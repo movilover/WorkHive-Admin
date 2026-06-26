@@ -1,0 +1,2060 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WorkHive Admin Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #07090F;
+  --bg2:      #0F1219;
+  --bg3:      #161B26;
+  --bg4:      #1E2433;
+  --border:   rgba(255,255,255,0.06);
+  --border2:  rgba(255,255,255,0.11);
+  --text:     #EEF0F8;
+  --text2:    #8892AA;
+  --text3:    #44506A;
+  --green:    #00E676;
+  --green2:   #00C853;
+  --orange:   #FFB300;
+  --blue:     #448AFF;
+  --blue2:    #82B1FF;
+  --red:      #FF5252;
+  --purple:   #E040FB;
+  --cyan:     #00E5FF;
+  --teal:     #1DE9B6;
+  --yellow:   #FFD740;
+
+  --grad-green:  linear-gradient(135deg,#00E676 0%,#00BFA5 100%);
+  --grad-blue:   linear-gradient(135deg,#448AFF 0%,#7C4DFF 100%);
+  --grad-orange: linear-gradient(135deg,#FFB300 0%,#FF6D00 100%);
+  --grad-red:    linear-gradient(135deg,#FF5252 0%,#D500F9 100%);
+  --grad-teal:   linear-gradient(135deg,#1DE9B6 0%,#00E5FF 100%);
+  --grad-purple: linear-gradient(135deg,#E040FB 0%,#7C4DFF 100%);
+  --grad-gold:   linear-gradient(135deg,#FFD740 0%,#FF6D00 100%);
+  --grad-pink:   linear-gradient(135deg,#FF4081 0%,#E040FB 100%);
+
+  --shadow:    0 12px 48px rgba(0,0,0,.8);
+  --shadow-sm: 0 4px 20px rgba(0,0,0,.4);
+  --r:    16px;
+  --r-sm: 10px;
+  --r-lg: 22px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:6px}
+
+/* ===== LOGIN ===== */
+#loginScreen{
+  position:fixed;inset:0;
+  background:radial-gradient(ellipse at 60% 20%, rgba(0,230,118,.05) 0%, transparent 60%),var(--bg);
+  display:flex;align-items:center;justify-content:center;z-index:9999;
+}
+.login-box{
+  width:100%;max-width:420px;padding:52px 44px;
+  background:linear-gradient(145deg,rgba(22,27,38,.98),rgba(15,18,25,.98));
+  border:1px solid rgba(0,230,118,.15);
+  border-radius:28px;box-shadow:0 24px 80px rgba(0,0,0,.9), 0 0 0 1px rgba(255,255,255,.03);
+  position:relative;overflow:hidden;
+}
+.login-box::before{
+  content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;
+  background:radial-gradient(circle,rgba(0,230,118,.08),transparent 70%);pointer-events:none;
+}
+.login-logo{display:flex;align-items:center;gap:14px;margin-bottom:36px;justify-content:center}
+.login-logo-icon{
+  width:56px;height:56px;border-radius:16px;background:var(--grad-green);
+  display:flex;align-items:center;justify-content:center;font-size:26px;
+  box-shadow:0 8px 24px rgba(0,230,118,.3);
+}
+.login-logo-text{font-size:24px;font-weight:900;color:var(--green);letter-spacing:-.5px}
+.login-logo-sub{font-size:10.5px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-top:2px}
+.login-title{font-size:28px;font-weight:900;text-align:center;margin-bottom:6px;letter-spacing:-.5px}
+.login-sub{font-size:12.5px;color:var(--text3);text-align:center;margin-bottom:30px}
+.lfield{margin-bottom:16px}
+.lfield label{font-size:11px;font-weight:800;color:var(--text2);display:block;margin-bottom:7px;text-transform:uppercase;letter-spacing:.8px}
+.lfield input{
+  width:100%;padding:14px 16px;border-radius:12px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  color:var(--text);font-family:inherit;font-size:14px;font-weight:600;
+  outline:none;transition:border-color .2s,box-shadow .2s;
+}
+.lfield input:focus{border-color:rgba(0,230,118,.5);box-shadow:0 0 0 3px rgba(0,230,118,.1)}
+.lfield .pass-wrap{position:relative}
+.lfield .pass-wrap input{padding-right:46px}
+.lfield .eye{position:absolute;right:14px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:16px;color:var(--text3);transition:color .15s}
+.lfield .eye:hover{color:var(--text2)}
+.btn-login{
+  width:100%;padding:15px;border-radius:12px;border:none;
+  background:var(--grad-green);color:#000;
+  font-weight:900;font-size:15px;cursor:pointer;font-family:inherit;
+  box-shadow:0 8px 28px rgba(0,230,118,.3),0 0 0 1px rgba(0,230,118,.2);
+  letter-spacing:.3px;transition:transform .15s,box-shadow .15s;
+}
+.btn-login:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(0,230,118,.4)}
+.btn-login:active{transform:scale(.97)}
+.login-err{color:var(--red);font-size:12px;font-weight:700;text-align:center;margin-bottom:12px;min-height:18px}
+.login-err:empty{display:none}
+.security-badge{display:flex;align-items:center;gap:8px;justify-content:center;margin-top:20px;font-size:11px;color:var(--text3);font-weight:600}
+.login-lockout{background:rgba(255,82,82,.08);border:1px solid rgba(255,82,82,.2);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--red);font-weight:600;display:none}
+
+/* ===== ADMIN SHELL ===== */
+#adminShell{display:none;min-height:100vh;flex-direction:column}
+
+/* ===== TOP HEADER ===== */
+.topheader{
+  background:linear-gradient(180deg, rgba(15,18,25,1) 0%, rgba(11,13,17,.98) 100%);
+  border-bottom:1px solid var(--border);
+  padding:0 28px;
+  display:flex;align-items:center;justify-content:space-between;
+  height:68px;position:sticky;top:0;z-index:100;
+  backdrop-filter:blur(20px);
+}
+.header-logo{display:flex;align-items:center;gap:12px;text-decoration:none}
+.header-logo-icon{width:42px;height:42px;border-radius:12px;background:var(--grad-green);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 16px rgba(0,230,118,.25);flex-shrink:0}
+.header-logo-text{font-size:18px;font-weight:900;color:var(--green);letter-spacing:-.3px}
+.header-logo-sub{font-size:9.5px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:1px}
+
+.header-center{display:flex;align-items:center;gap:6px}
+.page-breadcrumb{font-size:13px;font-weight:700;color:var(--text2);display:flex;align-items:center;gap:6px}
+.page-breadcrumb .crumb-active{color:var(--text);font-weight:800}
+
+.header-right{display:flex;align-items:center;gap:10px}
+.hdr-clock{font-size:12px;color:var(--text3);font-weight:700;font-variant-numeric:tabular-nums;background:var(--bg3);padding:6px 12px;border-radius:8px;border:1px solid var(--border)}
+.hdr-notif{
+  width:38px;height:38px;border-radius:10px;background:var(--bg3);
+  border:1px solid var(--border);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;position:relative;transition:all .15s;font-size:16px;
+}
+.hdr-notif:hover{border-color:rgba(0,230,118,.3);background:rgba(0,230,118,.05)}
+.notif-dot{position:absolute;top:7px;right:7px;width:7px;height:7px;border-radius:50%;background:var(--red);border:1.5px solid var(--bg2)}
+.btn-back{
+  padding:8px 16px;border-radius:10px;border:1px solid var(--border2);
+  background:var(--bg3);color:var(--text2);font-weight:700;font-size:12px;
+  cursor:pointer;font-family:inherit;transition:all .15s;display:flex;align-items:center;gap:6px;
+}
+.btn-back:hover{border-color:rgba(0,230,118,.3);color:var(--green)}
+.btn-logout-hdr{
+  padding:8px 16px;border-radius:10px;border:1px solid rgba(255,82,82,.25);
+  background:rgba(255,82,82,.07);color:var(--red);font-weight:700;font-size:12px;
+  cursor:pointer;font-family:inherit;transition:all .15s;
+}
+.btn-logout-hdr:hover{background:rgba(255,82,82,.15)}
+.admin-chip{
+  display:flex;align-items:center;gap:8px;
+  background:rgba(0,230,118,.07);border:1px solid rgba(0,230,118,.15);
+  border-radius:10px;padding:6px 12px 6px 8px;cursor:pointer;
+}
+.admin-chip:hover{background:rgba(0,230,118,.12)}
+.chip-avatar{width:28px;height:28px;border-radius:8px;background:var(--grad-green);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#000}
+.chip-name{font-size:12px;font-weight:800}
+.chip-role{font-size:10px;color:var(--green);font-weight:700}
+
+/* ===== MAIN CONTENT ===== */
+main{flex:1;padding:28px;max-width:1400px;width:100%;margin:0 auto}
+.screen{display:none}
+.screen.active{display:block;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ===== HOMEPAGE HERO ===== */
+.home-hero{
+  background:linear-gradient(135deg, rgba(0,230,118,.05) 0%, rgba(68,138,255,.05) 50%, rgba(224,64,251,.03) 100%);
+  border:1px solid rgba(0,230,118,.12);
+  border-radius:24px;padding:36px 40px;margin-bottom:28px;
+  position:relative;overflow:hidden;
+}
+.home-hero::before{
+  content:'';position:absolute;top:-80px;right:-80px;width:300px;height:300px;
+  background:radial-gradient(circle,rgba(0,230,118,.08),transparent 70%);pointer-events:none;
+}
+.home-hero::after{
+  content:'';position:absolute;bottom:-60px;left:30%;width:200px;height:200px;
+  background:radial-gradient(circle,rgba(68,138,255,.06),transparent 70%);pointer-events:none;
+}
+.hero-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.hero-greeting{font-size:13px;color:var(--teal);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.hero-title{font-size:32px;font-weight:900;letter-spacing:-.8px;line-height:1.1}
+.hero-title span{background:var(--grad-green);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:13.5px;color:var(--text2);margin-top:8px;line-height:1.6}
+.hero-stats{display:flex;gap:20px;flex-wrap:wrap}
+.hero-stat{text-align:center}
+.hero-stat-val{font-size:22px;font-weight:900;color:var(--green);font-variant-numeric:tabular-nums}
+.hero-stat-label{font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.hero-date{font-size:12px;color:var(--text3);font-weight:700;text-align:right}
+
+/* ===== PREMIUM NAV BUTTONS ===== */
+.nav-section-label{
+  font-size:11px;font-weight:800;color:var(--text3);text-transform:uppercase;
+  letter-spacing:1px;margin:28px 0 14px;display:flex;align-items:center;gap:10px;
+}
+.nav-section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+.nav-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:10px}
+.nav-btn{
+  display:flex;align-items:center;gap:13px;
+  padding:16px 18px;border-radius:16px;cursor:pointer;
+  border:1px solid var(--border);background:var(--bg2);
+  transition:all .2s cubic-bezier(.4,0,.2,1);
+  position:relative;overflow:hidden;user-select:none;
+  text-decoration:none;
+}
+.nav-btn::before{
+  content:'';position:absolute;inset:0;opacity:0;transition:opacity .2s;
+}
+.nav-btn:hover{transform:translateY(-2px);border-color:var(--btn-color, rgba(0,230,118,.3));box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.nav-btn:hover::before{opacity:1}
+.nav-btn:active{transform:scale(.97)}
+
+.nav-btn.green{--btn-color:rgba(0,230,118,.3)}.nav-btn.green::before{background:linear-gradient(135deg,rgba(0,230,118,.06),transparent)}
+.nav-btn.blue{--btn-color:rgba(68,138,255,.3)}.nav-btn.blue::before{background:linear-gradient(135deg,rgba(68,138,255,.06),transparent)}
+.nav-btn.orange{--btn-color:rgba(255,179,0,.3)}.nav-btn.orange::before{background:linear-gradient(135deg,rgba(255,179,0,.06),transparent)}
+.nav-btn.teal{--btn-color:rgba(29,233,182,.3)}.nav-btn.teal::before{background:linear-gradient(135deg,rgba(29,233,182,.06),transparent)}
+.nav-btn.purple{--btn-color:rgba(224,64,251,.3)}.nav-btn.purple::before{background:linear-gradient(135deg,rgba(224,64,251,.06),transparent)}
+.nav-btn.red{--btn-color:rgba(255,82,82,.3)}.nav-btn.red::before{background:linear-gradient(135deg,rgba(255,82,82,.06),transparent)}
+.nav-btn.cyan{--btn-color:rgba(0,229,255,.3)}.nav-btn.cyan::before{background:linear-gradient(135deg,rgba(0,229,255,.06),transparent)}
+.nav-btn.gold{--btn-color:rgba(255,215,64,.3)}.nav-btn.gold::before{background:linear-gradient(135deg,rgba(255,215,64,.06),transparent)}
+.nav-btn.pink{--btn-color:rgba(255,64,129,.3)}.nav-btn.pink::before{background:linear-gradient(135deg,rgba(255,64,129,.06),transparent)}
+
+.nav-btn-icon{
+  width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  font-size:19px;flex-shrink:0;
+}
+.nav-btn.green .nav-btn-icon{background:linear-gradient(135deg,rgba(0,230,118,.15),rgba(0,191,165,.1));box-shadow:0 4px 12px rgba(0,230,118,.15)}
+.nav-btn.blue .nav-btn-icon{background:linear-gradient(135deg,rgba(68,138,255,.15),rgba(124,77,255,.1));box-shadow:0 4px 12px rgba(68,138,255,.15)}
+.nav-btn.orange .nav-btn-icon{background:linear-gradient(135deg,rgba(255,179,0,.15),rgba(255,109,0,.1));box-shadow:0 4px 12px rgba(255,179,0,.15)}
+.nav-btn.teal .nav-btn-icon{background:linear-gradient(135deg,rgba(29,233,182,.15),rgba(0,229,255,.1));box-shadow:0 4px 12px rgba(29,233,182,.15)}
+.nav-btn.purple .nav-btn-icon{background:linear-gradient(135deg,rgba(224,64,251,.15),rgba(124,77,255,.1));box-shadow:0 4px 12px rgba(224,64,251,.15)}
+.nav-btn.red .nav-btn-icon{background:linear-gradient(135deg,rgba(255,82,82,.15),rgba(213,0,249,.1));box-shadow:0 4px 12px rgba(255,82,82,.15)}
+.nav-btn.cyan .nav-btn-icon{background:linear-gradient(135deg,rgba(0,229,255,.15),rgba(29,233,182,.1));box-shadow:0 4px 12px rgba(0,229,255,.15)}
+.nav-btn.gold .nav-btn-icon{background:linear-gradient(135deg,rgba(255,215,64,.15),rgba(255,109,0,.1));box-shadow:0 4px 12px rgba(255,215,64,.15)}
+.nav-btn.pink .nav-btn-icon{background:linear-gradient(135deg,rgba(255,64,129,.15),rgba(224,64,251,.1));box-shadow:0 4px 12px rgba(255,64,129,.15)}
+
+.nav-btn-info{flex:1;min-width:0}
+.nav-btn-label{font-size:13px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav-btn-sub{font-size:10.5px;color:var(--text3);font-weight:600;margin-top:2px}
+.nav-btn-badge{
+  margin-left:auto;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:900;
+  min-width:22px;text-align:center;flex-shrink:0;
+}
+.nav-btn.green .nav-btn-badge{background:rgba(0,230,118,.15);color:var(--teal)}
+.nav-btn.blue .nav-btn-badge{background:rgba(68,138,255,.15);color:var(--blue2)}
+.nav-btn.orange .nav-btn-badge{background:rgba(255,179,0,.15);color:var(--orange)}
+.nav-btn.teal .nav-btn-badge{background:rgba(29,233,182,.15);color:var(--teal)}
+.nav-btn.purple .nav-btn-badge{background:rgba(224,64,251,.15);color:var(--purple)}
+.nav-btn.red .nav-btn-badge{background:rgba(255,82,82,.15);color:var(--red)}
+.nav-btn.cyan .nav-btn-badge{background:rgba(0,229,255,.15);color:var(--cyan)}
+
+/* ===== STAT CARDS ===== */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:24px}
+.stat-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:18px;
+  padding:22px;position:relative;overflow:hidden;cursor:pointer;
+  transition:border-color .2s,transform .2s;
+}
+.stat-card:hover{transform:translateY(-2px)}
+.stat-card::after{content:'';position:absolute;top:-30px;right:-30px;width:100px;height:100px;border-radius:50%;opacity:.06;transform:scale(1.5)}
+.stat-card.green{border-color:rgba(0,230,118,.1)}.stat-card.green::after{background:var(--green)}
+.stat-card.blue{border-color:rgba(68,138,255,.1)}.stat-card.blue::after{background:var(--blue)}
+.stat-card.orange{border-color:rgba(255,179,0,.1)}.stat-card.orange::after{background:var(--orange)}
+.stat-card.red{border-color:rgba(255,82,82,.1)}.stat-card.red::after{background:var(--red)}
+.stat-card.purple{border-color:rgba(224,64,251,.1)}.stat-card.purple::after{background:var(--purple)}
+.stat-card.teal{border-color:rgba(29,233,182,.1)}.stat-card.teal::after{background:var(--teal)}
+
+.stat-icon{font-size:24px;margin-bottom:14px}
+.stat-value{font-size:30px;font-weight:900;line-height:1;margin-bottom:4px;font-variant-numeric:tabular-nums}
+.stat-label{font-size:11.5px;color:var(--text2);font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.stat-change{font-size:10.5px;font-weight:700;margin-top:10px;padding:3px 9px;border-radius:6px;display:inline-block}
+.stat-change.up{background:rgba(0,230,118,.1);color:var(--teal)}
+.stat-change.down{background:rgba(255,82,82,.1);color:var(--red)}
+.stat-change.warn{background:rgba(255,179,0,.1);color:var(--orange)}
+
+/* ===== SECTION HEADER ===== */
+.sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px}
+.sec-hd h2{font-size:18px;font-weight:900;letter-spacing:-.3px}
+.sec-hd .sec-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+/* ===== CARD ===== */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:22px;margin-bottom:20px}
+.card-title{font-size:14px;font-weight:800;margin-bottom:18px;display:flex;align-items:center;gap:8px;color:var(--text)}
+
+/* ===== TABLE ===== */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+table th{
+  font-size:10.5px;font-weight:800;color:var(--text3);text-transform:uppercase;
+  letter-spacing:.6px;padding:10px 14px;border-bottom:1px solid var(--border);
+  text-align:left;white-space:nowrap;
+}
+table td{padding:13px 14px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle}
+table tr:last-child td{border-bottom:none}
+table tr:hover td{background:rgba(255,255,255,.015)}
+.td-name{font-weight:700}
+.td-email{color:var(--text2);font-size:11.5px;margin-top:2px}
+
+/* ===== BADGES ===== */
+.badge{font-size:10.5px;font-weight:700;padding:4px 10px;border-radius:7px;display:inline-block;white-space:nowrap}
+.badge.green{background:rgba(0,230,118,.12);color:var(--teal)}
+.badge.orange{background:rgba(255,179,0,.12);color:var(--orange)}
+.badge.red{background:rgba(255,82,82,.12);color:var(--red)}
+.badge.blue{background:rgba(68,138,255,.12);color:var(--blue2)}
+.badge.purple{background:rgba(224,64,251,.12);color:var(--purple)}
+
+/* ===== BUTTONS ===== */
+.btn{padding:9px 17px;border-radius:10px;border:none;font-weight:700;font-size:12.5px;cursor:pointer;font-family:inherit;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn:active{transform:scale(.96)}
+.btn-sm{padding:7px 13px;font-size:11.5px;border-radius:8px}
+.btn-primary{background:var(--grad-green);color:#000;box-shadow:0 4px 16px rgba(0,230,118,.2)}
+.btn-primary:hover{box-shadow:0 8px 28px rgba(0,230,118,.35);transform:translateY(-1px)}
+.btn-approve{background:rgba(0,230,118,.1);color:var(--teal);border:1px solid rgba(0,230,118,.25)}
+.btn-approve:hover{background:var(--teal);color:#000}
+.btn-reject{background:rgba(255,82,82,.1);color:var(--red);border:1px solid rgba(255,82,82,.25)}
+.btn-reject:hover{background:var(--red);color:#fff}
+.btn-warning{background:rgba(255,179,0,.1);color:var(--orange);border:1px solid rgba(255,179,0,.25)}
+.btn-warning:hover{background:var(--orange);color:#000}
+.btn-info{background:rgba(68,138,255,.1);color:var(--blue2);border:1px solid rgba(68,138,255,.25)}
+.btn-info:hover{background:var(--blue);color:#fff}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}
+.btn-ghost:hover{border-color:rgba(0,230,118,.3);color:var(--green)}
+
+/* ===== FORMS ===== */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field{margin-bottom:14px}
+.field label{font-size:11px;font-weight:800;color:var(--text2);display:block;margin-bottom:7px;text-transform:uppercase;letter-spacing:.5px}
+.field input,.field select,.field textarea{
+  width:100%;padding:12px 14px;border-radius:10px;
+  border:1px solid var(--border2);background:rgba(255,255,255,.04);
+  color:var(--text);font-family:inherit;font-size:13px;font-weight:600;
+  outline:none;transition:border-color .15s,box-shadow .15s;
+}
+.field input:focus,.field select:focus,.field textarea:focus{
+  border-color:rgba(0,230,118,.5);box-shadow:0 0 0 3px rgba(0,230,118,.08)
+}
+.field select option{background:var(--bg3);color:var(--text)}
+.field textarea{resize:vertical;min-height:90px}
+.field-hint{font-size:10.5px;color:var(--text3);margin-top:5px;font-weight:600}
+
+/* ===== SEARCH ===== */
+.search-bar{position:relative}
+.search-bar input{
+  width:100%;padding:9px 14px 9px 38px;border-radius:10px;
+  border:1px solid var(--border2);background:rgba(255,255,255,.04);
+  color:var(--text);font-family:inherit;font-size:13px;font-weight:600;
+  outline:none;transition:border-color .15s;min-width:220px;
+}
+.search-bar input:focus{border-color:rgba(0,230,118,.5)}
+.search-bar .search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none;color:var(--text3)}
+
+/* ===== ACTIVITY LOG ===== */
+.log-item{display:flex;gap:12px;padding:13px 0;border-bottom:1px solid var(--border)}
+.log-item:last-child{border-bottom:none}
+.log-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.log-dot.green{background:var(--teal)}
+.log-dot.orange{background:var(--orange)}
+.log-dot.red{background:var(--red)}
+.log-dot.blue{background:var(--blue)}
+.log-text{font-size:12.5px;color:var(--text2);line-height:1.5;flex:1}
+.log-text strong{color:var(--text);font-weight:700}
+.log-time{font-size:11px;color:var(--text3);font-weight:600;white-space:nowrap;margin-top:1px}
+
+/* ===== MODAL ===== */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(10px);
+  z-index:200;display:none;align-items:center;justify-content:center;padding:20px;
+}
+.modal-overlay.show{display:flex}
+.modal-box{
+  background:var(--bg2);border:1px solid rgba(255,255,255,.1);border-radius:24px;
+  padding:30px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;
+  box-shadow:0 24px 80px rgba(0,0,0,.9);animation:popIn .25s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes popIn{from{opacity:0;transform:scale(.93)}to{opacity:1;transform:none}}
+.modal-title{font-size:19px;font-weight:900;margin-bottom:4px;letter-spacing:-.3px}
+.modal-sub{font-size:12.5px;color:var(--text2);margin-bottom:22px}
+.modal-close{float:right;cursor:pointer;font-size:18px;opacity:.4;transition:opacity .15s;border:none;background:none;color:var(--text)}
+.modal-close:hover{opacity:.9}
+
+/* ===== TOAST ===== */
+.toast{
+  position:fixed;top:20px;right:20px;
+  padding:13px 20px;border-radius:12px;
+  font-size:13px;font-weight:700;z-index:9999;
+  box-shadow:var(--shadow);min-width:260px;
+  transform:translateX(120%);transition:transform .35s cubic-bezier(.34,1.56,.64,1);
+  display:flex;align-items:center;gap:10px;
+}
+.toast.show{transform:none}
+.toast.success{background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.25);color:var(--teal);backdrop-filter:blur(12px)}
+.toast.error{background:rgba(255,82,82,.08);border:1px solid rgba(255,82,82,.25);color:var(--red);backdrop-filter:blur(12px)}
+.toast.info{background:rgba(68,138,255,.08);border:1px solid rgba(68,138,255,.25);color:var(--blue2);backdrop-filter:blur(12px)}
+.toast.warn{background:rgba(255,179,0,.08);border:1px solid rgba(255,179,0,.25);color:var(--orange);backdrop-filter:blur(12px)}
+
+/* ===== PAYMENT METHOD ===== */
+.method-card{
+  background:var(--bg3);border:1px solid var(--border2);border-radius:16px;
+  padding:20px;display:flex;flex-direction:column;gap:12px;
+}
+.method-toggle{display:flex;align-items:center;justify-content:space-between}
+.method-name{font-size:15px;font-weight:800}
+.method-detail{font-size:12px;color:var(--text2)}
+.toggle-switch{position:relative;width:44px;height:24px;cursor:pointer;flex-shrink:0}
+.toggle-switch input{opacity:0;width:0;height:0;position:absolute}
+.toggle-track{position:absolute;inset:0;border-radius:24px;background:var(--bg4);border:1px solid var(--border2);transition:background .2s}
+.toggle-switch input:checked + .toggle-track{background:var(--green2);border-color:transparent}
+.toggle-thumb{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+.toggle-switch input:checked ~ .toggle-thumb{transform:translateX(20px)}
+
+/* ===== ALERT ===== */
+.alert{display:flex;gap:10px;padding:12px 15px;border-radius:10px;margin-bottom:16px;font-size:12.5px;font-weight:600;align-items:flex-start;line-height:1.5}
+.alert.warn{background:rgba(255,179,0,.07);border:1px solid rgba(255,179,0,.2);color:var(--orange)}
+.alert.info{background:rgba(68,138,255,.07);border:1px solid rgba(68,138,255,.2);color:var(--blue2)}
+.alert.success{background:rgba(0,230,118,.07);border:1px solid rgba(0,230,118,.2);color:var(--teal)}
+
+/* ===== TELEGRAM ===== */
+.tg-step{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px}
+.tg-step-num{
+  width:28px;height:28px;border-radius:50%;background:rgba(0,229,255,.1);
+  border:1px solid rgba(0,229,255,.25);color:var(--cyan);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:900;flex-shrink:0;
+}
+.tg-step-body{font-size:13px;color:var(--text2);line-height:1.6;flex:1}
+.tg-step-body strong{color:var(--text)}
+.tg-status-bar{display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:13px 16px}
+.tg-indicator{width:10px;height:10px;border-radius:50%;animation:pulse2 2s infinite}
+.tg-indicator.connected{background:var(--teal)}
+.tg-indicator.disconnected{background:var(--red);animation:none}
+@keyframes pulse2{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ===== USER DETAIL ===== */
+.user-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.detail-box{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px}
+.detail-box .label{font-size:10.5px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.detail-box .value{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+
+/* Chart */
+.chart-row{display:flex;align-items:flex-end;gap:6px;height:90px;padding:4px 0}
+.chart-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px}
+.chart-bar{width:100%;border-radius:5px 5px 0 0;transition:height .6s cubic-bezier(.34,1.2,.64,1);min-height:4px}
+.chart-label{font-size:9px;color:var(--text3);font-weight:700;text-align:center}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:900px){
+  .nav-grid{grid-template-columns:repeat(2,1fr)}
+  .form-grid{grid-template-columns:1fr}
+  .topheader{padding:0 16px}
+  main{padding:16px}
+  .home-hero{padding:24px 20px}
+  .hero-title{font-size:22px}
+}
+@media(max-width:580px){
+  .nav-grid{grid-template-columns:repeat(2,1fr)}
+  .stats-grid{grid-template-columns:1fr 1fr}
+}
+
+/* select style */
+.styled-select{
+  padding:9px 13px;border-radius:10px;border:1px solid var(--border2);
+  background:var(--bg3);color:var(--text);font-size:12px;font-weight:700;
+  outline:none;font-family:inherit;cursor:pointer;
+}
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ===== LOGIN ===== -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-icon">🐝</div>
+      <div>
+        <div class="login-logo-text">WorkHive Admin</div>
+        <div class="login-logo-sub">Secure Control Panel</div>
+      </div>
+    </div>
+    <div class="login-title">Admin Login</div>
+    <div class="login-sub">High-Security Access · All actions are logged</div>
+    <div class="login-lockout" id="lockoutMsg"></div>
+    <div class="login-err" id="loginErr"></div>
+    <div class="lfield">
+      <label>Admin Username</label>
+      <input type="text" id="adminUser" placeholder="admin" autocomplete="username">
+    </div>
+    <div class="lfield">
+      <label>Password</label>
+      <div class="pass-wrap">
+        <input type="password" id="adminPass" placeholder="••••••••" autocomplete="current-password">
+        <span class="eye" onclick="toggleLoginPass()">👁</span>
+      </div>
+    </div>
+    <div class="lfield">
+      <label>Security Code</label>
+      <input type="text" id="adminCode" placeholder="6-digit code" maxlength="6" inputmode="numeric">
+      <div class="field-hint">Default: <strong>272727</strong></div>
+    </div>
+    <div style="margin-bottom:18px"></div>
+    <button class="btn-login" onclick="doAdminLogin()">🔐 Secure Login</button>
+    <div class="security-badge">🛡️ 256-bit encrypted · 3 attempts max · IP logged</div>
+  </div>
+</div>
+
+<!-- ===== ADMIN SHELL ===== -->
+<div id="adminShell">
+  <!-- TOP HEADER -->
+  <header class="topheader">
+    <div class="header-logo" onclick="goScreen('dashboard')" style="cursor:pointer">
+      <div class="header-logo-icon">🐝</div>
+      <div>
+        <div class="header-logo-text">WorkHive</div>
+        <div class="header-logo-sub">Admin Panel</div>
+      </div>
+    </div>
+    <div class="header-center">
+      <div class="page-breadcrumb">
+        <span>Admin</span>
+        <span style="color:var(--border2)">›</span>
+        <span class="crumb-active" id="pageTitle">Dashboard</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="hdr-clock" id="adminClock">00:00:00</div>
+      <div class="hdr-notif" onclick="goScreen('notifications')">
+        🔔<div class="notif-dot" id="topNotifDot"></div>
+      </div>
+      <div class="admin-chip" onclick="goScreen('settings')">
+        <div class="chip-avatar">A</div>
+        <div>
+          <div class="chip-name">Super Admin</div>
+          <div class="chip-role">🛡️ Full Access</div>
+        </div>
+      </div>
+      <button class="btn-logout-hdr" onclick="doLogout()">🚪 Logout</button>
+    </div>
+  </header>
+
+  <main id="mainContent">
+
+    <!-- ===== DASHBOARD / HOME ===== -->
+    <section class="screen active" id="screen-dashboard">
+      <!-- Hero -->
+      <div class="home-hero">
+        <div class="hero-top">
+          <div>
+            <div class="hero-greeting">👋 Welcome back, Super Admin</div>
+            <div class="hero-title">WorkHive <span>Control Center</span></div>
+            <div class="hero-sub">Manage users, jobs, payments & platform settings from one place.</div>
+          </div>
+          <div>
+            <div class="hero-date" id="heroDat"></div>
+            <div class="hero-stats" style="margin-top:16px">
+              <div class="hero-stat"><div class="hero-stat-val" id="hsTotalUsers">0</div><div class="hero-stat-label">Users</div></div>
+              <div class="hero-stat"><div class="hero-stat-val" id="hsTotalDeposit">$0</div><div class="hero-stat-label">Deposits</div></div>
+              <div class="hero-stat"><div class="hero-stat-val" id="hsActiveJobs">0</div><div class="hero-stat-label">Active Jobs</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card green" onclick="goScreen('users')">
+          <div class="stat-icon">👥</div>
+          <div class="stat-value" id="statTotalUsers">0</div>
+          <div class="stat-label">Total Users</div>
+          <div class="stat-change up" id="statUsersChange">All time</div>
+        </div>
+        <div class="stat-card blue" onclick="goScreen('deposits')">
+          <div class="stat-icon">💰</div>
+          <div class="stat-value" id="statTotalDeposit">$0</div>
+          <div class="stat-label">Total Deposits</div>
+          <div class="stat-change up">Confirmed</div>
+        </div>
+        <div class="stat-card orange" onclick="goScreen('withdrawals')">
+          <div class="stat-icon">📤</div>
+          <div class="stat-value" id="statPendingWithdraw">$0</div>
+          <div class="stat-label">Pending Withdrawals</div>
+          <div class="stat-change warn" id="statWithdrawCount">0 requests</div>
+        </div>
+        <div class="stat-card teal" onclick="goScreen('jobs')">
+          <div class="stat-icon">💼</div>
+          <div class="stat-value" id="statActiveJobs">0</div>
+          <div class="stat-label">Active Jobs</div>
+          <div class="stat-change up" id="statPendingJobsBadge">0 pending</div>
+        </div>
+        <div class="stat-card purple" onclick="goScreen('tasks')">
+          <div class="stat-icon">✅</div>
+          <div class="stat-value" id="statTasksDone">0</div>
+          <div class="stat-label">Task Submissions</div>
+          <div class="stat-change up">All time</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-icon">⚠️</div>
+          <div class="stat-value" id="statPendingKyc">0</div>
+          <div class="stat-label">KYC Pending</div>
+          <div class="stat-change down">Need review</div>
+        </div>
+      </div>
+
+      <!-- PREMIUM NAV BUTTONS -->
+      <div class="nav-section-label">👥 Users & Management</div>
+      <div class="nav-grid">
+        <div class="nav-btn green" onclick="goScreen('users')">
+          <div class="nav-btn-icon">👥</div>
+          <div class="nav-btn-info">
+            <div class="nav-btn-label">User Management</div>
+            <div class="nav-btn-sub">View, ban, verify users</div>
+          </div>
+          <div class="nav-btn-badge" id="nbUsers">0</div>
+        </div>
+        <div class="nav-btn orange" onclick="goScreen('jobs')">
+          <div class="nav-btn-icon">💼</div>
+          <div class="nav-btn-info">
+            <div class="nav-btn-label">Job Approvals</div>
+            <div class="nav-btn-sub">Review & approve jobs</div>
+          </div>
+          <div class="nav-btn-badge" id="nbJobs">0</div>
+        </div>
+        <div class="nav-btn purple" onclick="goScreen('tasks')">
+          <div class="nav-btn-icon">✅</div>
+          <div class="nav-btn-info">
+            <div class="nav-btn-label">Task Submissions</div>
+            <div class="nav-btn-sub">Approve task proofs</div>
+          </div>
+          <div class="nav-btn-badge" id="nbTasks">0</div>
+        </div>
+      </div>
+
+      <div class="nav-section-label">💳 Finance & Payments</div>
+      <div class="nav-grid">
+        <div class="nav-btn blue" onclick="goScreen('deposits')">
+          <div class="nav-btn-icon">⬇️</div>
+          <div class="nav-btn-info">
+            <div class="nav-btn-label">Deposits</div>
+            <div class="nav-btn-sub">Confirm deposit requests</div>
+          </div>
+          <div class="nav-btn-badge" id="nbDeposits">0</div>
+        </div>
+        <div class="nav-btn teal" onclick="goScreen('withdrawals')">
+          <div class="nav-btn-icon">⬆️</div>
+          <div class="nav-btn-info">
+            <div class="nav-btn-label">Withdrawals</div>
+            <div class="nav-btn-sub">Process withdrawal requests</div>
+          </div>
+          <div class="nav-btn-badge" id="nbWithdrawals">0</div>
+        </div>
+        <div class="nav-btn gold" onclick="goScreen('payment-methods')">
+          <div class="nav-btn-icon">💳</div>
+          <div class="nav-btn-info">
+            <div class="nav-btn-label">Payment Methods</div>
+            <div class="nav-btn-sub">bKash, Nagad, USDT…</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-section-label">📡 Communication & System</div>
+      <div class="nav-grid">
+        <div class="nav-btn cyan" onclick="goScreen('telegram')">
+          <div class="nav-btn-icon">✈️</div>
+          <div class="nav-btn-info">
+            <div class="nav-btn-label">Telegram Bot</div>
+            <div class="nav-btn-sub">Auto-notifications setup</div>
+          </div>
+        </div>
+        <div class="nav-btn pink" onclick="goScreen('broadcast')">
+          <div class="nav-btn-icon">📢</div>
+          <div class="nav-btn-info">
+            <div class="nav-btn-label">Broadcast</div>
+            <div class="nav-btn-sub">Message all users</div>
+          </div>
+        </div>
+        <div class="nav-btn red" onclick="goScreen('notifications')">
+          <div class="nav-btn-icon">🔔</div>
+          <div class="nav-btn-info">
+            <div class="nav-btn-label">Notifications</div>
+            <div class="nav-btn-sub">Admin alerts & updates</div>
+          </div>
+          <div class="nav-btn-badge" id="nbNotifs">0</div>
+        </div>
+      </div>
+
+      <div class="nav-grid" style="grid-template-columns:repeat(3,1fr)">
+        <div class="nav-btn blue" onclick="goScreen('settings')">
+          <div class="nav-btn-icon">⚙️</div>
+          <div class="nav-btn-info">
+            <div class="nav-btn-label">Site Settings</div>
+            <div class="nav-btn-sub">Fees, limits & security</div>
+          </div>
+        </div>
+        <div class="nav-btn green" onclick="goScreen('logs')">
+          <div class="nav-btn-icon">📋</div>
+          <div class="nav-btn-info">
+            <div class="nav-btn-label">Activity Logs</div>
+            <div class="nav-btn-sub">All admin actions</div>
+          </div>
+        </div>
+        <div class="nav-btn purple" onclick="exportUsers()">
+          <div class="nav-btn-icon">📥</div>
+          <div class="nav-btn-info">
+            <div class="nav-btn-label">Export CSV</div>
+            <div class="nav-btn-sub">Download user list</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts & Pending -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:28px">
+        <div class="card">
+          <div class="card-title">📈 Weekly Signups</div>
+          <div class="chart-row" id="signupChart"></div>
+          <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:10px;color:var(--text3)">
+            <span id="chartMin"></span><span id="chartMax"></span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">⏳ Pending Jobs</div>
+          <div id="dashPendingJobs"></div>
+        </div>
+      </div>
+
+      <!-- Activity -->
+      <div class="card" style="margin-top:20px">
+        <div class="card-title">🔄 Recent Activity</div>
+        <div id="dashActivityLog"></div>
+      </div>
+    </section>
+
+    <!-- ===== USER MANAGEMENT ===== -->
+    <section class="screen" id="screen-users">
+      <div class="sec-hd">
+        <div style="display:flex;align-items:center;gap:12px">
+          <button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')">← Back</button>
+          <h2>👥 User Management</h2>
+        </div>
+        <div class="sec-actions">
+          <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="userSearch" placeholder="Search users…" oninput="filterUsers(this.value)">
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="exportUsers()">📥 Export</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>User</th><th>Joined</th><th>Balance</th><th>Tasks</th><th>KYC</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="userTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== JOB APPROVALS ===== -->
+    <section class="screen" id="screen-jobs">
+      <div class="sec-hd">
+        <div style="display:flex;align-items:center;gap:12px">
+          <button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')">← Back</button>
+          <h2>💼 Job Approvals</h2>
+        </div>
+        <div class="sec-actions">
+          <select class="styled-select" onchange="filterJobs(this.value)">
+            <option value="all">All Jobs</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+      </div>
+      <div id="jobList"></div>
+    </section>
+
+    <!-- ===== TASK SUBMISSIONS ===== -->
+    <section class="screen" id="screen-tasks">
+      <div class="sec-hd">
+        <div style="display:flex;align-items:center;gap:12px">
+          <button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')">← Back</button>
+          <h2>✅ Task Submissions</h2>
+        </div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>User</th><th>Task</th><th>Reward</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="taskSubmissionBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== DEPOSITS ===== -->
+    <section class="screen" id="screen-deposits">
+      <div class="sec-hd">
+        <div style="display:flex;align-items:center;gap:12px">
+          <button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')">← Back</button>
+          <h2>⬇️ Deposit Requests</h2>
+        </div>
+        <div class="sec-actions">
+          <select class="styled-select" onchange="filterDeposits(this.value)">
+            <option value="all">All</option>
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+          </select>
+        </div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>User</th><th>Method</th><th>Amount</th><th>TxID</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="depositBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== WITHDRAWALS ===== -->
+    <section class="screen" id="screen-withdrawals">
+      <div class="sec-hd">
+        <div style="display:flex;align-items:center;gap:12px">
+          <button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')">← Back</button>
+          <h2>⬆️ Withdrawal Requests</h2>
+        </div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>User</th><th>Method</th><th>Amount</th><th>Net (after fee)</th><th>Account</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="withdrawBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== PAYMENT METHODS ===== -->
+    <section class="screen" id="screen-payment-methods">
+      <div class="sec-hd">
+        <div style="display:flex;align-items:center;gap:12px">
+          <button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')">← Back</button>
+          <h2>💳 Payment Methods</h2>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openAddMethodModal()">+ Add Method</button>
+      </div>
+      <div class="alert info">ℹ️ Enable/disable methods, update account numbers, and set a separate deposit fee % and withdraw fee % for each method.</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px" id="paymentMethodsGrid"></div>
+    </section>
+
+    <!-- ===== TELEGRAM ===== -->
+    <section class="screen" id="screen-telegram">
+      <div class="sec-hd">
+        <div style="display:flex;align-items:center;gap:12px">
+          <button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')">← Back</button>
+          <h2>✈️ Telegram Bot</h2>
+        </div>
+      </div>
+      <div class="alert info">ℹ️ Configure your Telegram bot to send automatic notifications to admins and users.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div class="card">
+          <div class="card-title">🤖 Bot Configuration</div>
+          <div class="tg-step"><div class="tg-step-num">1</div><div class="tg-step-body">Open Telegram, search <strong>@BotFather</strong> and send <strong>/newbot</strong></div></div>
+          <div class="tg-step"><div class="tg-step-num">2</div><div class="tg-step-body">Follow prompts to name your bot, then copy the <strong>HTTP API Token</strong></div></div>
+          <div class="tg-step"><div class="tg-step-num">3</div><div class="tg-step-body">Paste the token below and click <strong>Connect Bot</strong></div></div>
+          <div class="tg-step"><div class="tg-step-num">4</div><div class="tg-step-body">Get your Chat ID by messaging <strong>@userinfobot</strong> on Telegram</div></div>
+          <div class="field" style="margin-top:10px">
+            <label>Bot Token</label>
+            <input type="text" id="tgBotToken" placeholder="123456:AAExxxxxxxxxxxxxx">
+            <div class="field-hint">From BotFather — keep this secret!</div>
+          </div>
+          <div class="field">
+            <label>Admin Chat ID</label>
+            <input type="text" id="tgAdminChatId" placeholder="-100xxxxxxxxxx">
+          </div>
+          <button class="btn btn-primary" style="width:100%;margin-top:4px" onclick="connectTelegram()">✈️ Connect Bot</button>
+          <button class="btn btn-ghost" style="width:100%;margin-top:8px" onclick="testTelegram()">🧪 Send Test Message</button>
+          <div class="tg-status-bar" style="margin-top:14px">
+            <div class="tg-indicator disconnected" id="tgIndicator"></div>
+            <div>
+              <div style="font-size:13px;font-weight:700" id="tgStatusText">Not Connected</div>
+              <div style="font-size:11px;color:var(--text3)" id="tgBotName">Configure above to connect</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">📨 Auto-Notification Events</div>
+          <div id="tgEventsList"></div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:20px">
+        <div class="card-title">👤 User Telegram Links</div>
+        <div class="alert warn" style="margin-bottom:14px">⚠️ Users link accounts by sending /start to your bot.</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>User</th><th>Telegram Username</th><th>Chat ID</th><th>Linked</th><th>Actions</th></tr></thead>
+            <tbody id="tgUserBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== BROADCAST ===== -->
+    <section class="screen" id="screen-broadcast">
+      <div class="sec-hd">
+        <div style="display:flex;align-items:center;gap:12px">
+          <button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')">← Back</button>
+          <h2>📢 Broadcast Message</h2>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div class="card">
+          <div class="card-title">✍️ Compose Message</div>
+          <div class="field">
+            <label>Target Audience</label>
+            <select id="bcTarget">
+              <option value="all">All Users</option>
+              <option value="workers">Workers Only</option>
+              <option value="kyc_verified">KYC Verified</option>
+              <option value="kyc_pending">KYC Pending</option>
+              <option value="inactive">Inactive (7+ days)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Channel</label>
+            <select id="bcChannel">
+              <option value="notification">In-App Notification</option>
+              <option value="telegram">Telegram Bot</option>
+              <option value="both">Both</option>
+            </select>
+          </div>
+          <div class="field"><label>Title</label><input type="text" id="bcTitle" placeholder="e.g. New Tasks Available! 🎉"></div>
+          <div class="field"><label>Message Body</label><textarea id="bcBody" rows="4" placeholder="Write your message here…"></textarea></div>
+          <button class="btn btn-primary" style="width:100%" onclick="sendBroadcast()">📢 Send Broadcast</button>
+        </div>
+        <div class="card">
+          <div class="card-title">📊 Broadcast History</div>
+          <div id="bcHistory"><div style="color:var(--text3);font-size:13px;text-align:center;padding:20px">No broadcasts yet.</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== NOTIFICATIONS ===== -->
+    <section class="screen" id="screen-notifications">
+      <div class="sec-hd">
+        <div style="display:flex;align-items:center;gap:12px">
+          <button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')">← Back</button>
+          <h2>🔔 Admin Notifications</h2>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="markAllAdminRead()">Mark all read</button>
+      </div>
+      <div id="adminNotifList"></div>
+    </section>
+
+    <!-- ===== SITE SETTINGS ===== -->
+    <section class="screen" id="screen-settings">
+      <div class="sec-hd">
+        <div style="display:flex;align-items:center;gap:12px">
+          <button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')">← Back</button>
+          <h2>⚙️ Site Settings</h2>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div class="card">
+          <div class="card-title">🌐 General Settings</div>
+          <div class="field"><label>Platform Name</label><input type="text" id="setName" value="WorkHive"></div>
+          <div class="field"><label>Minimum Withdrawal ($)</label><input type="number" id="setMinWithdraw" value="5" min="1"></div>
+          <div class="field"><label>Minimum Deposit ($)</label><input type="number" id="setMinDeposit" value="1" min="0.5"></div>
+          <div class="field"><label>Default Platform Fee (%)</label><input type="number" id="setFee" value="5" min="0" max="30"></div>
+          <div class="field"><label>Referral Reward ($)</label><input type="number" id="setRefReward" value="0.50" step="0.01"></div>
+          <div class="field"><label>Daily Check-in Reward ($)</label><input type="number" id="setCheckin" value="0.10" step="0.01"></div>
+          <button class="btn btn-primary" style="width:100%;margin-top:4px" onclick="saveSettings()">💾 Save Settings</button>
+        </div>
+        <div class="card">
+          <div class="card-title">🔐 Security Settings</div>
+          <div class="field"><label>New Admin Password</label><input type="password" id="setNewPass" placeholder="Leave blank to keep current"></div>
+          <div class="field"><label>New Security Code (6 digits)</label><input type="text" id="setNewCode" placeholder="6-digit code" maxlength="6"></div>
+          <div class="field"><label>IP Whitelist (one per line)</label><textarea id="setIpWhitelist" rows="4" placeholder="Leave empty to allow all IPs"></textarea></div>
+          <div class="alert warn">⚠️ Changing security code requires current password.</div>
+          <button class="btn btn-warning" style="width:100%" onclick="saveSecuritySettings()">🔐 Update Security</button>
+          <div style="display:flex;justify-content:space-between;align-items:center;background:var(--bg3);border:1px solid var(--border);padding:14px;border-radius:12px;margin-top:16px">
+            <div>
+              <div style="font-size:13px;font-weight:700">Maintenance Mode</div>
+              <div style="font-size:11.5px;color:var(--text3)">Users see maintenance page</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggleMaintenance">
+              <div class="toggle-track"></div>
+              <div class="toggle-thumb"></div>
+            </label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== ACTIVITY LOGS ===== -->
+    <section class="screen" id="screen-logs">
+      <div class="sec-hd">
+        <div style="display:flex;align-items:center;gap:12px">
+          <button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')">← Back</button>
+          <h2>📋 Activity Logs</h2>
+        </div>
+        <div class="sec-actions">
+          <select class="styled-select" onchange="filterLogs(this.value)">
+            <option value="all">All Actions</option>
+            <option value="login">Login</option>
+            <option value="deposit">Deposit</option>
+            <option value="withdrawal">Withdrawal</option>
+            <option value="job">Jobs</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="clearLogs()">🗑 Clear</button>
+        </div>
+      </div>
+      <div class="card"><div id="logsContainer"></div></div>
+    </section>
+
+  </main>
+</div>
+
+<!-- User Detail Modal -->
+<div class="modal-overlay" id="userDetailModal">
+  <div class="modal-box" style="max-width:600px">
+    <button class="modal-close" onclick="closeModal('userDetailModal')">✕</button>
+    <div id="userDetailContent"></div>
+  </div>
+</div>
+
+<!-- Add Payment Method Modal -->
+<div class="modal-overlay" id="addMethodModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('addMethodModal')">✕</button>
+    <div class="modal-title">Add Payment Method</div>
+    <div class="modal-sub">Add a new deposit/withdrawal method</div>
+    <div class="field"><label>Method Name</label><input type="text" id="newMethodName" placeholder="e.g. bKash, Nagad, USDT"></div>
+    <div class="field"><label>Emoji Icon</label><input type="text" id="newMethodEmoji" placeholder="📱" maxlength="4"></div>
+    <div class="field"><label>Account Number / Wallet</label><input type="text" id="newMethodNumber" placeholder="01XXXXXXXXX"></div>
+    <div class="form-grid">
+      <div class="field"><label>Min Deposit ($)</label><input type="number" id="newMethodMin" value="1" min="0.5"></div>
+      <div class="field"><label>Deposit Fee (%)</label><input type="number" id="newMethodDepFee" value="0" min="0" max="30" step="0.1"></div>
+    </div>
+    <div class="field"><label>Withdraw Fee (%)</label><input type="number" id="newMethodWdFee" value="5" min="0" max="30" step="0.1"></div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('addMethodModal')">Cancel</button>
+      <button class="btn btn-primary" style="flex:1" onclick="addPaymentMethod()">Add Method</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reject Reason Modal -->
+<div class="modal-overlay" id="rejectReasonModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('rejectReasonModal')">✕</button>
+    <div class="modal-title" id="rejectModalTitle">❌ Reject</div>
+    <div class="modal-sub" id="rejectModalSub">Please give a reason — the member will see this.</div>
+    <div class="field"><textarea id="rejectReasonText" rows="3" placeholder="e.g. Instructions unclear, against platform rules, wrong transaction ID…"></textarea></div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('rejectReasonModal')">Cancel</button>
+      <button class="btn btn-reject" style="flex:1" onclick="confirmRejectReason()">Confirm Reject</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore, collection, getDocs, doc, updateDoc, addDoc, onSnapshot,
+  query, where, orderBy, serverTimestamp, increment, setDoc, deleteDoc, getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCeA-269WRHJCehg9Z__tlre_EbZcfanlY",
+  authDomain: "workhive-35207.firebaseapp.com",
+  projectId: "workhive-35207",
+  storageBucket: "workhive-35207.firebasestorage.app",
+  messagingSenderId: "567915693960",
+  appId: "1:567915693960:web:db6b3c3165c125c8d51c3d"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+window._fbAdmin = {
+  db, collection, getDocs, doc, updateDoc, addDoc, onSnapshot,
+  query, where, orderBy, serverTimestamp, increment, setDoc, deleteDoc, getDoc
+};
+window._fbAdminReady = true;
+if (window._resolveFbAdminReady) window._resolveFbAdminReady();
+</script>
+
+<script>
+// ===================== SECURITY =====================
+const ADMIN_CREDS = { user: 'admin', pass: 'WorkHive@2024!', code: '272727' };
+let loginAttempts = 0, lockoutUntil = null, _sessionToken = null;
+
+window._fbAdminReadyPromise = new Promise(resolve => { window._resolveFbAdminReady = resolve; });
+if (window._fbAdminReady) window._resolveFbAdminReady();
+
+function doAdminLogin() {
+  if (lockoutUntil && Date.now() < lockoutUntil) {
+    const s = Math.ceil((lockoutUntil - Date.now()) / 1000);
+    document.getElementById('lockoutMsg').textContent = `🔒 Locked. Try in ${s}s`;
+    document.getElementById('lockoutMsg').style.display = 'block'; return;
+  }
+  const user = document.getElementById('adminUser').value.trim();
+  const pass = document.getElementById('adminPass').value;
+  const code = document.getElementById('adminCode').value.trim();
+  const errEl = document.getElementById('loginErr');
+  if (!user || !pass || !code) { errEl.textContent = '❌ All fields required'; return; }
+  const su = localStorage.getItem('wha_user') || ADMIN_CREDS.user;
+  const sp = localStorage.getItem('wha_pass') || ADMIN_CREDS.pass;
+  const sc = localStorage.getItem('wha_code') || ADMIN_CREDS.code;
+  if (user === su && pass === sp && code === sc) {
+    loginAttempts = 0;
+    _sessionToken = btoa(Date.now() + ':' + Math.random());
+    sessionStorage.setItem('wh_admin_token', _sessionToken);
+    addLog('🔐 Admin logged in', 'login', 'success');
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminShell').style.display = 'flex';
+    initAdmin(); showToast('✅ Welcome, Admin!', 'success');
+  } else {
+    loginAttempts++;
+    const r = 3 - loginAttempts;
+    if (loginAttempts >= 3) {
+      lockoutUntil = Date.now() + 30000;
+      document.getElementById('lockoutMsg').textContent = '🔒 Locked for 30 seconds.';
+      document.getElementById('lockoutMsg').style.display = 'block';
+      setTimeout(() => { lockoutUntil = null; loginAttempts = 0; document.getElementById('lockoutMsg').style.display = 'none'; errEl.textContent = ''; }, 30000);
+      errEl.textContent = '';
+    } else { errEl.textContent = `❌ Invalid credentials. ${r} attempt${r !== 1 ? 's' : ''} left.`; }
+    const lb = document.querySelector('.login-box');
+    lb.style.animation = 'none'; lb.offsetHeight;
+    const s = document.createElement('style');
+    s.textContent = '@keyframes shk{0%,100%{transform:none}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}';
+    document.head.appendChild(s); lb.style.animation = 'shk .4s ease';
+  }
+}
+
+function toggleLoginPass() {
+  const i = document.getElementById('adminPass');
+  i.type = i.type === 'password' ? 'text' : 'password';
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('loginScreen').style.display !== 'none') doAdminLogin();
+  if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.show').forEach(m => m.classList.remove('show'));
+});
+
+function doLogout() {
+  if (!confirm('Log out of admin panel?')) return;
+  sessionStorage.removeItem('wh_admin_token'); _sessionToken = null;
+  document.getElementById('adminShell').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('adminPass').value = ''; document.getElementById('adminCode').value = '';
+  showToast('Logged out', 'info');
+}
+
+// ===================== STATE =====================
+const STATE = {
+  users: [],
+  jobs: [],
+  deposits: [],
+  withdrawals: [],
+  taskSubmissions: [],
+  paymentMethods: [],
+  tgEvents: [
+    {id:'e1',event:'New User Registration',icon:'👤',enabled:true,msg:'🎉 New user: {name} ({email})'},
+    {id:'e2',event:'New Deposit',icon:'⬇️',enabled:true,msg:'💰 Deposit: {user} deposited ${amount} via {method}'},
+    {id:'e3',event:'Withdrawal Request',icon:'⬆️',enabled:true,msg:'📤 Withdrawal: {user} wants ${amount} via {method}'},
+    {id:'e4',event:'New Job Submitted',icon:'💼',enabled:true,msg:'💼 New job by {user}: "{title}" needs approval'},
+    {id:'e5',event:'Job Approved/Rejected',icon:'✅',enabled:false,msg:'✅ Job "{title}" was {status}'},
+    {id:'e6',event:'Task Completed',icon:'🎯',enabled:false,msg:'🎯 {user} completed "{task}" — earned ${reward}'},
+    {id:'e7',event:'KYC Submitted',icon:'🪪',enabled:true,msg:'🪪 KYC submitted by {user} — review needed'},
+    {id:'e8',event:'User Banned',icon:'⛔',enabled:true,msg:'⛔ User {name} has been banned'},
+  ],
+  adminNotifications: [],
+  logs: [
+    {action:'🔐 Admin logged in',type:'login',level:'success',ip:'127.0.0.1',time:new Date().toLocaleString()},
+  ],
+  tgConfig: {token:'',adminChatId:'',connected:false},
+  broadcastHistory: [],
+  settings: {name:'WorkHive',minWithdraw:5,minDeposit:1,fee:5,refReward:0.50,checkin:0.10},
+  logFilter: 'all',
+  jobFilter: 'all',
+  depositFilter: 'all',
+  _pendingReject: null, // {type, id}
+};
+
+// ===================== INIT =====================
+function initAdmin() {
+  updateClock(); setInterval(updateClock, 1000);
+  document.getElementById('heroDat').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  renderAllScreens();
+  waitForFbAdmin().then(() => {
+    loadFirestoreUsers();
+    listenJobs();
+    listenDeposits();
+    listenWithdrawals();
+    listenTaskSubmissions();
+    listenPaymentMethods();
+    listenSettings();
+  });
+}
+
+async function waitForFbAdmin(timeout = 4000) {
+  if (window._fbAdminReady) return true;
+  await Promise.race([window._fbAdminReadyPromise, new Promise(r => setTimeout(r, timeout))]);
+  return !!window._fbAdminReady;
+}
+
+function updateClock() {
+  document.getElementById('adminClock').textContent = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+function renderAllScreens() {
+  updateDashboardStats(); renderUserTable(STATE.users); renderJobList(STATE.jobFilter);
+  renderTaskSubmissions(); renderDeposits(STATE.depositFilter); renderWithdrawals();
+  renderPaymentMethods(); renderTgEvents(); renderTgUserTable();
+  renderAdminNotifs(); renderLogs(); renderSignupChart();
+  renderDashPendingJobs(); renderDashActivity(); updateNavBadges();
+}
+
+// ===================== FIRESTORE: USERS =====================
+async function loadFirestoreUsers() {
+  try {
+    const fb = window._fbAdmin;
+    const snap = await fb.getDocs(fb.collection(fb.db, 'users'));
+    const users = [];
+    snap.forEach(d => users.push({id: d.id, ...d.data()}));
+    STATE.users = users.map(u => ({
+      id: u.id, name: u.name || 'Unknown', email: u.email || '—',
+      username: u.username || '', balance: u.balance || 0,
+      tasks: u.tasksCompleted || 0, kyc: u.kyc ? 'Verified' : 'Pending',
+      status: u.status || 'active', country: u.country || '—',
+      totalEarned: u.totalEarned || 0, totalWithdrawn: u.totalWithdrawn || 0,
+      phone: u.phone || '—', referralCode: u.referralCode || '—',
+      telegramChatId: u.telegramChatId || '', telegramUsername: u.telegramUsername || '',
+      joined: u.createdAt ? (u.createdAt.toDate ? u.createdAt.toDate().toLocaleDateString('en-US') : '—') : '—',
+    }));
+    updateDashboardStats(); renderUserTable(STATE.users); renderTgUserTable(); updateNavBadges();
+  } catch(e) { console.warn('Firestore users:', e); }
+}
+
+function findUserById(uid) { return STATE.users.find(u => u.id === uid); }
+function findUserName(uid) { const u = findUserById(uid); return u ? u.name : (uid || 'Unknown'); }
+
+// Writes a notification document that the member's app reads from
+// users/{uid}/notifications — used for every approve/reject action below.
+async function notifyUser(uid, title, msg, icon) {
+  if (!uid) return;
+  try {
+    const fb = window._fbAdmin;
+    await fb.addDoc(fb.collection(fb.db, 'users', uid, 'notifications'), {
+      title, msg, icon: icon || '🔔', unread: true, createdAt: fb.serverTimestamp()
+    });
+  } catch(e) { console.warn('notifyUser error:', e); }
+}
+
+// ===================== FIRESTORE: JOBS =====================
+function listenJobs() {
+  const fb = window._fbAdmin;
+  fb.onSnapshot(fb.collection(fb.db, 'jobs'), snap => {
+    STATE.jobs = [];
+    snap.forEach(d => STATE.jobs.push({ id: d.id, ...d.data() }));
+    STATE.jobs.sort((a,b) => (b._ts||0) - (a._ts||0));
+    renderJobList(STATE.jobFilter); renderDashPendingJobs(); updateDashboardStats(); updateNavBadges();
+  }, e => console.warn('listenJobs:', e));
+}
+
+function filterJobs(val) { STATE.jobFilter = val; renderJobList(val); }
+
+function renderJobList(filter) {
+  const list = filter === 'all' || !filter ? STATE.jobs : STATE.jobs.filter(j => j.status === filter);
+  const el = document.getElementById('jobList');
+  if (!list.length) { el.innerHTML = '<div class="card" style="text-align:center;padding:40px;color:var(--text3)">No jobs found.</div>'; return; }
+  el.innerHTML = list.map(j => `
+    <div class="card" style="margin-bottom:14px;border-color:${j.status==='pending'?'rgba(255,179,0,.2)':j.status==='approved'?'rgba(0,230,118,.15)':'rgba(255,82,82,.15)'}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+        <div style="flex:1;margin-right:14px">
+          <div style="font-size:15px;font-weight:800;margin-bottom:5px">${j.title || 'Untitled'}</div>
+          <div style="font-size:12px;color:var(--text2)">📂 ${j.category||'—'} · 👥 ${j.limit||0} workers · 🌍 ${j.country||'—'}</div>
+          <div style="font-size:11.5px;color:var(--text3);margin-top:3px">👤 ${j.postedByName||'Unknown'} · ⏰ ${j.submittedAt||'—'}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:20px;font-weight:900;color:var(--teal);margin-bottom:4px">+$${(j.reward||0).toFixed(2)}</div>
+          <span class="badge ${j.status==='pending'?'orange':j.status==='approved'?'green':'red'}">${j.status}</span>
+        </div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:11px;font-size:12.5px;color:var(--text2);margin-bottom:12px;line-height:1.6">${j.instructions||''}</div>
+      ${j.status==='rejected' && j.rejectReason ? `<div class="alert warn" style="margin-bottom:10px">📝 Rejection reason sent to member: ${j.rejectReason}</div>` : ''}
+      ${j.status==='pending' ? `<div style="display:flex;gap:10px">
+        <button class="btn btn-approve" style="flex:1" onclick="approveJob('${j.id}')">✅ Approve & Publish</button>
+        <button class="btn btn-reject" style="flex:1" onclick="openRejectModal('job','${j.id}','${(j.title||'').replace(/'/g,"\\'")}')">❌ Reject</button>
+      </div>` : `<div style="font-size:12px;color:var(--text3)">Reviewed · ${j.submittedAt||''}</div>`}
+    </div>`).join('');
+}
+
+async function approveJob(id) {
+  const j = STATE.jobs.find(x => x.id === id); if (!j) return;
+  const fb = window._fbAdmin;
+  await fb.updateDoc(fb.doc(fb.db, 'jobs', id), { status: 'approved', filled: j.filled || 0 });
+  addLog(`✅ Job approved & published: "${j.title}"`, 'job', 'success');
+  sendTelegramNotif('e5', {title:j.title,status:'APPROVED'});
+  addAdminNotif('✅ Job Approved', `"${j.title}" is now live for workers.`, 'success');
+  notifyUser(j.postedBy, '✅ Job Approved', `Your job "${j.title}" was approved and is now live!`, '✅');
+  showToast('✅ Job approved and published!', 'success');
+}
+
+function rejectJob(id, reason) {
+  const fb = window._fbAdmin;
+  return fb.updateDoc(fb.doc(fb.db, 'jobs', id), { status: 'rejected', rejectReason: reason });
+}
+
+// ===================== FIRESTORE: DEPOSITS =====================
+function listenDeposits() {
+  const fb = window._fbAdmin;
+  fb.onSnapshot(fb.collection(fb.db, 'deposits'), snap => {
+    STATE.deposits = [];
+    snap.forEach(d => STATE.deposits.push({ id: d.id, ...d.data() }));
+    STATE.deposits.sort((a,b) => (b._ts||0) - (a._ts||0));
+    renderDeposits(STATE.depositFilter); updateDashboardStats(); updateNavBadges();
+  }, e => console.warn('listenDeposits:', e));
+}
+
+function filterDeposits(val) { STATE.depositFilter = val; renderDeposits(val); }
+
+function renderDeposits(filter) {
+  const list = !filter || filter === 'all' ? STATE.deposits : STATE.deposits.filter(d => d.status === filter);
+  document.getElementById('depositBody').innerHTML = list.map(d => `
+    <tr>
+      <td class="td-name">${d.userName||'Unknown'}</td>
+      <td>${d.method}</td>
+      <td style="color:var(--teal);font-weight:800">$${(d.amount||0).toFixed(2)}</td>
+      <td style="font-size:11.5px;color:var(--text2);max-width:140px;overflow:hidden;text-overflow:ellipsis">${d.txnId||d.txId||'—'}</td>
+      <td style="font-size:12px;color:var(--text2)">${d.date||'—'}</td>
+      <td><span class="badge ${d.status==='confirmed'?'green':d.status==='rejected'?'red':'orange'}">${d.status}</span></td>
+      <td>${d.status==='pending' ? `<div style="display:flex;gap:5px">
+        <button class="btn btn-sm btn-approve" onclick="confirmDeposit('${d.id}')">✅ Confirm</button>
+        <button class="btn btn-sm btn-reject" onclick="openRejectModal('deposit','${d.id}','${d.method} $${(d.amount||0).toFixed(2)}')">❌</button>
+      </div>` : (d.status==='confirmed' ? '<span style="color:var(--teal);font-size:12px">✅ Done</span>' : `<span style="color:var(--red);font-size:11px">${d.rejectReason||''}</span>`)}</td>
+    </tr>`).join('');
+}
+
+async function confirmDeposit(id) {
+  const d = STATE.deposits.find(x => x.id === id); if (!d) return;
+  const fb = window._fbAdmin;
+  await fb.updateDoc(fb.doc(fb.db, 'deposits', id), { status: 'confirmed' });
+  // Credit user balance now that an admin has verified the payment.
+  if (d.userId) {
+    await fb.updateDoc(fb.doc(fb.db, 'users', d.userId), {
+      balance: fb.increment(d.amount), totalEarned: fb.increment(d.amount)
+    }).catch(()=>{});
+  }
+  addLog(`💰 Deposit confirmed: ${d.userName} — $${d.amount}`, 'deposit', 'success');
+  sendTelegramNotif('e2', {user:d.userName,amount:d.amount,method:d.method});
+  notifyUser(d.userId, '✅ Deposit Verified', `$${(d.amount||0).toFixed(2)} via ${d.method} has been added to your wallet.`, '✅');
+  addAdminNotif('💰 Deposit Confirmed', `${d.userName} — $${d.amount} via ${d.method}`, 'success');
+  showToast(`✅ Deposit confirmed: $${d.amount}`, 'success');
+}
+
+function rejectDeposit(id, reason) {
+  const fb = window._fbAdmin;
+  return fb.updateDoc(fb.doc(fb.db, 'deposits', id), { status: 'rejected', rejectReason: reason });
+}
+
+// ===================== FIRESTORE: WITHDRAWALS =====================
+function listenWithdrawals() {
+  const fb = window._fbAdmin;
+  fb.onSnapshot(fb.collection(fb.db, 'withdrawals'), snap => {
+    STATE.withdrawals = [];
+    snap.forEach(d => STATE.withdrawals.push({ id: d.id, ...d.data() }));
+    STATE.withdrawals.sort((a,b) => (b._ts||0) - (a._ts||0));
+    renderWithdrawals(); updateDashboardStats(); updateNavBadges();
+  }, e => console.warn('listenWithdrawals:', e));
+}
+
+function renderWithdrawals() {
+  document.getElementById('withdrawBody').innerHTML = STATE.withdrawals.map(w => `
+    <tr>
+      <td class="td-name">${w.userName||'Unknown'}</td>
+      <td>${w.method}</td>
+      <td style="font-weight:800;color:var(--orange)">$${(w.amount||0).toFixed(2)}</td>
+      <td style="color:var(--teal);font-weight:800">$${(w.net||0).toFixed(2)}</td>
+      <td style="font-size:11.5px;color:var(--text2);max-width:120px;overflow:hidden;text-overflow:ellipsis">${w.account||'—'}</td>
+      <td style="font-size:12px;color:var(--text2)">${w.date||'—'}</td>
+      <td><span class="badge ${w.status==='completed'?'green':w.status==='rejected'?'red':w.status==='processing'?'blue':'orange'}">${w.status}</span></td>
+      <td>${w.status!=='completed' && w.status!=='rejected' ? `<div style="display:flex;gap:5px">
+        <button class="btn btn-sm btn-approve" onclick="completeWithdraw('${w.id}')">✅ Send</button>
+        <button class="btn btn-sm btn-reject" onclick="openRejectModal('withdrawal','${w.id}','${w.method} $${(w.amount||0).toFixed(2)}')">❌</button>
+      </div>` : (w.status==='completed' ? '<span style="color:var(--teal);font-size:12px">✅ Sent</span>' : `<span style="color:var(--red);font-size:11px">${w.rejectReason||''}</span>`)}</td>
+    </tr>`).join('');
+}
+
+async function completeWithdraw(id) {
+  const w = STATE.withdrawals.find(x => x.id === id); if (!w) return;
+  const fb = window._fbAdmin;
+  await fb.updateDoc(fb.doc(fb.db, 'withdrawals', id), { status: 'completed' });
+  if (w.userId) {
+    await fb.updateDoc(fb.doc(fb.db, 'users', w.userId), {
+      pendingWithdraw: fb.increment(-(w.net||0)),
+      totalWithdrawn: fb.increment(w.net||0)
+    }).catch(()=>{});
+  }
+  addLog(`📤 Withdrawal sent: ${w.userName} — $${w.amount}`, 'withdrawal', 'success');
+  sendTelegramNotif('e3', {user:w.userName,amount:w.amount,method:w.method});
+  notifyUser(w.userId, '✅ Withdrawal Sent', `$${(w.net||0).toFixed(2)} was sent to your ${w.method} account.`, '✅');
+  addAdminNotif('📤 Withdrawal Sent', `${w.userName} — $${(w.net||0).toFixed(2)} via ${w.method}`, 'success');
+  showToast(`✅ Sent $${(w.net||0).toFixed(2)} to ${w.userName}`, 'success');
+}
+
+function rejectWithdrawal(id, reason) {
+  const fb = window._fbAdmin;
+  return fb.updateDoc(fb.doc(fb.db, 'withdrawals', id), { status: 'rejected', rejectReason: reason });
+}
+
+// When a withdrawal is rejected, refund the amount back to the member's
+// available balance (it was deducted up front when they requested it).
+async function refundRejectedWithdrawal(w) {
+  if (!w || !w.userId) return;
+  const fb = window._fbAdmin;
+  await fb.updateDoc(fb.doc(fb.db, 'users', w.userId), {
+    balance: fb.increment(w.amount || 0),
+    pendingWithdraw: fb.increment(-(w.net || 0))
+  }).catch(()=>{});
+}
+
+// ===================== FIRESTORE: TASK SUBMISSIONS =====================
+// Members' job-completion proofs land here. Normally the job's original
+// poster (the "employer") approves/rejects these inside the app itself,
+// but Admin keeps full visibility + override power, as requested.
+function listenTaskSubmissions() {
+  const fb = window._fbAdmin;
+  fb.onSnapshot(fb.collection(fb.db, 'taskSubmissions'), snap => {
+    STATE.taskSubmissions = [];
+    snap.forEach(d => STATE.taskSubmissions.push({ id: d.id, ...d.data() }));
+    STATE.taskSubmissions.sort((a,b) => (b._ts||0) - (a._ts||0));
+    renderTaskSubmissions(); updateDashboardStats(); updateNavBadges();
+  }, e => console.warn('listenTaskSubmissions:', e));
+}
+
+function renderTaskSubmissions() {
+  document.getElementById('taskSubmissionBody').innerHTML = STATE.taskSubmissions.map(t => `
+    <tr>
+      <td class="td-name">${t.workerName||'Unknown'}</td>
+      <td>${t.jobTitle||'—'}</td>
+      <td style="color:var(--teal);font-weight:800">+$${(t.reward||0).toFixed(2)}</td>
+      <td style="font-size:12px;color:var(--text2)">${t.date||'—'}</td>
+      <td><span class="badge ${t.status==='approved'?'green':t.status==='pending'?'orange':'red'}">${t.status}</span></td>
+      <td>${t.status==='pending' ? `<div style="display:flex;gap:5px">
+        <button class="btn btn-sm btn-approve" onclick="adminApproveTask('${t.id}')">✅</button>
+        <button class="btn btn-sm btn-reject" onclick="openRejectModal('task','${t.id}','${(t.jobTitle||'').replace(/'/g,"\\'")}')">❌</button>
+      </div>` : '—'}</td>
+    </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:24px">No submissions yet</td></tr>';
+}
+
+async function adminApproveTask(id) {
+  const t = STATE.taskSubmissions.find(x => x.id === id); if (!t) return;
+  const fb = window._fbAdmin;
+  await fb.updateDoc(fb.doc(fb.db, 'taskSubmissions', id), { status: 'approved' });
+  if (t.workerId) {
+    await fb.updateDoc(fb.doc(fb.db, 'users', t.workerId), {
+      balance: fb.increment(t.reward||0),
+      totalEarned: fb.increment(t.reward||0),
+      tasksCompleted: fb.increment(1)
+    }).catch(()=>{});
+  }
+  if (t.jobId) { fb.updateDoc(fb.doc(fb.db, 'jobs', t.jobId), { filled: fb.increment(1) }).catch(()=>{}); }
+  addLog(`✅ Task approved (admin): ${t.workerName} — "${t.jobTitle}"`, 'job', 'success');
+  notifyUser(t.workerId, '✅ Task Approved', `"${t.jobTitle}" approved — +$${(t.reward||0).toFixed(2)} added.`, '💰');
+  showToast('✅ Task approved by admin!', 'success');
+}
+
+function rejectTaskSubmission(id, reason) {
+  const fb = window._fbAdmin;
+  return fb.updateDoc(fb.doc(fb.db, 'taskSubmissions', id), { status: 'rejected', rejectReason: reason });
+}
+
+// ===================== UNIFIED REJECT MODAL =====================
+function openRejectModal(type, id, label) {
+  STATE._pendingReject = { type, id };
+  const titles = { job:'❌ Reject Job', deposit:'❌ Reject Deposit', withdrawal:'❌ Reject Withdrawal', task:'❌ Reject Task Submission' };
+  document.getElementById('rejectModalTitle').textContent = titles[type] || '❌ Reject';
+  document.getElementById('rejectModalSub').textContent = (label ? label + ' — ' : '') + 'Please give a reason — the member will see this.';
+  document.getElementById('rejectReasonText').value = '';
+  document.getElementById('rejectReasonModal').classList.add('show');
+}
+
+async function confirmRejectReason() {
+  const reason = document.getElementById('rejectReasonText').value.trim();
+  if (!reason) { showToast('লিখুন কেন রিজেক্ট হচ্ছে', 'error'); return; }
+  const { type, id } = STATE._pendingReject || {};
+  if (!type || !id) return;
+  closeModal('rejectReasonModal');
+  if (type === 'job') {
+    const j = STATE.jobs.find(x => x.id === id);
+    await rejectJob(id, reason);
+    addLog(`❌ Job rejected: "${j?.title||id}" — ${reason}`, 'job', 'error');
+    notifyUser(j?.postedBy, '❌ Job Rejected', `Your job "${j?.title}" was not approved. Reason: ${reason}`, '❌');
+    showToast('❌ Job rejected.', 'error');
+  } else if (type === 'deposit') {
+    const d = STATE.deposits.find(x => x.id === id);
+    await rejectDeposit(id, reason);
+    addLog(`❌ Deposit rejected: ${d?.userName} — ${reason}`, 'deposit', 'error');
+    notifyUser(d?.userId, '❌ Deposit Rejected', `Your ${d?.method} deposit of $${(d?.amount||0).toFixed(2)} was rejected. Reason: ${reason}`, '❌');
+    showToast('❌ Deposit rejected.', 'error');
+  } else if (type === 'withdrawal') {
+    const w = STATE.withdrawals.find(x => x.id === id);
+    await rejectWithdrawal(id, reason);
+    await refundRejectedWithdrawal(w);
+    addLog(`❌ Withdrawal rejected: ${w?.userName} — ${reason}`, 'withdrawal', 'error');
+    notifyUser(w?.userId, '❌ Withdrawal Rejected', `Your withdrawal of $${(w?.amount||0).toFixed(2)} was rejected and refunded to your balance. Reason: ${reason}`, '❌');
+    showToast('❌ Withdrawal rejected & refunded.', 'error');
+  } else if (type === 'task') {
+    const t = STATE.taskSubmissions.find(x => x.id === id);
+    await rejectTaskSubmission(id, reason);
+    addLog(`❌ Task rejected (admin): ${t?.workerName} — ${reason}`, 'job', 'error');
+    notifyUser(t?.workerId, '❌ Task Rejected', `"${t?.jobTitle}" was rejected. Reason: ${reason}`, '❌');
+    showToast('❌ Task rejected.', 'error');
+  }
+}
+
+// ===================== DASHBOARD =====================
+function updateDashboardStats() {
+  const pW = STATE.withdrawals.filter(w => w.status === 'pending');
+  const totalPW = pW.reduce((a,w) => a + (w.amount||0), 0);
+  const activeJobs = STATE.jobs.filter(j => j.status === 'approved').length;
+  const pendingJobs = STATE.jobs.filter(j => j.status === 'pending').length;
+  const kycPending = STATE.users.filter(u => u.kyc === 'Pending').length;
+  const totalDeposit = STATE.deposits.filter(d => d.status === 'confirmed').reduce((a,d) => a+(d.amount||0), 0);
+
+  document.getElementById('statTotalUsers').textContent = STATE.users.length;
+  document.getElementById('statUsersChange').textContent = STATE.users.length + ' total';
+  document.getElementById('statTotalDeposit').textContent = '$' + totalDeposit.toFixed(2);
+  document.getElementById('statPendingWithdraw').textContent = '$' + totalPW.toFixed(2);
+  document.getElementById('statWithdrawCount').textContent = pW.length + ' pending';
+  document.getElementById('statActiveJobs').textContent = activeJobs;
+  document.getElementById('statPendingJobsBadge').textContent = pendingJobs + ' pending';
+  document.getElementById('statTasksDone').textContent = STATE.taskSubmissions.length;
+  document.getElementById('statPendingKyc').textContent = kycPending;
+  if (document.getElementById('hsTotalUsers')) document.getElementById('hsTotalUsers').textContent = STATE.users.length;
+  if (document.getElementById('hsTotalDeposit')) document.getElementById('hsTotalDeposit').textContent = '$' + totalDeposit.toFixed(2);
+  if (document.getElementById('hsActiveJobs')) document.getElementById('hsActiveJobs').textContent = activeJobs;
+}
+
+function renderSignupChart() {
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const data = [3,7,2,9,5,12,8]; const max = Math.max(...data);
+  document.getElementById('signupChart').innerHTML = data.map((v,i) => `
+    <div class="chart-bar-wrap">
+      <div class="chart-bar" style="background:var(--grad-green);height:${(v/max*76)}px;opacity:${0.45+v/max*.55}"></div>
+      <div class="chart-label">${days[i]}</div>
+    </div>`).join('');
+  document.getElementById('chartMin').textContent = 'Min: ' + Math.min(...data);
+  document.getElementById('chartMax').textContent = 'Max: ' + max;
+}
+
+function renderDashPendingJobs() {
+  const pending = STATE.jobs.filter(j => j.status === 'pending').slice(0,4);
+  const el = document.getElementById('dashPendingJobs');
+  if (!pending.length) { el.innerHTML = '<div style="color:var(--text3);font-size:13px;text-align:center;padding:20px">✅ No pending jobs</div>'; return; }
+  el.innerHTML = pending.map(j => `
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:11px 0;border-bottom:1px solid var(--border)">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${j.title}</div>
+        <div style="font-size:11px;color:var(--text3)">${j.postedByName||''} · $${(j.reward||0).toFixed(2)}/task</div>
+      </div>
+      <div style="display:flex;gap:5px;flex-shrink:0">
+        <button class="btn btn-sm btn-approve" onclick="approveJob('${j.id}')">✅</button>
+        <button class="btn btn-sm btn-reject" onclick="openRejectModal('job','${j.id}','${(j.title||'').replace(/'/g,"\\'")}')">❌</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderDashActivity() {
+  document.getElementById('dashActivityLog').innerHTML = STATE.logs.slice(0,6).map(l => `
+    <div class="log-item">
+      <div class="log-dot ${l.level==='success'?'green':l.level==='error'?'red':l.level==='warn'?'orange':'blue'}"></div>
+      <div class="log-text">${l.action}</div>
+      <div class="log-time">${l.time}</div>
+    </div>`).join('');
+}
+
+function updateNavBadges() {
+  const pJ = STATE.jobs.filter(j => j.status==='pending').length;
+  const pW = STATE.withdrawals.filter(w => w.status==='pending').length;
+  const pD = STATE.deposits.filter(d => d.status==='pending').length;
+  const pT = STATE.taskSubmissions.filter(t => t.status==='pending').length;
+  const unread = STATE.adminNotifications.filter(n => !n.read).length;
+  document.getElementById('nbUsers').textContent = STATE.users.length;
+  document.getElementById('nbJobs').textContent = pJ;
+  document.getElementById('nbTasks').textContent = pT;
+  document.getElementById('nbDeposits').textContent = pD;
+  document.getElementById('nbWithdrawals').textContent = pW;
+  document.getElementById('nbNotifs').textContent = unread;
+  document.getElementById('topNotifDot').style.display = unread > 0 ? 'block' : 'none';
+}
+
+// ===================== NAVIGATION =====================
+const pageTitles = {
+  dashboard:'Dashboard', users:'User Management', jobs:'Job Approvals',
+  tasks:'Task Submissions', deposits:'Deposits', withdrawals:'Withdrawals',
+  'payment-methods':'Payment Methods', telegram:'Telegram Bot',
+  broadcast:'Broadcast', notifications:'Notifications',
+  settings:'Site Settings', logs:'Activity Logs'
+};
+
+function goScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const sc = document.getElementById('screen-' + name);
+  if (sc) sc.classList.add('active');
+  document.getElementById('pageTitle').textContent = pageTitles[name] || name;
+  window.scrollTo(0, 0);
+  addLog('👁 Viewed: ' + (pageTitles[name] || name), 'view', 'info');
+}
+
+// ===================== USERS =====================
+function renderUserTable(users) {
+  document.getElementById('userTableBody').innerHTML = users.map((u,i) => `
+    <tr>
+      <td style="color:var(--text3);font-size:12px">${i+1}</td>
+      <td>
+        <div class="td-name">${u.name}</div>
+        <div class="td-email">${u.email}</div>
+        ${u.username ? `<div style="font-size:10px;color:var(--teal);margin-top:1px">@${u.username}</div>` : ''}
+      </td>
+      <td style="font-size:12px;color:var(--text2)">${u.joined}</td>
+      <td style="font-weight:800;color:var(--teal)">$${(u.balance||0).toFixed(2)}</td>
+      <td style="font-weight:700">${u.tasks}</td>
+      <td><span class="badge ${u.kyc==='Verified'?'green':'orange'}">${u.kyc}</span></td>
+      <td><span class="badge ${u.status==='active'?'green':'red'}">${u.status}</span></td>
+      <td>
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          <button class="btn btn-sm btn-info" onclick="viewUser('${u.id}')">👁 View</button>
+          <button class="btn btn-sm ${u.status==='active'?'btn-reject':'btn-approve'}" onclick="toggleBan('${u.id}')">${u.status==='active'?'⛔':'✅'}</button>
+          ${u.kyc==='Pending' ? `<button class="btn btn-sm btn-warning" onclick="verifyKyc('${u.id}')">🪪</button>` : ''}
+        </div>
+      </td>
+    </tr>`).join('') || `<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:28px">No users found</td></tr>`;
+}
+
+function filterUsers(q) {
+  const ql = q.toLowerCase();
+  renderUserTable(STATE.users.filter(u =>
+    u.name.toLowerCase().includes(ql) || u.email.toLowerCase().includes(ql) ||
+    (u.username||'').toLowerCase().includes(ql) || u.country.toLowerCase().includes(ql)
+  ));
+}
+
+function viewUser(id) {
+  const u = STATE.users.find(x => x.id === id); if (!u) return;
+  document.getElementById('userDetailContent').innerHTML = `
+    <div class="modal-title">👤 ${u.name}</div>
+    <div class="modal-sub">@${u.username||'—'} · ${u.email}</div>
+    <div class="user-detail-grid">
+      <div class="detail-box"><div class="label">Balance</div><div class="value" style="color:var(--teal)">$${(u.balance||0).toFixed(2)}</div></div>
+      <div class="detail-box"><div class="label">Total Earned</div><div class="value" style="color:var(--green)">$${(u.totalEarned||0).toFixed(2)}</div></div>
+      <div class="detail-box"><div class="label">Total Withdrawn</div><div class="value" style="color:var(--orange)">$${(u.totalWithdrawn||0).toFixed(2)}</div></div>
+      <div class="detail-box"><div class="label">Tasks Done</div><div class="value">${u.tasks}</div></div>
+      <div class="detail-box"><div class="label">Country</div><div class="value">${u.country}</div></div>
+      <div class="detail-box"><div class="label">Phone</div><div class="value" style="font-size:13px">${u.phone}</div></div>
+      <div class="detail-box"><div class="label">KYC</div><div class="value"><span class="badge ${u.kyc==='Verified'?'green':'orange'}">${u.kyc}</span></div></div>
+      <div class="detail-box"><div class="label">Status</div><div class="value"><span class="badge ${u.status==='active'?'green':'red'}">${u.status}</span></div></div>
+    </div>
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px">
+      <div style="font-size:11px;color:var(--text3);font-weight:700;margin-bottom:5px;text-transform:uppercase">Joined</div>
+      <div style="font-size:14px;font-weight:700">${u.joined}</div>
+    </div>
+    ${u.referralCode ? `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px">
+      <div style="font-size:11px;color:var(--text3);font-weight:700;margin-bottom:4px;text-transform:uppercase">Referral Code</div>
+      <div style="font-size:16px;font-weight:900;color:var(--orange);letter-spacing:2px">${u.referralCode}</div>
+    </div>` : ''}
+    ${u.telegramChatId ? `<div class="alert success">✅ Telegram: ${u.telegramUsername||''} (ID: ${u.telegramChatId})</div>` : '<div class="alert warn">⚠️ Telegram not linked</div>'}
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
+      <button class="btn btn-approve" onclick="verifyKyc('${u.id}');closeModal('userDetailModal')">🪪 Verify KYC</button>
+      <button class="btn btn-warning" onclick="adjustBalance('${u.id}')">💰 Balance</button>
+      <button class="btn btn-reject" onclick="toggleBan('${u.id}');closeModal('userDetailModal')">${u.status==='active'?'⛔ Ban':'✅ Unban'}</button>
+    </div>`;
+  document.getElementById('userDetailModal').classList.add('show');
+}
+
+async function toggleBan(id) {
+  const u = STATE.users.find(x => x.id === id); if (!u) return;
+  u.status = u.status === 'active' ? 'banned' : 'active';
+  renderUserTable(STATE.users); updateNavBadges();
+  const fb = window._fbAdmin;
+  await fb.updateDoc(fb.doc(fb.db, 'users', id), { status: u.status }).catch(()=>{});
+  addLog(`${u.status==='banned'?'⛔ Banned':'✅ Unbanned'}: ${u.name}`, 'user', u.status==='banned'?'error':'success');
+  sendTelegramNotif('e8', {name: u.name});
+  notifyUser(id, u.status==='banned' ? '⛔ Account Banned' : '✅ Account Reinstated', u.status==='banned' ? 'Your account was banned by an admin.' : 'Your account access has been restored.', u.status==='banned'?'⛔':'✅');
+  showToast(u.status === 'banned' ? `⛔ ${u.name} banned` : `✅ ${u.name} unbanned`, u.status==='banned'?'error':'success');
+}
+
+async function verifyKyc(id) {
+  const u = STATE.users.find(x => x.id === id); if (!u) return;
+  u.kyc = 'Verified'; renderUserTable(STATE.users); updateDashboardStats();
+  const fb = window._fbAdmin;
+  await fb.updateDoc(fb.doc(fb.db, 'users', id), { kyc: true }).catch(()=>{});
+  addLog(`🪪 KYC verified: ${u.name}`, 'user', 'success');
+  notifyUser(id, '🪪 KYC Verified', 'Your identity verification is complete. You can now withdraw.', '🪪');
+  showToast(`🪪 KYC verified: ${u.name}`, 'success');
+}
+
+async function adjustBalance(id) {
+  const u = STATE.users.find(x => x.id === id); if (!u) return;
+  const amount = parseFloat(prompt(`Adjust balance for ${u.name}\nCurrent: $${u.balance.toFixed(2)}\n\nAmount (+ to add, - to deduct):`));
+  if (isNaN(amount)) return;
+  u.balance = Math.max(0, u.balance + amount);
+  renderUserTable(STATE.users);
+  const fb = window._fbAdmin;
+  await fb.updateDoc(fb.doc(fb.db, 'users', id), { balance: fb.increment(amount) }).catch(()=>{});
+  addLog(`💰 Balance adjusted for ${u.name}: ${amount>=0?'+':''}$${amount.toFixed(2)}`, 'deposit', amount>=0?'success':'warn');
+  notifyUser(id, '💰 Balance Adjusted', `An admin adjusted your balance by ${amount>=0?'+':''}$${amount.toFixed(2)}.`, '💰');
+  showToast(`💰 Balance: $${u.balance.toFixed(2)}`, 'success');
+}
+
+function exportUsers() {
+  const rows = ['Name,Email,Username,Joined,Balance,Tasks,KYC,Status,Country'];
+  STATE.users.forEach(u => rows.push([u.name,u.email,u.username||'',u.joined,u.balance,u.tasks,u.kyc,u.status,u.country].join(',')));
+  const blob = new Blob([rows.join('\n')], {type:'text/csv'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'workhive_users.csv'; a.click();
+  showToast('📥 CSV exported!', 'success');
+}
+
+// ===================== PAYMENT METHODS =====================
+function listenPaymentMethods() {
+  const fb = window._fbAdmin;
+  fb.onSnapshot(fb.collection(fb.db, 'paymentMethods'), async snap => {
+    STATE.paymentMethods = [];
+    snap.forEach(d => STATE.paymentMethods.push({ id: d.id, ...d.data() }));
+    if (!STATE.paymentMethods.length) { await seedDefaultPaymentMethods(); return; }
+    renderPaymentMethods();
+  }, e => console.warn('listenPaymentMethods:', e));
+}
+
+async function seedDefaultPaymentMethods() {
+  const fb = window._fbAdmin;
+  const defaults = [
+    {name:'bKash',emoji:'📱',number:'01711000000',minDeposit:1,depositFee:0,withdrawFee:5,enabled:true},
+    {name:'Nagad',emoji:'💳',number:'01711000001',minDeposit:1,depositFee:0,withdrawFee:5,enabled:true},
+    {name:'Rocket',emoji:'🚀',number:'01711000002',minDeposit:1,depositFee:0,withdrawFee:5,enabled:false},
+    {name:'USDT (TRC20)',emoji:'₮',number:'TRxxxxxxxxxxxxxxxxxxxxxxxxxx',minDeposit:5,depositFee:0,withdrawFee:3,enabled:true},
+    {name:'Bank Transfer',emoji:'🏦',number:'Account: 123456789',minDeposit:20,depositFee:0,withdrawFee:2,enabled:false},
+  ];
+  for (const m of defaults) { await fb.addDoc(fb.collection(fb.db, 'paymentMethods'), m).catch(()=>{}); }
+}
+
+function renderPaymentMethods() {
+  document.getElementById('paymentMethodsGrid').innerHTML = STATE.paymentMethods.map(m => `
+    <div class="method-card">
+      <div class="method-toggle">
+        <div>
+          <div class="method-name">${m.emoji} ${m.name}</div>
+          <div class="method-detail">Min deposit: $${m.minDeposit}</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" ${m.enabled?'checked':''} onchange="togglePayMethod('${m.id}',this.checked)">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text3);font-weight:700;margin-bottom:5px;text-transform:uppercase">Account / Wallet</div>
+        <input type="text" value="${m.number}"
+          style="width:100%;padding:9px 12px;background:rgba(255,255,255,.04);border:1px solid var(--border2);border-radius:9px;color:var(--text);font-family:monospace;font-size:13px;font-weight:700;outline:none"
+          onchange="updateMethodField('${m.id}','number',this.value)">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <div style="font-size:10px;color:var(--text3);font-weight:700;margin-bottom:4px;text-transform:uppercase">Deposit Fee %</div>
+          <input type="number" value="${m.depositFee ?? 0}" min="0" max="30" step="0.1"
+            style="width:100%;padding:8px 10px;background:rgba(255,255,255,.04);border:1px solid var(--border2);border-radius:9px;color:var(--text);font-size:13px;font-weight:700;outline:none"
+            onchange="updateMethodField('${m.id}','depositFee',parseFloat(this.value)||0)">
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text3);font-weight:700;margin-bottom:4px;text-transform:uppercase">Withdraw Fee %</div>
+          <input type="number" value="${m.withdrawFee ?? 5}" min="0" max="30" step="0.1"
+            style="width:100%;padding:8px 10px;background:rgba(255,255,255,.04);border:1px solid var(--border2);border-radius:9px;color:var(--text);font-size:13px;font-weight:700;outline:none"
+            onchange="updateMethodField('${m.id}','withdrawFee',parseFloat(this.value)||0)">
+        </div>
+      </div>
+      <button class="btn btn-sm btn-ghost" onclick="deletePayMethod('${m.id}')" style="width:100%;margin-top:4px">🗑 Remove</button>
+    </div>`).join('') || '<div class="card" style="text-align:center;color:var(--text3)">Loading payment methods…</div>';
+}
+
+async function togglePayMethod(id, val) {
+  const fb = window._fbAdmin;
+  await fb.updateDoc(fb.doc(fb.db, 'paymentMethods', id), { enabled: val }).catch(()=>{});
+  const m = STATE.paymentMethods.find(x => x.id === id);
+  showToast(`${m?.name||'Method'} ${val?'enabled':'disabled'}`, val?'success':'warn');
+}
+async function updateMethodField(id, field, val) {
+  const fb = window._fbAdmin;
+  await fb.updateDoc(fb.doc(fb.db, 'paymentMethods', id), { [field]: val }).catch(()=>{});
+  showToast('✅ Saved', 'success');
+}
+async function deletePayMethod(id) {
+  if (!confirm('Remove this payment method?')) return;
+  const fb = window._fbAdmin;
+  await fb.deleteDoc(fb.doc(fb.db, 'paymentMethods', id)).catch(()=>{});
+  showToast('🗑 Removed', 'warn');
+}
+function openAddMethodModal() { document.getElementById('addMethodModal').classList.add('show'); }
+async function addPaymentMethod() {
+  const name = document.getElementById('newMethodName').value.trim();
+  const emoji = document.getElementById('newMethodEmoji').value.trim() || '💳';
+  const number = document.getElementById('newMethodNumber').value.trim();
+  const min = parseFloat(document.getElementById('newMethodMin').value) || 1;
+  const depositFee = parseFloat(document.getElementById('newMethodDepFee').value) || 0;
+  const withdrawFee = parseFloat(document.getElementById('newMethodWdFee').value) || 0;
+  if (!name || !number) { showToast('Fill in all fields', 'error'); return; }
+  const fb = window._fbAdmin;
+  await fb.addDoc(fb.collection(fb.db, 'paymentMethods'), {name,emoji,number,minDeposit:min,depositFee,withdrawFee,enabled:true});
+  closeModal('addMethodModal');
+  showToast('✅ Payment method added!', 'success');
+}
+
+// ===================== SITE SETTINGS (Firestore) =====================
+function listenSettings() {
+  const fb = window._fbAdmin;
+  fb.onSnapshot(fb.doc(fb.db, 'settings', 'site'), snap => {
+    if (snap.exists()) {
+      Object.assign(STATE.settings, snap.data());
+      const s = STATE.settings;
+      if (document.getElementById('setName')) document.getElementById('setName').value = s.name ?? 'WorkHive';
+      if (document.getElementById('setMinWithdraw')) document.getElementById('setMinWithdraw').value = s.minWithdraw ?? 5;
+      if (document.getElementById('setMinDeposit')) document.getElementById('setMinDeposit').value = s.minDeposit ?? 1;
+      if (document.getElementById('setFee')) document.getElementById('setFee').value = s.fee ?? 5;
+      if (document.getElementById('setRefReward')) document.getElementById('setRefReward').value = s.refReward ?? 0.5;
+      if (document.getElementById('setCheckin')) document.getElementById('setCheckin').value = s.checkin ?? 0.1;
+    }
+  }, e => console.warn('listenSettings:', e));
+}
+
+// ===================== TELEGRAM =====================
+function renderTgEvents() {
+  document.getElementById('tgEventsList').innerHTML = STATE.tgEvents.map(e => `
+    <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:18px;flex-shrink:0">${e.icon}</span>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:700;margin-bottom:2px">${e.event}</div>
+        <div style="font-size:11px;color:var(--text3);line-height:1.5">${e.msg}</div>
+      </div>
+      <label class="toggle-switch" style="margin-top:2px">
+        <input type="checkbox" ${e.enabled?'checked':''} onchange="toggleTgEvent('${e.id}',this.checked)">
+        <div class="toggle-track"></div>
+        <div class="toggle-thumb"></div>
+      </label>
+    </div>`).join('');
+}
+
+function toggleTgEvent(id, val) {
+  const e = STATE.tgEvents.find(x => x.id === id);
+  if (e) { e.enabled = val; showToast(`${e.event}: ${val?'on':'off'}`, val?'success':'warn'); }
+}
+
+function connectTelegram() {
+  const token = document.getElementById('tgBotToken').value.trim();
+  const chatId = document.getElementById('tgAdminChatId').value.trim();
+  if (!token) { showToast('Enter bot token', 'error'); return; }
+  if (!chatId) { showToast('Enter admin chat ID', 'error'); return; }
+  STATE.tgConfig.token = token; STATE.tgConfig.adminChatId = chatId; STATE.tgConfig.connected = true;
+  localStorage.setItem('wha_tg_token', token); localStorage.setItem('wha_tg_chatid', chatId);
+  document.getElementById('tgIndicator').className = 'tg-indicator connected';
+  document.getElementById('tgStatusText').textContent = 'Bot Connected';
+  document.getElementById('tgBotName').textContent = 'Token saved · Active';
+  addLog('✈️ Telegram bot connected', 'telegram', 'success');
+  showToast('✅ Telegram connected!', 'success');
+}
+
+function testTelegram() {
+  const token = STATE.tgConfig.token || localStorage.getItem('wha_tg_token');
+  const chatId = STATE.tgConfig.adminChatId || localStorage.getItem('wha_tg_chatid');
+  if (!token || !chatId) { showToast('Connect the bot first', 'error'); return; }
+  const msg = encodeURIComponent('🐝 WorkHive Admin Test\n\nYour Telegram bot is connected! ✅\n\n' + new Date().toLocaleString());
+  fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${msg}`)
+    .then(r => r.json()).then(d => showToast(d.ok ? '✅ Test sent!' : '❌ ' + (d.description||'Failed'), d.ok?'success':'error'))
+    .catch(() => showToast('❌ Network error', 'error'));
+}
+
+function sendTelegramNotif(eventId, vars={}) {
+  const event = STATE.tgEvents.find(e => e.id === eventId);
+  if (!event || !event.enabled) return;
+  const token = STATE.tgConfig.token || localStorage.getItem('wha_tg_token');
+  const chatId = STATE.tgConfig.adminChatId || localStorage.getItem('wha_tg_chatid');
+  if (!token || !chatId) return;
+  let msg = event.msg;
+  Object.entries(vars).forEach(([k,v]) => { msg = msg.replace('{'+k+'}', v); });
+  fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(msg+'\n⏰ '+new Date().toLocaleString())}`).catch(()=>{});
+}
+
+function sendTelegramToUser(chatId, message) {
+  const token = STATE.tgConfig.token || localStorage.getItem('wha_tg_token');
+  if (!token || !chatId) return Promise.resolve(false);
+  return fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}&parse_mode=HTML`).then(r=>r.json()).then(d=>d.ok);
+}
+
+function renderTgUserTable() {
+  document.getElementById('tgUserBody').innerHTML = STATE.users.map(u => `
+    <tr>
+      <td class="td-name">${u.name}</td>
+      <td style="color:var(--cyan)">${u.telegramUsername||'—'}</td>
+      <td style="font-family:monospace;font-size:12px">${u.telegramChatId||'—'}</td>
+      <td><span class="badge ${u.telegramChatId?'green':'orange'}">${u.telegramChatId?'✅ Linked':'⚠ Pending'}</span></td>
+      <td>${u.telegramChatId ? `<button class="btn btn-sm btn-info" onclick="sendDirectMsg('${u.id}')">📨 Message</button>` : '—'}</td>
+    </tr>`).join('');
+}
+
+function sendDirectMsg(userId) {
+  const u = STATE.users.find(x => x.id === userId); if (!u || !u.telegramChatId) return;
+  const msg = prompt(`Send Telegram message to ${u.name}:`);
+  if (!msg) return;
+  sendTelegramToUser(u.telegramChatId, `🐝 WorkHive\n\n${msg}`)
+    .then(ok => showToast(ok?`✅ Sent to ${u.name}`:'❌ Failed', ok?'success':'error'));
+}
+
+// ===================== BROADCAST =====================
+function sendBroadcast() {
+  const target = document.getElementById('bcTarget').value;
+  const channel = document.getElementById('bcChannel').value;
+  const title = document.getElementById('bcTitle').value.trim();
+  const body = document.getElementById('bcBody').value.trim();
+  if (!title || !body) { showToast('Fill in all fields', 'error'); return; }
+  const targetUsers = STATE.users.filter(u => {
+    if (target==='all') return true;
+    if (target==='kyc_verified') return u.kyc==='Verified';
+    if (target==='kyc_pending') return u.kyc==='Pending';
+    if (target==='inactive') return u.tasks < 5;
+    return true;
+  });
+  if (channel==='telegram'||channel==='both') {
+    targetUsers.filter(u=>u.telegramChatId).forEach(u => sendTelegramToUser(u.telegramChatId, `🐝 <b>${title}</b>\n\n${body}`));
+  }
+  targetUsers.forEach(u => notifyUser(u.id, '📢 ' + title, body, '📢'));
+  STATE.broadcastHistory.unshift({id:'bc'+Date.now(),title,body,target,channel,sent:targetUsers.length,date:new Date().toLocaleString()});
+  document.getElementById('bcTitle').value = ''; document.getElementById('bcBody').value = '';
+  document.getElementById('bcHistory').innerHTML = STATE.broadcastHistory.map(b => `
+    <div style="padding:12px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:13px;font-weight:700;margin-bottom:2px">${b.title}</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:4px">${b.body.substring(0,80)}${b.body.length>80?'...':''}</div>
+      <div style="font-size:11px;color:var(--text3)">📤 ${b.target} · ${b.channel} · 👥 ${b.sent} users · ${b.date}</div>
+    </div>`).join('');
+  addLog(`📢 Broadcast: "${title}" → ${targetUsers.length} users`, 'broadcast', 'success');
+  showToast(`📢 Sent to ${targetUsers.length} users!`, 'success');
+}
+
+// ===================== NOTIFICATIONS (admin's own) =====================
+function addAdminNotif(title, msg, type='info') {
+  STATE.adminNotifications.unshift({id:'an'+Date.now(),title,msg,time:'just now',read:false,type});
+  updateNavBadges(); renderAdminNotifs();
+}
+
+function renderAdminNotifs() {
+  document.getElementById('adminNotifList').innerHTML = STATE.adminNotifications.map(n => `
+    <div class="card" style="margin-bottom:10px;border-color:${!n.read?'rgba(0,230,118,.15)':''};cursor:pointer" onclick="readAdminNotif('${n.id}')">
+      <div style="display:flex;gap:13px;align-items:flex-start">
+        <div style="width:44px;height:44px;border-radius:12px;background:${n.type==='success'?'rgba(0,230,118,.1)':n.type==='warn'?'rgba(255,179,0,.1)':'rgba(68,138,255,.1)'};display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0">
+          ${n.type==='success'?'✅':n.type==='warn'?'⚠️':'ℹ️'}
+        </div>
+        <div style="flex:1">
+          <div style="font-size:13.5px;font-weight:${n.read?'600':'800'};margin-bottom:3px">${n.title}${!n.read?'<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-left:8px;vertical-align:middle"></span>':''}</div>
+          <div style="font-size:12.5px;color:var(--text2);line-height:1.5">${n.msg}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:5px">${n.time}</div>
+        </div>
+      </div>
+    </div>`).join('') || '<div class="card" style="text-align:center;color:var(--text3);padding:24px">No notifications.</div>';
+}
+
+function readAdminNotif(id) {
+  const n = STATE.adminNotifications.find(x => x.id === id);
+  if (n) { n.read = true; updateNavBadges(); renderAdminNotifs(); }
+}
+
+function markAllAdminRead() {
+  STATE.adminNotifications.forEach(n => n.read = true);
+  updateNavBadges(); renderAdminNotifs(); showToast('All notifications read', 'info');
+}
+
+// ===================== SETTINGS =====================
+async function saveSettings() {
+  STATE.settings.name = document.getElementById('setName').value || 'WorkHive';
+  STATE.settings.minWithdraw = parseFloat(document.getElementById('setMinWithdraw').value) || 5;
+  STATE.settings.minDeposit = parseFloat(document.getElementById('setMinDeposit').value) || 1;
+  STATE.settings.fee = parseFloat(document.getElementById('setFee').value) || 5;
+  STATE.settings.refReward = parseFloat(document.getElementById('setRefReward').value) || 0.50;
+  STATE.settings.checkin = parseFloat(document.getElementById('setCheckin').value) || 0.10;
+  const fb = window._fbAdmin;
+  await fb.setDoc(fb.doc(fb.db, 'settings', 'site'), STATE.settings).catch(()=>{});
+  localStorage.setItem('wha_settings', JSON.stringify(STATE.settings));
+  addLog('⚙️ Settings updated', 'settings', 'success');
+  showToast('💾 Settings saved!', 'success');
+}
+
+function saveSecuritySettings() {
+  const newPass = document.getElementById('setNewPass').value;
+  const newCode = document.getElementById('setNewCode').value;
+  if (newPass) localStorage.setItem('wha_pass', newPass);
+  if (newCode) {
+    if (newCode.length !== 6 || !/^\d+$/.test(newCode)) { showToast('Code must be 6 digits', 'error'); return; }
+    localStorage.setItem('wha_code', newCode);
+  }
+  addLog('🔐 Security settings updated', 'login', 'warn');
+  showToast('🔐 Security updated!', 'success');
+  document.getElementById('setNewPass').value = ''; document.getElementById('setNewCode').value = '';
+}
+
+// ===================== LOGS =====================
+function addLog(action, type='view', level='info') {
+  STATE.logs.unshift({action,type,level,ip:'127.0.0.1',time:new Date().toLocaleString('en-US')});
+  if (STATE.logs.length > 200) STATE.logs.pop();
+  if (document.getElementById('screen-logs').classList.contains('active')) renderLogs();
+}
+
+function renderLogs() {
+  const list = STATE.logFilter==='all' ? STATE.logs : STATE.logs.filter(l => l.type === STATE.logFilter);
+  document.getElementById('logsContainer').innerHTML = list.map(l => `
+    <div class="log-item">
+      <div class="log-dot ${l.level==='success'?'green':l.level==='error'?'red':l.level==='warn'?'orange':'blue'}"></div>
+      <div class="log-text">${l.action}</div>
+      <div style="font-size:11px;color:var(--text3);white-space:nowrap;margin-left:8px">${l.ip} · ${l.time}</div>
+    </div>`).join('') || '<div style="color:var(--text3);text-align:center;padding:24px">No logs.</div>';
+}
+
+function filterLogs(val) { STATE.logFilter = val; renderLogs(); }
+function clearLogs() { if (confirm('Clear all logs?')) { STATE.logs = []; renderLogs(); showToast('Logs cleared','warn'); } }
+
+// ===================== MODALS =====================
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+document.addEventListener('click', e => { if (e.target.classList.contains('modal-overlay')) e.target.classList.remove('show'); });
+
+// ===================== TOAST =====================
+let _toastTimer;
+function showToast(msg, type='success') {
+  const el = document.getElementById('toast');
+  el.className = 'toast ' + type; el.textContent = msg; el.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
+}
+
+// ===================== LOAD SAVED =====================
+(function loadSaved(){
+  const st = localStorage.getItem('wha_tg_token'), sc = localStorage.getItem('wha_tg_chatid');
+  if (st && sc) {
+    STATE.tgConfig.token = st; STATE.tgConfig.adminChatId = sc; STATE.tgConfig.connected = true;
+    setTimeout(() => {
+      const ti = document.getElementById('tgBotToken'); if (ti) ti.value = st;
+      const ci = document.getElementById('tgAdminChatId'); if (ci) ci.value = sc;
+      const ind = document.getElementById('tgIndicator'); if (ind) ind.className = 'tg-indicator connected';
+      const ts = document.getElementById('tgStatusText'); if (ts) ts.textContent = 'Bot Connected';
+    }, 100);
+  }
+  const ss = localStorage.getItem('wha_settings');
+  if (ss) try { Object.assign(STATE.settings, JSON.parse(ss)); } catch(e) {}
+})();
+</script>
+</body>
+</html>
