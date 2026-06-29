@@ -581,9 +581,10 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
               <option value="approved">Approved</option>
               <option value="rejected">Rejected</option>
             </select>
+            <button class="btn btn-primary btn-sm" onclick="openModal('postJobModal')"><i class="ti ti-plus"></i> Post New Job</button>
           </div>
         </div>
-        <div class="alert info"><i class="ti ti-info-circle"></i> জব পোস্ট করার পরে শুধুমাত্র আপনার অনুমোদনের পরেই তা Worker দের কাছে দৃশ্যমান হবে।</div>
+        <div class="alert info"><i class="ti ti-info-circle"></i> জব পোস্ট করার পরে শুধুমাত্র আপনার অনুমোদনের পরেই তা Worker দের কাছে দৃশ্যমান হবে। Admin নিজে জব পোস্ট করলে তা সাথে সাথেই Live হয়ে যাবে।</div>
         <div id="jobList"></div>
       </div>
 
@@ -657,7 +658,7 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
           <h2><button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')" style="margin-right:6px"><i class="ti ti-arrow-left"></i></button><i class="ti ti-credit-card"></i> Payment Methods</h2>
           <button class="btn btn-primary btn-sm" onclick="openModal('addMethodModal')"><i class="ti ti-plus"></i> Add Method</button>
         </div>
-        <div class="alert info"><i class="ti ti-info-circle"></i> Enable/disable methods, account numbers update করুন এবং deposit/withdraw fee % set করুন।</div>
+        <div class="alert info"><i class="ti ti-info-circle"></i> Enable/disable methods, account numbers update করুন, Logo সেট করুন এবং deposit/withdraw fee % set করুন।</div>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px" id="methodsGrid"></div>
       </div>
 
@@ -732,15 +733,31 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
         <div class="sec-hd">
           <h2><button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')" style="margin-right:6px"><i class="ti ti-arrow-left"></i></button><i class="ti ti-settings"></i> Site Settings</h2>
         </div>
+        <div class="alert info"><i class="ti ti-info-circle"></i> এই পেজের সব Setting সরাসরি User App-এ লাইভ আপডেট হয় (siteSettings/global)।</div>
         <div class="two-col">
-          <div class="card">
-            <div class="card-title"><i class="ti ti-world"></i> General Settings</div>
-            <div class="field"><label>Platform Name</label><input type="text" id="setName" value="WorkHive"></div>
-            <div class="field"><label>Minimum Withdrawal ($)</label><input type="number" id="setMinWd" value="5" min="1"></div>
-            <div class="field"><label>Minimum Deposit ($)</label><input type="number" id="setMinDep" value="1" min="0.5"></div>
-            <div class="field"><label>Default Platform Fee (%)</label><input type="number" id="setFee" value="5" min="0" max="30"></div>
-            <div class="field"><label>Referral Reward ($)</label><input type="number" id="setRef" value="0.50" step="0.01"></div>
-            <button class="btn btn-primary" style="width:100%" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> Save Settings</button>
+          <div>
+            <div class="card">
+              <div class="card-title"><i class="ti ti-world"></i> General Settings</div>
+              <div class="field"><label>Platform Name</label><input type="text" id="setName" value="WorkHive"></div>
+              <div class="field"><label>Minimum Withdrawal ($)</label><input type="number" id="setMinWd" value="5" min="1"></div>
+              <div class="field"><label>Minimum Deposit ($)</label><input type="number" id="setMinDep" value="1" min="0.5"></div>
+              <div class="field"><label>Default Withdraw Fee (%)</label><input type="number" id="setFee" value="5" min="0" max="30"></div>
+              <button class="btn btn-primary" style="width:100%" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> Save General Settings</button>
+            </div>
+            <div class="card">
+              <div class="card-title"><i class="ti ti-users-group"></i> 3-Generation Referral Rewards</div>
+              <div class="field"><label>Gen 1 Reward — Direct Referral ($)</label><input type="number" id="setRefGen1" value="0.50" step="0.01" min="0"></div>
+              <div class="field"><label>Gen 2 Reward ($)</label><input type="number" id="setRefGen2" value="0.25" step="0.01" min="0"></div>
+              <div class="field"><label>Gen 3 Reward ($)</label><input type="number" id="setRefGen3" value="0.10" step="0.01" min="0"></div>
+              <button class="btn btn-primary" style="width:100%" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> Save Referral Settings</button>
+            </div>
+            <div class="card">
+              <div class="card-title"><i class="ti ti-headset"></i> Support Info</div>
+              <div class="field"><label>Support Email</label><input type="text" id="setSupportEmail" value="support@workhive.app"></div>
+              <div class="field"><label>Support / Live Chat Hours</label><input type="text" id="setSupportHours" value="9 AM – 11 PM"></div>
+              <div class="field"><label>Average Response Time</label><input type="text" id="setSupportResponse" value="Within 12 hours"></div>
+              <button class="btn btn-primary" style="width:100%" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> Save Support Settings</button>
+            </div>
           </div>
           <div>
             <div class="card">
@@ -749,6 +766,24 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
               <div class="field"><label>New Security Code (6 digits)</label><input type="text" id="newCode" placeholder="6-digit code" maxlength="6"></div>
               <div class="alert warn"><i class="ti ti-alert-triangle"></i> Security code পরিবর্তন করলে সঙ্গে সঙ্গে effective হবে।</div>
               <button class="btn btn-warning" style="width:100%" onclick="saveSecurity()"><i class="ti ti-lock"></i> Update Security</button>
+            </div>
+            <div class="card">
+              <div class="card-title"><i class="ti ti-speakerphone"></i> Site-Wide Banner (User App)</div>
+              <div class="field"><label>Banner Message (ফাঁকা রাখলে banner hide হবে)</label><textarea id="setBannerMsg" placeholder="e.g. 🎉 নতুন টাস্ক যুক্ত হয়েছে!" rows="2"></textarea></div>
+              <div class="field"><label>Banner Type</label>
+                <select id="setBannerType"><option value="info">Info (Blue)</option><option value="warn">Warning (Amber)</option><option value="success">Success (Green)</option></select>
+              </div>
+              <button class="btn btn-primary" style="width:100%" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> Save Banner</button>
+            </div>
+            <div class="card">
+              <div class="card-title"><i class="ti ti-disc"></i> Daily Spin Feature</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0">
+                <div>
+                  <div style="font-size:14px;font-weight:700">Enable Daily Spin</div>
+                  <div style="font-size:12px;color:var(--text3);margin-top:2px">Off হলে User App-এ spin disable থাকবে</div>
+                </div>
+                <label class="toggle"><input type="checkbox" id="toggleSpin" checked onchange="saveSettings()"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+              </div>
             </div>
             <div class="card">
               <div class="card-title"><i class="ti ti-tool"></i> Maintenance Mode</div>
@@ -833,7 +868,15 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
       <div class="modal-close" onclick="closeModal('addMethodModal')"><i class="ti ti-x"></i></div>
     </div>
     <div class="field"><label>Method Name</label><input type="text" id="nmName" placeholder="e.g. bKash, Nagad, USDT"></div>
-    <div class="field"><label>Emoji Icon</label><input type="text" id="nmEmoji" placeholder="📱" maxlength="4"></div>
+    <div class="field">
+      <label>Method Logo (Image — Optional)</label>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div id="nmLogoPreview" style="width:46px;height:46px;border-radius:10px;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden;flex-shrink:0">📷</div>
+        <input type="file" id="nmLogoFile" accept="image/*" onchange="previewMethodLogo(this)" style="font-size:12px;flex:1">
+      </div>
+      <div class="lf-hint">Logo দিলে Emoji এর জায়গায় Logo দেখানো হবে (Recommended: ছোট, square ছবি)</div>
+    </div>
+    <div class="field"><label>Emoji Icon (Logo না দিলে এটা ব্যবহার হবে)</label><input type="text" id="nmEmoji" placeholder="📱" maxlength="4"></div>
     <div class="field"><label>Account Number / Wallet Address</label><input type="text" id="nmNumber" placeholder="01XXXXXXXXX"></div>
     <div class="form-grid">
       <div class="field"><label>Min Deposit ($)</label><input type="number" id="nmMin" value="1" min="0.5"></div>
@@ -843,6 +886,42 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
     <div style="display:flex;gap:10px;margin-top:4px">
       <button class="btn btn-ghost" style="flex:1" onclick="closeModal('addMethodModal')">Cancel</button>
       <button class="btn btn-primary" style="flex:1" onclick="addMethod()"><i class="ti ti-plus"></i> Add Method</button>
+    </div>
+  </div>
+</div>
+
+<!-- Post New Job (Admin posts directly, instantly live) -->
+<div class="modal-overlay" id="postJobModal">
+  <div class="modal-box" style="max-width:560px">
+    <div class="modal-hd">
+      <div><div class="modal-title">Post New Micro Job</div><div class="modal-sub">Admin থেকে পোস্ট করা জব সাথে সাথেই Live হবে</div></div>
+      <div class="modal-close" onclick="closeModal('postJobModal')"><i class="ti ti-x"></i></div>
+    </div>
+    <div class="field"><label>Job Title</label><input type="text" id="pjTitle" placeholder="e.g. Like & Comment on Facebook Post"></div>
+    <div class="form-grid">
+      <div class="field"><label>Category</label>
+        <select id="pjCategory">
+          <option>Social Media</option><option>App Download</option><option>Website Visit</option>
+          <option>Review/Rating</option><option>Watch Video</option><option>Survey</option><option>Other</option>
+        </select>
+      </div>
+      <div class="field"><label>Submission Type</label>
+        <select id="pjType">
+          <option value="proof">Proof Submission (text/screenshot info)</option>
+          <option value="link">Direct Link Click Only</option>
+        </select>
+      </div>
+    </div>
+    <div class="field"><label>Direct Link (URL)</label><input type="text" id="pjLink" placeholder="https://example.com/your-task-link"></div>
+    <div class="field"><label>Instructions</label><textarea id="pjInstructions" rows="3" placeholder="Worker-দের জন্য ধাপে ধাপে নির্দেশনা লিখুন"></textarea></div>
+    <div class="form-grid">
+      <div class="field"><label>Reward per Task ($)</label><input type="number" id="pjReward" placeholder="0.10" step="0.01" min="0.01"></div>
+      <div class="field"><label>Worker Limit (slots)</label><input type="number" id="pjLimit" placeholder="100" min="1"></div>
+    </div>
+    <div class="field"><label>Target Country</label><input type="text" id="pjCountry" placeholder="Global / Bangladesh / ..." value="Global"></div>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('postJobModal')">Cancel</button>
+      <button class="btn btn-primary" style="flex:1" onclick="postJob()"><i class="ti ti-rocket"></i> Post & Publish Job</button>
     </div>
   </div>
 </div>
@@ -870,6 +949,9 @@ import {
   getFirestore, collection, getDocs, doc, updateDoc, addDoc, onSnapshot,
   query, where, orderBy, serverTimestamp, increment, setDoc, deleteDoc, getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  getAuth, signInAnonymously, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const cfg = {
   apiKey: "AIzaSyCeA-269WRHJCehg9Z__tlre_EbZcfanlY",
@@ -881,11 +963,34 @@ const cfg = {
 };
 const app = initializeApp(cfg);
 const db = getFirestore(app);
-window._fb = { db, collection, getDocs, doc, updateDoc, addDoc, onSnapshot, query, where, orderBy, serverTimestamp, increment, setDoc, deleteDoc, getDoc };
-window._fbReady = true;
-if (window._fbResolve) window._fbResolve();
-document.getElementById('fbStatus').textContent = 'Connected';
-document.getElementById('fbStatus').style.color = 'var(--green)';
+const auth = getAuth(app);
+window._fb = { db, auth, collection, getDocs, doc, updateDoc, addDoc, onSnapshot, query, where, orderBy, serverTimestamp, increment, setDoc, deleteDoc, getDoc };
+
+// IMPORTANT: The admin panel has no separate Firebase Authentication account of its own —
+// it only checks a local username/password/code stored in localStorage. Firestore Security
+// Rules normally require `request.auth != null` to read/write data, so WITHOUT signing the
+// admin browser into Firebase Auth, every admin read/write (deposits, withdrawals, jobs,
+// payment methods, settings, etc.) would silently fail with "permission-denied" and never
+// reach the user app — this was the main reason data wasn't syncing between the two panels.
+// Signing in anonymously gives the admin panel a valid `request.auth`, so make sure
+// "Anonymous" sign-in is enabled in Firebase Console > Authentication > Sign-in method,
+// and that your Firestore Rules allow access when `request.auth != null`.
+function fbSetStatus(text, ok) {
+  const el = document.getElementById('fbStatus');
+  if (!el) return;
+  el.textContent = text;
+  el.style.color = ok ? 'var(--green)' : 'var(--amber)';
+}
+signInAnonymously(auth).catch(err => {
+  console.warn('Admin anonymous sign-in failed:', err);
+  fbSetStatus('Auth Failed — check Firebase Console', false);
+});
+onAuthStateChanged(auth, user => {
+  window._fbReady = true;
+  if (window._fbResolve) window._fbResolve();
+  if (user) fbSetStatus('Connected (Admin Authenticated)', true);
+  else fbSetStatus('Connected (Not Authenticated)', false);
+});
 </script>
 
 <script>
@@ -898,7 +1003,9 @@ const S = {
   _rejectCtx: null, _balUid: null,
   tg: { token: '', chatId: '', connected: false },
   bcHistory: [],
-  settings: { name: 'WorkHive', minWd: 5, minDep: 1, fee: 5, ref: 0.5 },
+  settings: { name: 'WorkHive', minWd: 5, minDep: 1, fee: 5, refGen1: 0.5, refGen2: 0.25, refGen3: 0.10,
+    supportEmail: 'support@workhive.app', supportHours: '9 AM – 11 PM', supportResponse: 'Within 12 hours',
+    banner: '', bannerType: 'info', spinEnabled: true },
 };
 
 const TG_EVENTS = [
@@ -913,7 +1020,7 @@ const TG_EVENTS = [
 // ===== FB WAIT =====
 window._fbReadyPromise = new Promise(r => { window._fbResolve = r; });
 if (window._fbReady) window._fbResolve();
-async function waitFb() { if (!window._fb) await Promise.race([window._fbReadyPromise, new Promise(r => setTimeout(r, 5000))]); return !!window._fb; }
+async function waitFb() { if (!window._fb || !window._fbReady) await Promise.race([window._fbReadyPromise, new Promise(r => setTimeout(r, 6000))]); return !!window._fb; }
 
 // ===== AUTH =====
 let attempts = 0, lockUntil = null;
@@ -961,6 +1068,23 @@ function fmtAmt(n) { return '$'+(parseFloat(n)||0).toFixed(2); }
 function fmtDate(ts) { if(!ts) return '—'; if(ts.toDate) return ts.toDate().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); return ts; }
 function initials(name) { return (name||'?').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase()||'?'; }
 function avColor(n) { const colors=['blue','purple','teal','amber','pink']; const i=(n||'').charCodeAt(0)%colors.length; return colors[i]||'blue'; }
+function resizeImageFile(file, maxSize, callback) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      let w = img.width, h = img.height;
+      if (w > h) { if (w > maxSize) { h *= maxSize / w; w = maxSize; } }
+      else { if (h > maxSize) { w *= maxSize / h; h = maxSize; } }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      callback(canvas.toDataURL('image/png', 0.85));
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
 
 // ===== NAVIGATION =====
 const pageNames = { dashboard:'Dashboard', users:'User Management', jobs:'Job Approvals', tasks:'Task Submissions', deposits:'Deposits', withdrawals:'Withdrawals', 'payment-methods':'Payment Methods', telegram:'Telegram Bot', broadcast:'Broadcast', notifications:'Notifications', settings:'Site Settings', logs:'Activity Logs' };
@@ -983,7 +1107,7 @@ async function notifyUser(uid, title, msg, icon='🔔') {
 // ===== FIRESTORE: USERS =====
 async function loadUsers() {
   const fb = window._fb; if (!fb) return;
-  const snap = await fb.getDocs(fb.collection(fb.db,'users')).catch(()=>null);
+  const snap = await fb.getDocs(fb.collection(fb.db,'users')).catch((e)=>{console.warn('loadUsers failed (check Firestore Rules / Auth):',e);return null;});
   if (!snap) return;
   S.users = [];
   snap.forEach(d => {
@@ -1010,7 +1134,7 @@ function listenJobs() {
     snap.forEach(d => S.jobs.push({id:d.id,...d.data()}));
     S.jobs.sort((a,b)=>(b._ts||0)-(a._ts||0));
     renderJobs(); renderDashPendingJobs(); updateStats(); updateBadges();
-  }, ()=>{});
+  }, (e)=>{console.warn('listenJobs error (check Firestore Rules / Auth):',e);});
 }
 
 // ===== FIRESTORE: DEPOSITS =====
@@ -1021,7 +1145,7 @@ function listenDeposits() {
     snap.forEach(d => S.deposits.push({id:d.id,...d.data()}));
     S.deposits.sort((a,b)=>(b._ts||0)-(a._ts||0));
     renderDeposits(); renderDashDeposits(); updateStats(); updateBadges();
-  }, ()=>{});
+  }, (e)=>{console.warn('listenDeposits error (check Firestore Rules / Auth):',e);});
 }
 
 // ===== FIRESTORE: WITHDRAWALS =====
@@ -1032,7 +1156,7 @@ function listenWithdrawals() {
     snap.forEach(d => S.withdrawals.push({id:d.id,...d.data()}));
     S.withdrawals.sort((a,b)=>(b._ts||0)-(a._ts||0));
     renderWithdrawals(); renderDashWithdrawals(); updateStats(); updateBadges();
-  }, ()=>{});
+  }, (e)=>{console.warn('listenWithdrawals error (check Firestore Rules / Auth):',e);});
 }
 
 // ===== FIRESTORE: TASKS =====
@@ -1043,7 +1167,7 @@ function listenTasks() {
     snap.forEach(d => S.tasks.push({id:d.id,...d.data()}));
     S.tasks.sort((a,b)=>(b._ts||0)-(a._ts||0));
     renderTasks(); updateStats(); updateBadges();
-  }, ()=>{});
+  }, (e)=>{console.warn('listenTasks error (check Firestore Rules / Auth):',e);});
 }
 
 // ===== FIRESTORE: METHODS =====
@@ -1054,33 +1178,56 @@ function listenMethods() {
     snap.forEach(d => S.methods.push({id:d.id,...d.data()}));
     if (!S.methods.length) await seedMethods();
     renderMethods();
-  }, ()=>{});
+  }, (e)=>{console.warn('listenMethods error (check Firestore Rules / Auth):',e);});
 }
 async function seedMethods() {
   const fb = window._fb; if (!fb) return;
   const defaults = [
-    {name:'bKash',emoji:'📱',number:'01711000000',minDeposit:1,depositFee:0,withdrawFee:5,enabled:true},
-    {name:'Nagad',emoji:'💳',number:'01711000001',minDeposit:1,depositFee:0,withdrawFee:5,enabled:true},
-    {name:'Rocket',emoji:'🚀',number:'01711000002',minDeposit:1,depositFee:0,withdrawFee:5,enabled:false},
-    {name:'USDT (TRC20)',emoji:'₮',number:'TRxxxxxxxxxxxxxxxxxxxxxxxxxx',minDeposit:5,depositFee:0,withdrawFee:3,enabled:true},
+    {name:'bKash',emoji:'📱',logo:'',number:'01711000000',minDeposit:1,depositFee:0,withdrawFee:5,enabled:true},
+    {name:'Nagad',emoji:'💳',logo:'',number:'01711000001',minDeposit:1,depositFee:0,withdrawFee:5,enabled:true},
+    {name:'Rocket',emoji:'🚀',logo:'',number:'01711000002',minDeposit:1,depositFee:0,withdrawFee:5,enabled:false},
+    {name:'USDT (TRC20)',emoji:'₮',logo:'',number:'TRxxxxxxxxxxxxxxxxxxxxxxxxxx',minDeposit:5,depositFee:0,withdrawFee:3,enabled:true},
   ];
   for (const m of defaults) await fb.addDoc(fb.collection(fb.db,'paymentMethods'),m).catch(()=>{});
 }
 
-// ===== FIRESTORE: SETTINGS =====
+// ===== FIRESTORE: SETTINGS (siteSettings/global — same doc the User App reads) =====
 function listenSettings() {
   const fb = window._fb; if (!fb) return;
-  fb.onSnapshot(fb.doc(fb.db,'settings','site'), snap => {
+  fb.onSnapshot(fb.doc(fb.db,'siteSettings','global'), snap => {
     if (snap.exists()) {
-      Object.assign(S.settings, snap.data());
+      const d = snap.data();
+      Object.assign(S.settings, {
+        name: d.name ?? S.settings.name,
+        minWd: d.minWithdraw ?? S.settings.minWd,
+        minDep: d.minDeposit ?? S.settings.minDep,
+        fee: d.withdrawFee ?? S.settings.fee,
+        refGen1: d.refGen1 ?? S.settings.refGen1,
+        refGen2: d.refGen2 ?? S.settings.refGen2,
+        refGen3: d.refGen3 ?? S.settings.refGen3,
+        supportEmail: d.supportEmail ?? S.settings.supportEmail,
+        supportHours: d.supportHours ?? S.settings.supportHours,
+        supportResponse: d.supportResponse ?? S.settings.supportResponse,
+        banner: d.banner ?? S.settings.banner,
+        bannerType: d.bannerType ?? S.settings.bannerType,
+        spinEnabled: d.spinEnabled !== undefined ? d.spinEnabled : S.settings.spinEnabled,
+      });
       const s = S.settings;
       if ($('setName')) $('setName').value = s.name||'WorkHive';
       if ($('setMinWd')) $('setMinWd').value = s.minWd||5;
       if ($('setMinDep')) $('setMinDep').value = s.minDep||1;
       if ($('setFee')) $('setFee').value = s.fee||5;
-      if ($('setRef')) $('setRef').value = s.ref||0.5;
+      if ($('setRefGen1')) $('setRefGen1').value = s.refGen1??0.5;
+      if ($('setRefGen2')) $('setRefGen2').value = s.refGen2??0.25;
+      if ($('setRefGen3')) $('setRefGen3').value = s.refGen3??0.10;
+      if ($('setSupportEmail')) $('setSupportEmail').value = s.supportEmail||'';
+      if ($('setSupportHours')) $('setSupportHours').value = s.supportHours||'';
+      if ($('setSupportResponse')) $('setSupportResponse').value = s.supportResponse||'';
+      if ($('setBannerMsg')) $('setBannerMsg').value = s.banner||'';
+      if ($('setBannerType')) $('setBannerType').value = s.bannerType||'info';
+      if ($('toggleSpin')) $('toggleSpin').checked = s.spinEnabled!==false;
     }
-  }, ()=>{});
+  }, (e)=>{console.warn('listenSettings error (check Firestore Rules / Auth):',e);});
 }
 
 // ===== STATS =====
@@ -1192,24 +1339,28 @@ function viewUser(id) {
 
 async function toggleBan(id) {
   const u=findUser(id); if(!u)return;
-  u.status=u.status==='active'?'banned':'active';
-  renderUsers();
-  const fb=window._fb; if(!fb)return;
-  await fb.updateDoc(fb.doc(fb.db,'users',id),{status:u.status}).catch(()=>{});
-  addLog(`${u.status==='banned'?'⛔ Banned':'✅ Unbanned'}: ${u.name}`,'user',u.status==='banned'?'red':'green');
-  if(u.status==='banned') sendTgEvent('e6',{name:u.name});
-  notifyUser(id, u.status==='banned'?'⛔ Account Banned':'✅ Account Restored', u.status==='banned'?'Your account was suspended by admin.':'Your account has been restored.');
-  showToast(u.status==='banned'?`⛔ ${u.name} banned`:`✅ ${u.name} unbanned`, u.status==='banned'?'error':'success');
+  const newStatus = u.status==='active'?'banned':'active';
+  const fb=window._fb; if(!fb){showToast('Firebase not ready','error');return;}
+  try{
+    await fb.updateDoc(fb.doc(fb.db,'users',id),{status:newStatus});
+    u.status=newStatus; renderUsers();
+    addLog(`${newStatus==='banned'?'⛔ Banned':'✅ Unbanned'}: ${u.name}`,'user',newStatus==='banned'?'red':'green');
+    if(newStatus==='banned') sendTgEvent('e6',{name:u.name});
+    notifyUser(id, newStatus==='banned'?'⛔ Account Banned':'✅ Account Restored', newStatus==='banned'?'Your account was suspended by admin.':'Your account has been restored.');
+    showToast(newStatus==='banned'?`⛔ ${u.name} banned`:`✅ ${u.name} unbanned`, newStatus==='banned'?'error':'success');
+  }catch(e){ console.error(e); showToast('❌ Update failed — check Firestore permissions','error'); }
 }
 
 async function verifyKyc(id) {
   const u=findUser(id); if(!u)return;
-  u.kyc='Verified'; renderUsers(); updateStats();
-  const fb=window._fb; if(!fb)return;
-  await fb.updateDoc(fb.doc(fb.db,'users',id),{kyc:true}).catch(()=>{});
-  addLog(`🪪 KYC verified: ${u.name}`,'user','green');
-  notifyUser(id,'🪪 KYC Verified!','Your identity has been verified. You can now withdraw.');
-  showToast(`🪪 KYC verified: ${u.name}`,'success');
+  const fb=window._fb; if(!fb){showToast('Firebase not ready','error');return;}
+  try{
+    await fb.updateDoc(fb.doc(fb.db,'users',id),{kyc:true});
+    u.kyc='Verified'; renderUsers(); updateStats();
+    addLog(`🪪 KYC verified: ${u.name}`,'user','green');
+    notifyUser(id,'🪪 KYC Verified!','Your identity has been verified. You can now withdraw.');
+    showToast(`🪪 KYC verified: ${u.name}`,'success');
+  }catch(e){ console.error(e); showToast('❌ Update failed — check Firestore permissions','error'); }
 }
 
 // ===== RENDER: JOBS =====
@@ -1217,17 +1368,18 @@ function filterJobs(val) { S.jobFilter=val; renderJobs(); }
 function renderJobs() {
   const list=S.jobFilter==='all'?S.jobs:S.jobs.filter(j=>j.status===S.jobFilter);
   const el=$('jobList');
-  if(!list.length){el.innerHTML='<div class="card" style="text-align:center;padding:40px;color:var(--text3)">No jobs found.</div>';return;}
+  if(!list.length){el.innerHTML='<div class="card" style="text-align:center;padding:40px;color:var(--text3)">No jobs found. Click "Post New Job" to publish your first micro job.</div>';return;}
   el.innerHTML=list.map(j=>{
     const u=findUser(j.postedBy);
+    const isAdminJob = j.postedBy==='admin';
     return `<div class="job-card ${j.status||'pending'}">
       <div class="job-poster">
-        <div class="poster-av">${initials(j.postedByName||'?')}</div>
+        <div class="poster-av" style="${isAdminJob?'background:var(--purple)':''}">${isAdminJob?'🐝':initials(j.postedByName||'?')}</div>
         <div style="flex:1">
-          <div style="font-size:14px;font-weight:800">${j.postedByName||'Unknown'}</div>
+          <div style="font-size:14px;font-weight:800">${j.postedByName||'Unknown'}${isAdminJob?' <span class="badge purple" style="margin-left:6px">Admin Posted</span>':''}</div>
           <div style="font-size:11.5px;color:var(--text3)">${j.postedByEmail||'—'}</div>
         </div>
-        <button class="btn btn-info btn-sm" onclick="viewPoster('${j.postedBy||''}')"><i class="ti ti-user"></i> Profile</button>
+        ${!isAdminJob?`<button class="btn btn-info btn-sm" onclick="viewPoster('${j.postedBy||''}')"><i class="ti ti-user"></i> Profile</button>`:''}
       </div>
       ${u?`<div class="poster-stats-mini">
         <div class="psm"><div class="psm-val">${fmtAmt(u.balance)}</div><div class="psm-lbl">Balance</div></div>
@@ -1257,7 +1409,10 @@ function renderJobs() {
       ${j.status==='pending'?`<div style="display:flex;gap:10px">
         <button class="btn btn-approve" style="flex:1" onclick="approveJob('${j.id}')"><i class="ti ti-check"></i> Approve & Publish</button>
         <button class="btn btn-danger" style="flex:1" onclick="openReject('job','${j.id}','${(j.title||'').replace(/'/g,"\\'")}')"><i class="ti ti-x"></i> Reject</button>
-      </div>`:j.status==='approved'?`<div class="alert success"><i class="ti ti-circle-check"></i> Live — Workers can see and complete this job.</div>`:`<div class="alert danger"><i class="ti ti-circle-x"></i> Rejected — Not visible to workers.</div>`}
+      </div>`:j.status==='approved'?`<div style="display:flex;gap:10px;align-items:center">
+        <div class="alert success" style="flex:1;margin-bottom:0"><i class="ti ti-circle-check"></i> Live — Workers can see and complete this job.</div>
+        <button class="btn btn-danger btn-sm" onclick="deleteJob('${j.id}','${(j.title||'').replace(/'/g,"\\'")}')"><i class="ti ti-trash"></i> Remove</button>
+      </div>`:`<div class="alert danger"><i class="ti ti-circle-x"></i> Rejected — Not visible to workers.</div>`}
     </div>`;
   }).join('');
 }
@@ -1270,12 +1425,47 @@ function viewPoster(uid) {
 async function approveJob(id) {
   const j=S.jobs.find(x=>x.id===id); if(!j)return;
   const fb=window._fb; if(!fb)return;
-  await fb.updateDoc(fb.doc(fb.db,'jobs',id),{status:'approved'}).catch(()=>{});
+  await fb.updateDoc(fb.doc(fb.db,'jobs',id),{status:'approved'}).catch((e)=>{console.error(e);showToast('❌ Approve failed','error');});
   addLog(`✅ Job approved: "${j.title}" by ${j.postedByName||'Unknown'}`,'job','green');
   sendTgEvent('e4',{user:j.postedByName||'',title:j.title||''});
   addAdminNotif('✅ Job Approved',`"${j.title}" is now live for workers.`,'success');
   notifyUser(j.postedBy,'✅ Job Approved!',`Your job "${j.title}" has been approved and is now live for workers.`);
   showToast('✅ Job approved and published!','success');
+}
+
+async function deleteJob(id, title) {
+  if (!confirm(`"${title}" জবটি স্থায়ীভাবে মুছে ফেলতে চান?`)) return;
+  const fb=window._fb; if(!fb)return;
+  await fb.deleteDoc(fb.doc(fb.db,'jobs',id)).catch((e)=>{console.error(e);showToast('❌ Delete failed','error');});
+  addLog(`🗑️ Job removed: "${title}"`,'job','red');
+  showToast('🗑️ Job removed','warn');
+}
+
+// ===== POST NEW JOB (Admin) =====
+async function postJob() {
+  const title=v('pjTitle'), category=$('pjCategory').value, type=$('pjType').value, link=v('pjLink'), instructions=v('pjInstructions'), country=v('pjCountry')||'Global';
+  const reward=parseFloat($('pjReward').value)||0, limit=parseInt($('pjLimit').value)||0;
+  if(!title){showToast('Job Title দিন','error');return;}
+  if(!reward||reward<=0){showToast('সঠিক Reward amount দিন','error');return;}
+  if(!limit||limit<=0){showToast('সঠিক Worker Limit দিন','error');return;}
+  const fb=window._fb; if(!fb){showToast('Firebase not ready','error');return;}
+  try{
+    await fb.addDoc(fb.collection(fb.db,'jobs'),{
+      title, category, type, link, instructions, reward, limit, filled:0, country,
+      postedBy:'admin', postedByName:'WorkHive Admin', postedByEmail:'admin@workhive.app',
+      status:'approved',
+      submittedAt:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),
+      _ts:Date.now(), createdAt: fb.serverTimestamp()
+    });
+    closeModal('postJobModal');
+    ['pjTitle','pjLink','pjInstructions'].forEach(id=>{ if($(id)) $(id).value=''; });
+    if($('pjCountry')) $('pjCountry').value='Global';
+    if($('pjReward')) $('pjReward').value='';
+    if($('pjLimit')) $('pjLimit').value='';
+    addLog(`🆕 Admin posted new job: "${title}" (+${fmtAmt(reward)}/task, ${limit} slots)`,'job','green');
+    addAdminNotif('🆕 New Job Posted', `"${title}" is now live for ${limit} workers.`, 'success');
+    showToast('✅ Job posted and is now live for workers!','success');
+  }catch(e){ console.error(e); showToast('❌ Post failed — check Firestore permissions','error'); }
 }
 
 // ===== RENDER: TASKS =====
@@ -1323,12 +1513,14 @@ function viewProof(id) {
 async function approveTask(id) {
   const t=S.tasks.find(x=>x.id===id); if(!t)return;
   const fb=window._fb; if(!fb)return;
-  await fb.updateDoc(fb.doc(fb.db,'taskSubmissions',id),{status:'approved'}).catch(()=>{});
-  if(t.workerId) await fb.updateDoc(fb.doc(fb.db,'users',t.workerId),{balance:fb.increment(t.reward||0),totalEarned:fb.increment(t.reward||0),tasksCompleted:fb.increment(1)}).catch(()=>{});
-  if(t.jobId&&t.jobId!=='spin') fb.updateDoc(fb.doc(fb.db,'jobs',t.jobId),{filled:fb.increment(1)}).catch(()=>{});
-  addLog(`✅ Task approved: ${t.workerName} — "${t.jobTitle}" +${fmtAmt(t.reward)}`,'job','green');
-  notifyUser(t.workerId,'✅ Task Approved!',`"${t.jobTitle}" proof approved — ${fmtAmt(t.reward)} added to your balance.`);
-  showToast(`✅ Task approved — ${fmtAmt(t.reward)} credited`,'success');
+  try{
+    await fb.updateDoc(fb.doc(fb.db,'taskSubmissions',id),{status:'approved'});
+    if(t.workerId) await fb.updateDoc(fb.doc(fb.db,'users',t.workerId),{balance:fb.increment(t.reward||0),totalEarned:fb.increment(t.reward||0),tasksCompleted:fb.increment(1)}).catch(()=>{});
+    if(t.jobId&&t.jobId!=='spin') fb.updateDoc(fb.doc(fb.db,'jobs',t.jobId),{filled:fb.increment(1)}).catch(()=>{});
+    addLog(`✅ Task approved: ${t.workerName} — "${t.jobTitle}" +${fmtAmt(t.reward)}`,'job','green');
+    notifyUser(t.workerId,'✅ Task Approved!',`"${t.jobTitle}" proof approved — ${fmtAmt(t.reward)} added to your balance.`);
+    showToast(`✅ Task approved — ${fmtAmt(t.reward)} credited`,'success');
+  }catch(e){ console.error(e); showToast('❌ Approve failed — check Firestore permissions','error'); }
 }
 
 // ===== RENDER: DEPOSITS =====
@@ -1353,15 +1545,17 @@ function renderDeposits() {
 async function confirmDeposit(id) {
   const d=S.deposits.find(x=>x.id===id); if(!d)return;
   const fb=window._fb; if(!fb)return;
-  await fb.updateDoc(fb.doc(fb.db,'deposits',id),{status:'confirmed'}).catch(()=>{});
-  if(d.userId) {
-    await fb.updateDoc(fb.doc(fb.db,'users',d.userId),{balance:fb.increment(d.amount||0),totalEarned:fb.increment(d.amount||0),pendingAmount:fb.increment(-(d.amount||0))}).catch(()=>{});
-  }
-  addLog(`💰 Deposit confirmed: ${d.userName} — ${fmtAmt(d.amount)} via ${d.method}`,'deposit','green');
-  sendTgEvent('e2',{user:d.userName,amount:d.amount,method:d.method,txnId:d.txnId||d.txId||'—'});
-  notifyUser(d.userId,'✅ Deposit Confirmed!',`${fmtAmt(d.amount)} via ${d.method} has been added to your wallet.`);
-  addAdminNotif('💰 Deposit Confirmed',`${d.userName} — ${fmtAmt(d.amount)} via ${d.method}`,'success');
-  showToast(`✅ ${fmtAmt(d.amount)} credited to ${d.userName}`,'success');
+  try{
+    await fb.updateDoc(fb.doc(fb.db,'deposits',id),{status:'confirmed'});
+    if(d.userId) {
+      await fb.updateDoc(fb.doc(fb.db,'users',d.userId),{balance:fb.increment(d.amount||0),totalEarned:fb.increment(d.amount||0),pendingAmount:fb.increment(-(d.amount||0))}).catch(()=>{});
+    }
+    addLog(`💰 Deposit confirmed: ${d.userName} — ${fmtAmt(d.amount)} via ${d.method}`,'deposit','green');
+    sendTgEvent('e2',{user:d.userName,amount:d.amount,method:d.method,txnId:d.txnId||d.txId||'—'});
+    notifyUser(d.userId,'✅ Deposit Confirmed!',`${fmtAmt(d.amount)} via ${d.method} has been added to your wallet.`);
+    addAdminNotif('💰 Deposit Confirmed',`${d.userName} — ${fmtAmt(d.amount)} via ${d.method}`,'success');
+    showToast(`✅ ${fmtAmt(d.amount)} credited to ${d.userName}`,'success');
+  }catch(e){ console.error(e); showToast('❌ Confirm failed — check Firestore permissions','error'); }
 }
 
 // ===== RENDER: WITHDRAWALS =====
@@ -1385,13 +1579,15 @@ function renderWithdrawals() {
 async function completeWithdraw(id) {
   const w=S.withdrawals.find(x=>x.id===id); if(!w)return;
   const fb=window._fb; if(!fb)return;
-  await fb.updateDoc(fb.doc(fb.db,'withdrawals',id),{status:'completed'}).catch(()=>{});
-  if(w.userId) await fb.updateDoc(fb.doc(fb.db,'users',w.userId),{totalWithdrawn:fb.increment(w.net||0),pendingAmount:fb.increment(-(w.net||0))}).catch(()=>{});
-  addLog(`📤 Withdrawal sent: ${w.userName} — ${fmtAmt(w.net)} via ${w.method} to ${w.account}`,'withdrawal','green');
-  sendTgEvent('e3',{user:w.userName,amount:w.amount,method:w.method,account:w.account});
-  notifyUser(w.userId,'✅ Withdrawal Sent!',`${fmtAmt(w.net)} has been sent to your ${w.method} account (${w.account}).`);
-  addAdminNotif('📤 Withdrawal Sent',`${w.userName} — ${fmtAmt(w.net)} via ${w.method}`,'success');
-  showToast(`✅ ${fmtAmt(w.net)} sent to ${w.userName}`,'success');
+  try{
+    await fb.updateDoc(fb.doc(fb.db,'withdrawals',id),{status:'completed'});
+    if(w.userId) await fb.updateDoc(fb.doc(fb.db,'users',w.userId),{totalWithdrawn:fb.increment(w.net||0),pendingAmount:fb.increment(-(w.net||0))}).catch(()=>{});
+    addLog(`📤 Withdrawal sent: ${w.userName} — ${fmtAmt(w.net)} via ${w.method} to ${w.account}`,'withdrawal','green');
+    sendTgEvent('e3',{user:w.userName,amount:w.amount,method:w.method,account:w.account});
+    notifyUser(w.userId,'✅ Withdrawal Sent!',`${fmtAmt(w.net)} has been sent to your ${w.method} account (${w.account}).`);
+    addAdminNotif('📤 Withdrawal Sent',`${w.userName} — ${fmtAmt(w.net)} via ${w.method}`,'success');
+    showToast(`✅ ${fmtAmt(w.net)} sent to ${w.userName}`,'success');
+  }catch(e){ console.error(e); showToast('❌ Send failed — check Firestore permissions','error'); }
 }
 
 // ===== UNIFIED REJECT =====
@@ -1409,33 +1605,35 @@ async function confirmReject() {
   const {type,id}=S._rejectCtx||{}; if(!type||!id)return;
   closeModal('rejectModal');
   const fb=window._fb; if(!fb)return;
-  if(type==='job'){
-    const j=S.jobs.find(x=>x.id===id);
-    await fb.updateDoc(fb.doc(fb.db,'jobs',id),{status:'rejected',rejectReason:reason}).catch(()=>{});
-    addLog(`❌ Job rejected: "${j?.title}" — ${reason}`,'job','red');
-    notifyUser(j?.postedBy,'❌ Job Rejected',`Your job "${j?.title}" was not approved. Reason: ${reason}`);
-    showToast('❌ Job rejected','error');
-  } else if(type==='deposit'){
-    const d=S.deposits.find(x=>x.id===id);
-    await fb.updateDoc(fb.doc(fb.db,'deposits',id),{status:'rejected',rejectReason:reason}).catch(()=>{});
-    if(d?.userId) await fb.updateDoc(fb.doc(fb.db,'users',d.userId),{pendingAmount:fb.increment(-(d.amount||0))}).catch(()=>{});
-    addLog(`❌ Deposit rejected: ${d?.userName} ${fmtAmt(d?.amount)} — ${reason}`,'deposit','red');
-    notifyUser(d?.userId,'❌ Deposit Rejected',`Your ${d?.method} deposit of ${fmtAmt(d?.amount)} was rejected. Reason: ${reason}`);
-    showToast('❌ Deposit rejected','error');
-  } else if(type==='withdrawal'){
-    const w=S.withdrawals.find(x=>x.id===id);
-    await fb.updateDoc(fb.doc(fb.db,'withdrawals',id),{status:'rejected',rejectReason:reason}).catch(()=>{});
-    if(w?.userId) await fb.updateDoc(fb.doc(fb.db,'users',w.userId),{balance:fb.increment(w.amount||0),pendingAmount:fb.increment(-(w.net||0))}).catch(()=>{});
-    addLog(`❌ Withdrawal rejected & refunded: ${w?.userName} ${fmtAmt(w?.amount)} — ${reason}`,'withdrawal','red');
-    notifyUser(w?.userId,'❌ Withdrawal Rejected (Refunded)',`Your withdrawal of ${fmtAmt(w?.amount)} was rejected and refunded. Reason: ${reason}`);
-    showToast('❌ Withdrawal rejected & balance refunded','error');
-  } else if(type==='task'){
-    const t=S.tasks.find(x=>x.id===id);
-    await fb.updateDoc(fb.doc(fb.db,'taskSubmissions',id),{status:'rejected',rejectReason:reason}).catch(()=>{});
-    notifyUser(t?.workerId,'❌ Task Rejected',`"${t?.jobTitle}" was rejected. Reason: ${reason}`);
-    addLog(`❌ Task rejected: ${t?.workerName} — "${t?.jobTitle}" — ${reason}`,'job','red');
-    showToast('❌ Task rejected','error');
-  }
+  try{
+    if(type==='job'){
+      const j=S.jobs.find(x=>x.id===id);
+      await fb.updateDoc(fb.doc(fb.db,'jobs',id),{status:'rejected',rejectReason:reason});
+      addLog(`❌ Job rejected: "${j?.title}" — ${reason}`,'job','red');
+      notifyUser(j?.postedBy,'❌ Job Rejected',`Your job "${j?.title}" was not approved. Reason: ${reason}`);
+      showToast('❌ Job rejected','error');
+    } else if(type==='deposit'){
+      const d=S.deposits.find(x=>x.id===id);
+      await fb.updateDoc(fb.doc(fb.db,'deposits',id),{status:'rejected',rejectReason:reason});
+      if(d?.userId) await fb.updateDoc(fb.doc(fb.db,'users',d.userId),{pendingAmount:fb.increment(-(d.amount||0))}).catch(()=>{});
+      addLog(`❌ Deposit rejected: ${d?.userName} ${fmtAmt(d?.amount)} — ${reason}`,'deposit','red');
+      notifyUser(d?.userId,'❌ Deposit Rejected',`Your ${d?.method} deposit of ${fmtAmt(d?.amount)} was rejected. Reason: ${reason}`);
+      showToast('❌ Deposit rejected','error');
+    } else if(type==='withdrawal'){
+      const w=S.withdrawals.find(x=>x.id===id);
+      await fb.updateDoc(fb.doc(fb.db,'withdrawals',id),{status:'rejected',rejectReason:reason});
+      if(w?.userId) await fb.updateDoc(fb.doc(fb.db,'users',w.userId),{balance:fb.increment(w.amount||0),pendingAmount:fb.increment(-(w.net||0))}).catch(()=>{});
+      addLog(`❌ Withdrawal rejected & refunded: ${w?.userName} ${fmtAmt(w?.amount)} — ${reason}`,'withdrawal','red');
+      notifyUser(w?.userId,'❌ Withdrawal Rejected (Refunded)',`Your withdrawal of ${fmtAmt(w?.amount)} was rejected and refunded. Reason: ${reason}`);
+      showToast('❌ Withdrawal rejected & balance refunded','error');
+    } else if(type==='task'){
+      const t=S.tasks.find(x=>x.id===id);
+      await fb.updateDoc(fb.doc(fb.db,'taskSubmissions',id),{status:'rejected',rejectReason:reason});
+      notifyUser(t?.workerId,'❌ Task Rejected',`"${t?.jobTitle}" was rejected. Reason: ${reason}`);
+      addLog(`❌ Task rejected: ${t?.workerName} — "${t?.jobTitle}" — ${reason}`,'job','red');
+      showToast('❌ Task rejected','error');
+    }
+  }catch(e){ console.error(e); showToast('❌ Reject failed — check Firestore permissions','error'); }
 }
 
 // ===== BALANCE ADJUST =====
@@ -1454,25 +1652,51 @@ async function confirmBalAdj() {
   const u=findUser(uid); if(!u)return;
   closeModal('balModal');
   const fb=window._fb; if(!fb)return;
-  await fb.updateDoc(fb.doc(fb.db,'users',uid),{balance:fb.increment(amt)}).catch(()=>{});
-  addLog(`💰 Balance adjusted: ${u.name} ${amt>=0?'+':''}${fmtAmt(amt)} — ${reason}`,'deposit',amt>=0?'green':'amber');
-  notifyUser(uid,'💰 Balance Adjusted',`Admin adjusted your balance by ${amt>=0?'+':''}${fmtAmt(amt)}. Reason: ${reason}`);
-  showToast(`💰 Balance ${amt>=0?'+':''}${fmtAmt(amt)}`,'success');
-  loadUsers();
+  try{
+    await fb.updateDoc(fb.doc(fb.db,'users',uid),{balance:fb.increment(amt)});
+    addLog(`💰 Balance adjusted: ${u.name} ${amt>=0?'+':''}${fmtAmt(amt)} — ${reason}`,'deposit',amt>=0?'green':'amber');
+    notifyUser(uid,'💰 Balance Adjusted',`Admin adjusted your balance by ${amt>=0?'+':''}${fmtAmt(amt)}. Reason: ${reason}`);
+    showToast(`💰 Balance ${amt>=0?'+':''}${fmtAmt(amt)}`,'success');
+    loadUsers();
+  }catch(e){ console.error(e); showToast('❌ Adjustment failed — check Firestore permissions','error'); }
 }
 
 // ===== PAYMENT METHODS =====
+let _nmLogoData = '';
+function previewMethodLogo(input) {
+  if (input.files && input.files[0]) {
+    resizeImageFile(input.files[0], 96, dataUrl => {
+      _nmLogoData = dataUrl;
+      const p = $('nmLogoPreview');
+      if (p) p.innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:cover">`;
+    });
+  }
+}
+function updateMethodLogo(id, input) {
+  if (input.files && input.files[0]) {
+    resizeImageFile(input.files[0], 96, async dataUrl => {
+      await updateMethod(id, 'logo', dataUrl);
+    });
+  }
+}
 function renderMethods() {
   $('methodsGrid').innerHTML=S.methods.map(m=>`
     <div class="method-card">
       <div style="display:flex;align-items:center;justify-content:space-between">
-        <div style="font-size:16px;font-weight:800">${m.emoji||'💳'} ${m.name}</div>
+        <div style="display:flex;align-items:center;gap:9px">
+          <div style="width:32px;height:32px;border-radius:9px;background:var(--bg3);border:1px solid var(--border2);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0">${m.logo?`<img src="${m.logo}" style="width:100%;height:100%;object-fit:cover">`:(m.emoji||'💳')}</div>
+          <div style="font-size:16px;font-weight:800">${m.name}</div>
+        </div>
         <label class="toggle"><input type="checkbox" ${m.enabled?'checked':''} onchange="toggleMethod('${m.id}',this.checked)"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
       </div>
       <div style="font-size:11px;color:var(--text3)">${m.enabled?'🟢 Enabled':'🔴 Disabled'} · Min deposit: ${fmtAmt(m.minDeposit)}</div>
       <div>
         <div style="font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Account / Wallet (Users will see this)</div>
         <input type="text" value="${m.number||''}" style="width:100%;padding:9px 12px;background:rgba(255,255,255,.04);border:1px solid var(--border2);border-radius:var(--radius);color:var(--text);font-family:monospace;font-size:13px;font-weight:700;outline:none" onchange="updateMethod('${m.id}','number',this.value)">
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Update Logo Image</div>
+        <input type="file" accept="image/*" style="width:100%;font-size:11px" onchange="updateMethodLogo('${m.id}',this)">
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
         <div>
@@ -1487,16 +1711,22 @@ function renderMethods() {
       <button class="btn btn-danger btn-sm" style="width:100%" onclick="deleteMethod('${m.id}')"><i class="ti ti-trash"></i> Remove Method</button>
     </div>`).join('')||'<div class="card" style="text-align:center;color:var(--text3);padding:24px">No payment methods. Add one above.</div>';
 }
-async function toggleMethod(id,val){const fb=window._fb;if(!fb)return;await fb.updateDoc(fb.doc(fb.db,'paymentMethods',id),{enabled:val}).catch(()=>{});const m=S.methods.find(x=>x.id===id);showToast(`${m?.name||'Method'} ${val?'enabled':'disabled'}`,val?'success':'warn');}
-async function updateMethod(id,field,val){const fb=window._fb;if(!fb)return;await fb.updateDoc(fb.doc(fb.db,'paymentMethods',id),{[field]:val}).catch(()=>{});showToast('Saved','success');}
-async function deleteMethod(id){if(!confirm('Remove this payment method?'))return;const fb=window._fb;if(!fb)return;await fb.deleteDoc(fb.doc(fb.db,'paymentMethods',id)).catch(()=>{});showToast('Method removed','warn');}
+async function toggleMethod(id,val){const fb=window._fb;if(!fb)return;await fb.updateDoc(fb.doc(fb.db,'paymentMethods',id),{enabled:val}).catch((e)=>{console.error(e);showToast('❌ Update failed','error');});const m=S.methods.find(x=>x.id===id);showToast(`${m?.name||'Method'} ${val?'enabled':'disabled'}`,val?'success':'warn');}
+async function updateMethod(id,field,val){const fb=window._fb;if(!fb)return;await fb.updateDoc(fb.doc(fb.db,'paymentMethods',id),{[field]:val}).catch((e)=>{console.error(e);showToast('❌ Save failed — check Firestore permissions','error');return;});showToast('Saved','success');}
+async function deleteMethod(id){if(!confirm('Remove this payment method?'))return;const fb=window._fb;if(!fb)return;await fb.deleteDoc(fb.doc(fb.db,'paymentMethods',id)).catch((e)=>{console.error(e);showToast('❌ Delete failed','error');});showToast('Method removed','warn');}
 async function addMethod(){
   const name=v('nmName'),emoji=v('nmEmoji')||'💳',number=v('nmNumber');
   if(!name||!number){showToast('Fill in all fields','error');return;}
   const fb=window._fb; if(!fb)return;
   const min=parseFloat($('nmMin').value)||1,depFee=parseFloat($('nmDepFee').value)||0,wdFee=parseFloat($('nmWdFee').value)||0;
-  await fb.addDoc(fb.collection(fb.db,'paymentMethods'),{name,emoji,number,minDeposit:min,depositFee:depFee,withdrawFee:wdFee,enabled:true}).catch(()=>{});
-  closeModal('addMethodModal'); showToast('✅ Payment method added!','success');
+  try{
+    await fb.addDoc(fb.collection(fb.db,'paymentMethods'),{name,emoji,logo:_nmLogoData||'',number,minDeposit:min,depositFee:depFee,withdrawFee:wdFee,enabled:true});
+    closeModal('addMethodModal');
+    _nmLogoData='';
+    const p=$('nmLogoPreview'); if(p) p.innerHTML='📷';
+    ['nmName','nmEmoji','nmNumber'].forEach(id=>{ if($(id)) $(id).value=''; });
+    showToast('✅ Payment method added!','success');
+  }catch(e){ console.error(e); showToast('❌ Add failed — check Firestore permissions','error'); }
 }
 
 // ===== TELEGRAM =====
@@ -1582,12 +1812,43 @@ function renderNotifs() {
 function readNotif(id){const n=S.adminNotifs.find(x=>x.id===id);if(n){n.read=true;updateBadges();renderNotifs();}}
 function markAllRead(){S.adminNotifs.forEach(n=>n.read=true);updateBadges();renderNotifs();showToast('All marked as read','info');}
 
-// ===== SETTINGS =====
+// ===== SETTINGS (writes to siteSettings/global — same path the User App reads) =====
 async function saveSettings() {
-  Object.assign(S.settings,{name:v('setName')||'WorkHive',minWd:parseFloat($('setMinWd').value)||5,minDep:parseFloat($('setMinDep').value)||1,fee:parseFloat($('setFee').value)||5,ref:parseFloat($('setRef').value)||0.5});
-  const fb=window._fb; if(fb) await fb.setDoc(fb.doc(fb.db,'settings','site'),S.settings).catch(()=>{});
-  addLog('⚙️ Settings updated','settings','green');
-  showToast('💾 Settings saved!','success');
+  Object.assign(S.settings,{
+    name:v('setName')||'WorkHive',
+    minWd:parseFloat($('setMinWd').value)||5,
+    minDep:parseFloat($('setMinDep').value)||1,
+    fee:parseFloat($('setFee').value)||5,
+    refGen1:parseFloat($('setRefGen1')?.value)||0,
+    refGen2:parseFloat($('setRefGen2')?.value)||0,
+    refGen3:parseFloat($('setRefGen3')?.value)||0,
+    supportEmail:v('setSupportEmail')||'support@workhive.app',
+    supportHours:v('setSupportHours')||'9 AM – 11 PM',
+    supportResponse:v('setSupportResponse')||'Within 12 hours',
+    banner:v('setBannerMsg'),
+    bannerType:$('setBannerType')?.value||'info',
+    spinEnabled: $('toggleSpin')?.checked!==false,
+  });
+  const fb=window._fb; if(!fb){showToast('Firebase not ready','error');return;}
+  try{
+    await fb.setDoc(fb.doc(fb.db,'siteSettings','global'),{
+      name:S.settings.name,
+      minWithdraw:S.settings.minWd,
+      minDeposit:S.settings.minDep,
+      withdrawFee:S.settings.fee,
+      refGen1:S.settings.refGen1,
+      refGen2:S.settings.refGen2,
+      refGen3:S.settings.refGen3,
+      supportEmail:S.settings.supportEmail,
+      supportHours:S.settings.supportHours,
+      supportResponse:S.settings.supportResponse,
+      banner:S.settings.banner,
+      bannerType:S.settings.bannerType,
+      spinEnabled:S.settings.spinEnabled,
+    }, {merge:true});
+    addLog('⚙️ Settings updated (live on User App)','settings','green');
+    showToast('💾 Settings saved! User App-এ লাইভ আপডেট হয়েছে।','success');
+  }catch(e){ console.error(e); showToast('❌ Save failed — check Firestore permissions','error'); }
 }
 function saveSecurity() {
   const np=v('newPass'),nc=v('newCode');
