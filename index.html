@@ -337,6 +337,15 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
 /* ===== BALANCE CHIP ===== */
 .bal-chip{display:inline-flex;align-items:center;gap:5px;font-size:14px;font-weight:800;color:var(--teal)}
 
+/* ===== PROOF THUMB (admin task table) ===== */
+.proof-thumb-btn{display:inline-flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:4px 8px 4px 4px;cursor:pointer;transition:.15s}
+.proof-thumb-btn:hover{border-color:var(--green-border)}
+.proof-thumb-btn img{width:30px;height:30px;object-fit:cover;border-radius:6px;flex-shrink:0}
+.proof-modal-img{width:100%;max-height:360px;object-fit:contain;border-radius:var(--radius);background:#000;margin-bottom:10px;cursor:zoom-in}
+.img-lightbox{position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:500;display:none;align-items:center;justify-content:center;padding:24px;cursor:zoom-out}
+.img-lightbox.show{display:flex}
+.img-lightbox img{max-width:100%;max-height:100%;border-radius:8px}
+
 @media(max-width:1100px){.stats-grid{grid-template-columns:repeat(2,1fr)}.quick-actions{grid-template-columns:1fr 1fr}}
 @media(max-width:800px){.sidebar{display:none}.two-col,.three-col{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}}
 </style>
@@ -344,6 +353,7 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
 <body>
 
 <div class="toast" id="toast"></div>
+<div class="img-lightbox" id="imgLightbox" onclick="closeLightbox()"><img id="lightboxImg" src=""></div>
 
 <!-- ===== LOGIN ===== -->
 <div id="loginScreen">
@@ -601,7 +611,7 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
             </select>
           </div>
         </div>
-        <div class="alert warn"><i class="ti ti-alert-triangle"></i> Task approve করলেই Worker এর balance credit হবে। Reject করলে কোনো balance change হবে না।</div>
+        <div class="alert warn"><i class="ti ti-alert-triangle"></i> Task approve করলেই Worker এর balance credit হবে। Reject করলে কোনো balance change হবে না। Submission মুছে ফেললে (Delete) সংশ্লিষ্ট স্ক্রিনশটও Firebase Storage থেকে স্থায়ীভাবে মুছে যাবে।</div>
         <div class="card">
           <div class="tbl-wrap">
             <table>
@@ -906,18 +916,20 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
         </select>
       </div>
       <div class="field"><label>Submission Type</label>
-        <select id="pjType">
+        <select id="pjType" onchange="updatePjTypeUI()">
           <option value="proof">Proof Submission (text/screenshot info)</option>
           <option value="link">Direct Link Click Only</option>
+          <option value="dailylink">🔁 Daily Direct Link (Auto 24h Repeat)</option>
         </select>
       </div>
     </div>
-    <div class="field"><label>Direct Link (URL)</label><input type="text" id="pjLink" placeholder="https://example.com/your-task-link"></div>
+    <div class="field" id="pjLinkField"><label id="pjLinkLabel">Direct Link (URL)</label><input type="text" id="pjLink" placeholder="https://example.com/your-task-link"></div>
     <div class="field"><label>Instructions</label><textarea id="pjInstructions" rows="3" placeholder="Worker-দের জন্য ধাপে ধাপে নির্দেশনা লিখুন"></textarea></div>
     <div class="form-grid">
       <div class="field"><label>Reward per Task ($)</label><input type="number" id="pjReward" placeholder="0.10" step="0.01" min="0.01"></div>
-      <div class="field"><label>Worker Limit (slots)</label><input type="number" id="pjLimit" placeholder="100" min="1"></div>
+      <div class="field" id="pjLimitField"><label>Worker Limit (slots)</label><input type="number" id="pjLimit" placeholder="100" min="1"></div>
     </div>
+    <div class="alert info" id="pjDailyHint" style="display:none"><i class="ti ti-info-circle"></i> এই টাইপে কোনো Worker Limit নেই — সব ইউজার প্রতি ২৪ ঘণ্টায় একবার এই লিংক ভিজিট করে reward পাবে, এবং লিংকে ভিজিট করে ফিরে এলে balance অটোমেটিক যোগ হয়ে যাবে (কোনো proof review লাগবে না)।</div>
     <div class="field"><label>Target Country</label><input type="text" id="pjCountry" placeholder="Global / Bangladesh / ..." value="Global"></div>
     <div style="display:flex;gap:10px;margin-top:4px">
       <button class="btn btn-ghost" style="flex:1" onclick="closeModal('postJobModal')">Cancel</button>
@@ -952,6 +964,9 @@ import {
 import {
   getAuth, signInAnonymously, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import {
+  getStorage, ref as fbStorageRef, deleteObject
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
 const cfg = {
   apiKey: "AIzaSyCeA-269WRHJCehg9Z__tlre_EbZcfanlY",
@@ -964,7 +979,8 @@ const cfg = {
 const app = initializeApp(cfg);
 const db = getFirestore(app);
 const auth = getAuth(app);
-window._fb = { db, auth, collection, getDocs, doc, updateDoc, addDoc, onSnapshot, query, where, orderBy, serverTimestamp, increment, setDoc, deleteDoc, getDoc };
+const storage = getStorage(app);
+window._fb = { db, auth, storage, collection, getDocs, doc, updateDoc, addDoc, onSnapshot, query, where, orderBy, serverTimestamp, increment, setDoc, deleteDoc, getDoc, fbStorageRef, deleteObject };
 
 // IMPORTANT: The admin panel has no separate Firebase Authentication account of its own —
 // it only checks a local username/password/code stored in localStorage. Firestore Security
@@ -974,7 +990,8 @@ window._fb = { db, auth, collection, getDocs, doc, updateDoc, addDoc, onSnapshot
 // reach the user app — this was the main reason data wasn't syncing between the two panels.
 // Signing in anonymously gives the admin panel a valid `request.auth`, so make sure
 // "Anonymous" sign-in is enabled in Firebase Console > Authentication > Sign-in method,
-// and that your Firestore Rules allow access when `request.auth != null`.
+// and that your Firestore Rules (and Storage Rules — needed to delete proof screenshots)
+// allow access when `request.auth != null`.
 function fbSetStatus(text, ok) {
   const el = document.getElementById('fbStatus');
   if (!el) return;
@@ -1053,6 +1070,7 @@ function initAdmin() {
   updateClock(); setInterval(updateClock, 1000);
   addLog('🔐 Admin logged in', 'login', 'success');
   renderSignupChart(); renderSysStatus();
+  updatePjTypeUI();
   waitFb().then(() => { loadUsers(); listenJobs(); listenDeposits(); listenWithdrawals(); listenTasks(); listenMethods(); listenSettings(); });
   // load saved TG
   const t = ls('wha_tg_token'), ch = ls('wha_tg_chat');
@@ -1085,6 +1103,8 @@ function resizeImageFile(file, maxSize, callback) {
   };
   reader.readAsDataURL(file);
 }
+function openLightbox(url) { const lb=$('imgLightbox'); $('lightboxImg').src=url; lb.classList.add('show'); }
+function closeLightbox() { $('imgLightbox').classList.remove('show'); }
 
 // ===== NAVIGATION =====
 const pageNames = { dashboard:'Dashboard', users:'User Management', jobs:'Job Approvals', tasks:'Task Submissions', deposits:'Deposits', withdrawals:'Withdrawals', 'payment-methods':'Payment Methods', telegram:'Telegram Bot', broadcast:'Broadcast', notifications:'Notifications', settings:'Site Settings', logs:'Activity Logs' };
@@ -1372,11 +1392,12 @@ function renderJobs() {
   el.innerHTML=list.map(j=>{
     const u=findUser(j.postedBy);
     const isAdminJob = j.postedBy==='admin';
+    const isDaily = j.type==='dailylink';
     return `<div class="job-card ${j.status||'pending'}">
       <div class="job-poster">
         <div class="poster-av" style="${isAdminJob?'background:var(--purple)':''}">${isAdminJob?'🐝':initials(j.postedByName||'?')}</div>
         <div style="flex:1">
-          <div style="font-size:14px;font-weight:800">${j.postedByName||'Unknown'}${isAdminJob?' <span class="badge purple" style="margin-left:6px">Admin Posted</span>':''}</div>
+          <div style="font-size:14px;font-weight:800">${j.postedByName||'Unknown'}${isAdminJob?' <span class="badge purple" style="margin-left:6px">Admin Posted</span>':''}${isDaily?' <span class="badge teal" style="margin-left:6px">🔁 Daily Repeat</span>':''}</div>
           <div style="font-size:11.5px;color:var(--text3)">${j.postedByEmail||'—'}</div>
         </div>
         ${!isAdminJob?`<button class="btn btn-info btn-sm" onclick="viewPoster('${j.postedBy||''}')"><i class="ti ti-user"></i> Profile</button>`:''}
@@ -1391,15 +1412,15 @@ function renderJobs() {
           <div style="font-size:15px;font-weight:800;margin-bottom:6px">${j.title||'Untitled'}</div>
           <div style="font-size:12px;color:var(--text2);display:flex;flex-wrap:wrap;gap:10px">
             <span><i class="ti ti-category" style="font-size:13px;vertical-align:-1px"></i> ${j.category||'—'}</span>
-            <span><i class="ti ti-users" style="font-size:13px;vertical-align:-1px"></i> ${j.limit||0} workers</span>
+            <span><i class="ti ti-users" style="font-size:13px;vertical-align:-1px"></i> ${isDaily?'Unlimited (repeatable)':( (j.limit||0)+' workers')}</span>
             <span><i class="ti ti-world" style="font-size:13px;vertical-align:-1px"></i> ${j.country||'—'}</span>
-            <span>${j.filled||0}/${j.limit||0} filled</span>
+            <span>${isDaily?'🔁 24h cooldown per user':((j.filled||0)+'/'+(j.limit||0)+' filled')}</span>
           </div>
           <div style="font-size:11.5px;color:var(--text3);margin-top:4px"><i class="ti ti-calendar" style="font-size:12px;vertical-align:-1px"></i> ${j.submittedAt||'—'}</div>
         </div>
         <div style="text-align:right;flex-shrink:0">
           <div style="font-size:22px;font-weight:900;color:var(--teal)">+${fmtAmt(j.reward)}</div>
-          <div style="font-size:10.5px;color:var(--text3)">per task</div>
+          <div style="font-size:10.5px;color:var(--text3)">${isDaily?'per visit / 24h':'per task'}</div>
           <span class="badge ${j.status==='pending'?'amber':j.status==='approved'?'green':'red'}" style="margin-top:6px">${j.status||'pending'}</span>
         </div>
       </div>
@@ -1442,12 +1463,25 @@ async function deleteJob(id, title) {
 }
 
 // ===== POST NEW JOB (Admin) =====
+function updatePjTypeUI() {
+  const type = $('pjType')?.value;
+  const limitField = $('pjLimitField');
+  const linkLabel = $('pjLinkLabel');
+  const dailyHint = $('pjDailyHint');
+  const isDaily = type === 'dailylink';
+  if (limitField) limitField.style.display = isDaily ? 'none' : '';
+  if (dailyHint) dailyHint.style.display = isDaily ? 'flex' : 'none';
+  if (linkLabel) linkLabel.textContent = (isDaily || type==='link') ? 'Direct Link (URL) — Required' : 'Direct Link (URL)';
+}
 async function postJob() {
   const title=v('pjTitle'), category=$('pjCategory').value, type=$('pjType').value, link=v('pjLink'), instructions=v('pjInstructions'), country=v('pjCountry')||'Global';
-  const reward=parseFloat($('pjReward').value)||0, limit=parseInt($('pjLimit').value)||0;
+  const reward=parseFloat($('pjReward').value)||0;
+  let limit=parseInt($('pjLimit').value)||0;
   if(!title){showToast('Job Title দিন','error');return;}
   if(!reward||reward<=0){showToast('সঠিক Reward amount দিন','error');return;}
-  if(!limit||limit<=0){showToast('সঠিক Worker Limit দিন','error');return;}
+  if((type==='link'||type==='dailylink')&&!link){showToast('Direct Link (URL) দিন','error');return;}
+  if(type==='dailylink'){ limit = 999999; }
+  else if(!limit||limit<=0){showToast('সঠিক Worker Limit দিন','error');return;}
   const fb=window._fb; if(!fb){showToast('Firebase not ready','error');return;}
   try{
     await fb.addDoc(fb.collection(fb.db,'jobs'),{
@@ -1462,8 +1496,10 @@ async function postJob() {
     if($('pjCountry')) $('pjCountry').value='Global';
     if($('pjReward')) $('pjReward').value='';
     if($('pjLimit')) $('pjLimit').value='';
-    addLog(`🆕 Admin posted new job: "${title}" (+${fmtAmt(reward)}/task, ${limit} slots)`,'job','green');
-    addAdminNotif('🆕 New Job Posted', `"${title}" is now live for ${limit} workers.`, 'success');
+    if($('pjType')) { $('pjType').value='proof'; updatePjTypeUI(); }
+    const typeLabel = type==='dailylink' ? ' (🔁 Daily 24h Repeat Link)' : type==='link' ? ' (Direct Link)' : '';
+    addLog(`🆕 Admin posted new job: "${title}"${typeLabel} (+${fmtAmt(reward)}${type==='dailylink'?'/visit':'/task'}${type==='dailylink'?'':', '+limit+' slots'})`,'job','green');
+    addAdminNotif('🆕 New Job Posted', `"${title}" is now live${type==='dailylink'?' as a daily-repeat link task':' for '+limit+' workers'}.`, 'success');
     showToast('✅ Job posted and is now live for workers!','success');
   }catch(e){ console.error(e); showToast('❌ Post failed — check Firestore permissions','error'); }
 }
@@ -1472,7 +1508,18 @@ async function postJob() {
 function filterTasks(val) { S.taskFilter=val; renderTasks(); }
 function renderTasks() {
   const list=S.taskFilter==='all'?S.tasks:S.tasks.filter(t=>t.status===S.taskFilter);
-  $('taskTbody').innerHTML=list.map(t=>`
+  $('taskTbody').innerHTML=list.map(t=>{
+    let proofCell;
+    if (t.proofImageUrl) {
+      proofCell = `<div class="proof-thumb-btn" onclick="viewProof('${t.id}')"><img src="${t.proofImageUrl}" alt="proof"><span style="font-size:11px;font-weight:700;color:var(--text2)"><i class="ti ti-photo" style="font-size:13px;vertical-align:-2px"></i> View</span></div>`;
+    } else if (t.proofText) {
+      proofCell = `<button class="btn btn-ghost btn-xs" onclick="viewProof('${t.id}')"><i class="ti ti-eye"></i> View Proof</button>`;
+    } else if (t.proofType==='dailylink' || t.proofType==='auto') {
+      proofCell = `<span style="color:var(--teal);font-size:11px;font-weight:700"><i class="ti ti-bolt" style="font-size:13px;vertical-align:-2px"></i> Auto</span>`;
+    } else {
+      proofCell = '<span style="color:var(--text3);font-size:11px">Link task</span>';
+    }
+    return `
     <tr>
       <td>
         <div style="display:flex;align-items:center;gap:9px">
@@ -1481,22 +1528,28 @@ function renderTasks() {
         </div>
       </td>
       <td style="font-size:12.5px;font-weight:700;max-width:160px;overflow:hidden;text-overflow:ellipsis">${t.jobTitle||'—'}</td>
-      <td>${t.proofText?`<button class="btn btn-ghost btn-xs" onclick="viewProof('${t.id}')"><i class="ti ti-eye"></i> View Proof</button>`:'<span style="color:var(--text3);font-size:11px">Link task</span>'}</td>
+      <td>${proofCell}</td>
       <td style="color:var(--teal);font-weight:800">+${fmtAmt(t.reward)}</td>
       <td style="font-size:12px;color:var(--text2)">${t.date||'—'}</td>
       <td><span class="badge ${t.status==='approved'?'green':t.status==='pending'?'amber':'red'}">${t.status||'pending'}</span></td>
-      <td>${t.status==='pending'?`<div style="display:flex;gap:5px">
-        <button class="btn btn-approve btn-xs" onclick="approveTask('${t.id}')"><i class="ti ti-check"></i></button>
-        <button class="btn btn-danger btn-xs" onclick="openReject('task','${t.id}','${(t.jobTitle||'').replace(/'/g,"\\'")}')"><i class="ti ti-x"></i></button>
-      </div>`:'—'}</td>
-    </tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:24px">No task submissions</td></tr>';
+      <td>
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          ${t.status==='pending'?`<button class="btn btn-approve btn-xs" onclick="approveTask('${t.id}')"><i class="ti ti-check"></i></button>
+          <button class="btn btn-danger btn-xs" onclick="openReject('task','${t.id}','${(t.jobTitle||'').replace(/'/g,"\\'")}')"><i class="ti ti-x"></i></button>`:''}
+          <button class="btn btn-ghost btn-xs" title="Delete permanently (also removes screenshot from storage)" onclick="deleteTaskSubmission('${t.id}')"><i class="ti ti-trash" style="color:var(--red)"></i></button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:24px">No task submissions</td></tr>';
 }
 
 function viewProof(id) {
   const t=S.tasks.find(x=>x.id===id); if(!t)return;
   $('proofSub').textContent=(t.jobTitle||'—')+' · '+(t.workerName||'Unknown');
+  const imgHtml = t.proofImageUrl ? `<img class="proof-modal-img" src="${t.proofImageUrl}" onclick="openLightbox('${t.proofImageUrl}')">` : '';
   $('proofContent').innerHTML=`
-    <div class="proof-box"><div class="proof-lbl">Worker Proof</div>${t.proofText||'(no text provided)'}</div>
+    ${imgHtml}
+    <div class="proof-box"><div class="proof-lbl">Worker Note / Text</div>${t.proofText||'(no text provided)'}</div>
     <div class="detail-grid">
       <div class="detail-box"><div class="dl">Reward</div><div class="dv" style="color:var(--teal)">+${fmtAmt(t.reward)}</div></div>
       <div class="detail-box"><div class="dl">Category</div><div class="dv" style="font-size:13px">${t.category||'—'}</div></div>
@@ -1506,7 +1559,8 @@ function viewProof(id) {
     ${t.status==='pending'?`<div style="display:flex;gap:10px;margin-top:4px">
       <button class="btn btn-danger" style="flex:1" onclick="closeModal('proofModal');openReject('task','${t.id}','${(t.jobTitle||'').replace(/'/g,"\\'")}')"><i class="ti ti-x"></i> Reject</button>
       <button class="btn btn-approve" style="flex:1" onclick="closeModal('proofModal');approveTask('${t.id}')"><i class="ti ti-check"></i> Approve & Credit</button>
-    </div>`:`<div class="alert ${t.status==='approved'?'success':'danger'}"><i class="ti ti-${t.status==='approved'?'circle-check':'circle-x'}"></i> ${t.status==='approved'?'Already approved.':'Already rejected.'}</div>`}`;
+    </div>`:`<div class="alert ${t.status==='approved'?'success':'danger'}"><i class="ti ti-${t.status==='approved'?'circle-check':'circle-x'}"></i> ${t.status==='approved'?'Already approved.':'Already rejected.'}</div>`}
+    <button class="btn btn-ghost" style="width:100%;margin-top:8px;color:var(--red);border-color:rgba(239,68,68,.25)" onclick="closeModal('proofModal');deleteTaskSubmission('${t.id}')"><i class="ti ti-trash"></i> Delete Submission & Free Storage</button>`;
   openModal('proofModal');
 }
 
@@ -1521,6 +1575,29 @@ async function approveTask(id) {
     notifyUser(t.workerId,'✅ Task Approved!',`"${t.jobTitle}" proof approved — ${fmtAmt(t.reward)} added to your balance.`);
     showToast(`✅ Task approved — ${fmtAmt(t.reward)} credited`,'success');
   }catch(e){ console.error(e); showToast('❌ Approve failed — check Firestore permissions','error'); }
+}
+
+// Permanently delete a task submission doc AND its uploaded screenshot from
+// Firebase Storage (if any), so Storage usage doesn't keep growing. This does
+// NOT touch the user's balance — if the task was already approved & credited,
+// approve/reject that already happened stays as-is; this only clears the record + file.
+async function deleteTaskSubmission(id) {
+  const t=S.tasks.find(x=>x.id===id); if(!t)return;
+  const hasImg = !!t.proofImageUrl;
+  const warn = hasImg
+    ? `"${t.jobTitle||'this submission'}" — এই সাবমিশনটি ও এর স্ক্রিনশট Firebase Storage থেকে স্থায়ীভাবে মুছে ফেলতে চান?`
+    : `"${t.jobTitle||'this submission'}" সাবমিশনটি স্থায়ীভাবে মুছে ফেলতে চান?`;
+  if (!confirm(warn)) return;
+  const fb=window._fb; if(!fb)return;
+  try{
+    if (hasImg) {
+      try { await fb.deleteObject(fb.fbStorageRef(fb.storage, t.proofImageUrl)); }
+      catch(e){ console.warn('Storage file already removed or delete failed:', e); }
+    }
+    await fb.deleteDoc(fb.doc(fb.db,'taskSubmissions',id));
+    addLog(`🗑️ Submission deleted: ${t.workerName||'Unknown'} — "${t.jobTitle||''}"${hasImg?' (screenshot removed from Storage)':''}`,'job','red');
+    showToast(hasImg?'🗑️ Submission & screenshot deleted':'🗑️ Submission deleted','warn');
+  }catch(e){ console.error(e); showToast('❌ Delete failed — check Firestore/Storage permissions','error'); }
 }
 
 // ===== RENDER: DEPOSITS =====
