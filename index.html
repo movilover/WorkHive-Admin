@@ -346,6 +346,19 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
 .img-lightbox.show{display:flex}
 .img-lightbox img{max-width:100%;max-height:100%;border-radius:8px}
 
+/* ===== MULTI-LINK INPUT ROWS (job posting) ===== */
+.link-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+.link-row input{flex:1}
+.link-row .link-num{width:22px;height:22px;border-radius:6px;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;color:var(--text3);flex-shrink:0}
+.link-row-remove{width:34px;height:34px;border-radius:var(--radius);background:var(--red-bg);border:1px solid var(--red-border);color:var(--red);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:.15s}
+.link-row-remove:hover{background:var(--red);color:#fff}
+
+/* ===== MULTI-SCREENSHOT PROOF DISPLAY (admin task review) ===== */
+.proof-shots-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:10px}
+.proof-shot-item{position:relative}
+.proof-shot-item img{width:100%;height:120px;object-fit:cover;border-radius:var(--radius);background:#000;cursor:zoom-in;border:1px solid var(--border)}
+.proof-shot-label{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.7);color:#fff;font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:6px}
+
 @media(max-width:1100px){.stats-grid{grid-template-columns:repeat(2,1fr)}.quick-actions{grid-template-columns:1fr 1fr}}
 @media(max-width:800px){.sidebar{display:none}.two-col,.three-col{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}}
 </style>
@@ -923,13 +936,23 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
         </select>
       </div>
     </div>
-    <div class="field" id="pjLinkField"><label id="pjLinkLabel">Direct Link (URL)</label><input type="text" id="pjLink" placeholder="https://example.com/your-task-link"></div>
+    <div class="field" id="pjLinkField">
+      <label id="pjLinkLabel">Direct Link(s) (URL)</label>
+      <div id="pjLinksList"></div>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="addLinkField()"><i class="ti ti-plus"></i> Add Another Link</button>
+      <div class="lf-hint" id="pjLinkHint">একাধিক লিংক দিলে Worker-কে সবগুলো লিংকই ভিজিট করতে হবে।</div>
+    </div>
     <div class="field"><label>Instructions</label><textarea id="pjInstructions" rows="3" placeholder="Worker-দের জন্য ধাপে ধাপে নির্দেশনা লিখুন"></textarea></div>
     <div class="form-grid">
       <div class="field"><label>Reward per Task ($)</label><input type="number" id="pjReward" placeholder="0.10" step="0.01" min="0.01"></div>
       <div class="field" id="pjLimitField"><label>Worker Limit (slots)</label><input type="number" id="pjLimit" placeholder="100" min="1"></div>
     </div>
-    <div class="alert info" id="pjDailyHint" style="display:none"><i class="ti ti-info-circle"></i> এই টাইপে কোনো Worker Limit নেই — সব ইউজার প্রতি ২৪ ঘণ্টায় একবার এই লিংক ভিজিট করে reward পাবে, এবং লিংকে ভিজিট করে ফিরে এলে balance অটোমেটিক যোগ হয়ে যাবে (কোনো proof review লাগবে না)।</div>
+    <div class="field" id="pjShotsField" style="display:none">
+      <label>Number of Screenshots Required</label>
+      <input type="number" id="pjShots" value="1" min="1" max="6">
+      <div class="lf-hint">Worker App-এ এই সংখ্যক আলাদা "Screenshot 1, Screenshot 2…" আপলোড বক্স দেখাবে — সবগুলো না দিলে Submit করা যাবে না।</div>
+    </div>
+    <div class="alert info" id="pjDailyHint" style="display:none"><i class="ti ti-info-circle"></i> এই টাইপে কোনো Worker Limit নেই — সব ইউজার প্রতি ২৪ ঘণ্টায় একবার এই লিংক(গুলো) ভিজিট করে reward পাবে, এবং লিংকে ভিজিট করে ফিরে এলে balance অটোমেটিক যোগ হয়ে যাবে (কোনো proof review লাগবে না)।</div>
     <div class="field"><label>Target Country</label><input type="text" id="pjCountry" placeholder="Global / Bangladesh / ..." value="Global"></div>
     <div style="display:flex;gap:10px;margin-top:4px">
       <button class="btn btn-ghost" style="flex:1" onclick="closeModal('postJobModal')">Cancel</button>
@@ -1070,6 +1093,7 @@ function initAdmin() {
   updateClock(); setInterval(updateClock, 1000);
   addLog('🔐 Admin logged in', 'login', 'success');
   renderSignupChart(); renderSysStatus();
+  addLinkField(); // seed the first link input row
   updatePjTypeUI();
   waitFb().then(() => { loadUsers(); listenJobs(); listenDeposits(); listenWithdrawals(); listenTasks(); listenMethods(); listenSettings(); });
   // load saved TG
@@ -1385,6 +1409,10 @@ async function verifyKyc(id) {
 
 // ===== RENDER: JOBS =====
 function filterJobs(val) { S.jobFilter=val; renderJobs(); }
+function jobLinksOf(j) {
+  if (Array.isArray(j.links) && j.links.length) return j.links.filter(Boolean);
+  return j.link ? [j.link] : [];
+}
 function renderJobs() {
   const list=S.jobFilter==='all'?S.jobs:S.jobs.filter(j=>j.status===S.jobFilter);
   const el=$('jobList');
@@ -1393,11 +1421,13 @@ function renderJobs() {
     const u=findUser(j.postedBy);
     const isAdminJob = j.postedBy==='admin';
     const isDaily = j.type==='dailylink';
+    const links = jobLinksOf(j);
+    const shots = j.type==='proof' ? (j.screenshotCount||1) : 0;
     return `<div class="job-card ${j.status||'pending'}">
       <div class="job-poster">
         <div class="poster-av" style="${isAdminJob?'background:var(--purple)':''}">${isAdminJob?'🐝':initials(j.postedByName||'?')}</div>
         <div style="flex:1">
-          <div style="font-size:14px;font-weight:800">${j.postedByName||'Unknown'}${isAdminJob?' <span class="badge purple" style="margin-left:6px">Admin Posted</span>':''}${isDaily?' <span class="badge teal" style="margin-left:6px">🔁 Daily Repeat</span>':''}</div>
+          <div style="font-size:14px;font-weight:800">${j.postedByName||'Unknown'}${isAdminJob?' <span class="badge purple" style="margin-left:6px">Admin Posted</span>':''}${isDaily?' <span class="badge teal" style="margin-left:6px">🔁 Daily Repeat</span>':''}${shots>1?` <span class="badge blue" style="margin-left:6px">📸 ${shots} Screenshots</span>`:''}${links.length>1?` <span class="badge amber" style="margin-left:6px">🔗 ${links.length} Links</span>`:''}</div>
           <div style="font-size:11.5px;color:var(--text3)">${j.postedByEmail||'—'}</div>
         </div>
         ${!isAdminJob?`<button class="btn btn-info btn-sm" onclick="viewPoster('${j.postedBy||''}')"><i class="ti ti-user"></i> Profile</button>`:''}
@@ -1425,7 +1455,7 @@ function renderJobs() {
         </div>
       </div>
       <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:11px;font-size:12.5px;color:var(--text2);margin-bottom:12px;line-height:1.6">${j.instructions||'(no instructions)'}</div>
-      ${j.link?`<div style="font-size:12px;color:var(--blue);margin-bottom:10px"><i class="ti ti-link" style="font-size:13px;vertical-align:-1px"></i> <a href="${j.link}" target="_blank" style="color:var(--blue)">${j.link}</a></div>`:''}
+      ${links.length?`<div style="margin-bottom:10px">${links.map((lnk,i)=>`<div style="font-size:12px;color:var(--blue);margin-bottom:4px"><i class="ti ti-link" style="font-size:13px;vertical-align:-1px"></i> ${links.length>1?`<b>Link ${i+1}:</b> `:''}<a href="${lnk}" target="_blank" style="color:var(--blue)">${lnk}</a></div>`).join('')}</div>`:''}
       ${j.rejectReason?`<div class="alert danger"><i class="ti ti-alert-circle"></i> Rejection: ${j.rejectReason}</div>`:''}
       ${j.status==='pending'?`<div style="display:flex;gap:10px">
         <button class="btn btn-approve" style="flex:1" onclick="approveJob('${j.id}')"><i class="ti ti-check"></i> Approve & Publish</button>
@@ -1463,42 +1493,97 @@ async function deleteJob(id, title) {
 }
 
 // ===== POST NEW JOB (Admin) =====
+
+// Dynamic multi-link input rows. Each row: [Link N] [input] [remove ✕ if >1 row]
+let _linkFieldCount = 0;
+function addLinkField(prefillValue) {
+  _linkFieldCount++;
+  const idx = _linkFieldCount;
+  const wrap = document.createElement('div');
+  wrap.className = 'link-row';
+  wrap.id = 'linkRow' + idx;
+  wrap.innerHTML = `
+    <div class="link-num">${idx}</div>
+    <input type="text" class="pj-link-input" placeholder="https://example.com/link-${idx}" value="${prefillValue?prefillValue.replace(/"/g,'&quot;'):''}">
+    <div class="link-row-remove" onclick="removeLinkField(${idx})" title="Remove this link"><i class="ti ti-x"></i></div>`;
+  $('pjLinksList').appendChild(wrap);
+  renumberLinkFields();
+}
+function removeLinkField(idx) {
+  const list = $('pjLinksList');
+  if (list.children.length <= 1) { showToast('অন্তত একটি লিংক থাকতে হবে', 'warn'); return; }
+  const row = $('linkRow' + idx);
+  if (row) row.remove();
+  renumberLinkFields();
+}
+function renumberLinkFields() {
+  const rows = $('pjLinksList').querySelectorAll('.link-row');
+  rows.forEach((row, i) => {
+    const numEl = row.querySelector('.link-num');
+    if (numEl) numEl.textContent = i + 1;
+    const inp = row.querySelector('.pj-link-input');
+    if (inp) inp.placeholder = `https://example.com/link-${i+1}`;
+    const rem = row.querySelector('.link-row-remove');
+    if (rem) rem.style.display = rows.length > 1 ? 'flex' : 'none';
+  });
+}
+function getAllLinkInputs() {
+  return Array.from($('pjLinksList').querySelectorAll('.pj-link-input')).map(i => i.value.trim()).filter(Boolean);
+}
+function resetLinkFields() {
+  $('pjLinksList').innerHTML = '';
+  _linkFieldCount = 0;
+  addLinkField();
+}
+
 function updatePjTypeUI() {
   const type = $('pjType')?.value;
   const limitField = $('pjLimitField');
   const linkLabel = $('pjLinkLabel');
   const dailyHint = $('pjDailyHint');
+  const shotsField = $('pjShotsField');
   const isDaily = type === 'dailylink';
+  const isProof = type === 'proof';
   if (limitField) limitField.style.display = isDaily ? 'none' : '';
   if (dailyHint) dailyHint.style.display = isDaily ? 'flex' : 'none';
-  if (linkLabel) linkLabel.textContent = (isDaily || type==='link') ? 'Direct Link (URL) — Required' : 'Direct Link (URL)';
+  if (shotsField) shotsField.style.display = isProof ? '' : 'none';
+  if (linkLabel) linkLabel.textContent = (isDaily || type==='link') ? 'Direct Link(s) (URL) — Required' : 'Direct Link(s) (URL) — Optional Reference';
 }
 async function postJob() {
-  const title=v('pjTitle'), category=$('pjCategory').value, type=$('pjType').value, link=v('pjLink'), instructions=v('pjInstructions'), country=v('pjCountry')||'Global';
+  const title=v('pjTitle'), category=$('pjCategory').value, type=$('pjType').value, instructions=v('pjInstructions'), country=v('pjCountry')||'Global';
   const reward=parseFloat($('pjReward').value)||0;
+  const links = getAllLinkInputs();
+  const screenshotCount = type==='proof' ? Math.max(1, Math.min(6, parseInt($('pjShots').value)||1)) : 1;
   let limit=parseInt($('pjLimit').value)||0;
   if(!title){showToast('Job Title দিন','error');return;}
   if(!reward||reward<=0){showToast('সঠিক Reward amount দিন','error');return;}
-  if((type==='link'||type==='dailylink')&&!link){showToast('Direct Link (URL) দিন','error');return;}
+  if((type==='link'||type==='dailylink')&&!links.length){showToast('অন্তত একটি Direct Link দিন','error');return;}
   if(type==='dailylink'){ limit = 999999; }
   else if(!limit||limit<=0){showToast('সঠিক Worker Limit দিন','error');return;}
   const fb=window._fb; if(!fb){showToast('Firebase not ready','error');return;}
   try{
     await fb.addDoc(fb.collection(fb.db,'jobs'),{
-      title, category, type, link, instructions, reward, limit, filled:0, country,
+      title, category, type,
+      links,                              // ← full array of links (new)
+      link: links[0] || '',               // ← kept for backward compatibility with older code paths
+      instructions, reward, limit, filled:0, country,
+      screenshotCount,                    // ← how many screenshot slots the worker app must show
       postedBy:'admin', postedByName:'WorkHive Admin', postedByEmail:'admin@workhive.app',
       status:'approved',
       submittedAt:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),
       _ts:Date.now(), createdAt: fb.serverTimestamp()
     });
     closeModal('postJobModal');
-    ['pjTitle','pjLink','pjInstructions'].forEach(id=>{ if($(id)) $(id).value=''; });
+    ['pjTitle','pjInstructions'].forEach(id=>{ if($(id)) $(id).value=''; });
+    resetLinkFields();
     if($('pjCountry')) $('pjCountry').value='Global';
     if($('pjReward')) $('pjReward').value='';
     if($('pjLimit')) $('pjLimit').value='';
+    if($('pjShots')) $('pjShots').value='1';
     if($('pjType')) { $('pjType').value='proof'; updatePjTypeUI(); }
     const typeLabel = type==='dailylink' ? ' (🔁 Daily 24h Repeat Link)' : type==='link' ? ' (Direct Link)' : '';
-    addLog(`🆕 Admin posted new job: "${title}"${typeLabel} (+${fmtAmt(reward)}${type==='dailylink'?'/visit':'/task'}${type==='dailylink'?'':', '+limit+' slots'})`,'job','green');
+    const extraLabel = (links.length>1?` · ${links.length} links`:'') + (type==='proof'&&screenshotCount>1?` · ${screenshotCount} screenshots required`:'');
+    addLog(`🆕 Admin posted new job: "${title}"${typeLabel} (+${fmtAmt(reward)}${type==='dailylink'?'/visit':'/task'}${type==='dailylink'?'':', '+limit+' slots'})${extraLabel}`,'job','green');
     addAdminNotif('🆕 New Job Posted', `"${title}" is now live${type==='dailylink'?' as a daily-repeat link task':' for '+limit+' workers'}.`, 'success');
     showToast('✅ Job posted and is now live for workers!','success');
   }catch(e){ console.error(e); showToast('❌ Post failed — check Firestore permissions','error'); }
@@ -1506,12 +1591,17 @@ async function postJob() {
 
 // ===== RENDER: TASKS =====
 function filterTasks(val) { S.taskFilter=val; renderTasks(); }
+function proofImagesOf(t) {
+  if (Array.isArray(t.proofImageUrls) && t.proofImageUrls.length) return t.proofImageUrls.filter(Boolean);
+  return t.proofImageUrl ? [t.proofImageUrl] : [];
+}
 function renderTasks() {
   const list=S.taskFilter==='all'?S.tasks:S.tasks.filter(t=>t.status===S.taskFilter);
   $('taskTbody').innerHTML=list.map(t=>{
+    const imgs = proofImagesOf(t);
     let proofCell;
-    if (t.proofImageUrl) {
-      proofCell = `<div class="proof-thumb-btn" onclick="viewProof('${t.id}')"><img src="${t.proofImageUrl}" alt="proof"><span style="font-size:11px;font-weight:700;color:var(--text2)"><i class="ti ti-photo" style="font-size:13px;vertical-align:-2px"></i> View</span></div>`;
+    if (imgs.length) {
+      proofCell = `<div class="proof-thumb-btn" onclick="viewProof('${t.id}')"><img src="${imgs[0]}" alt="proof"><span style="font-size:11px;font-weight:700;color:var(--text2)"><i class="ti ti-photo" style="font-size:13px;vertical-align:-2px"></i> ${imgs.length>1?imgs.length+' photos':'View'}</span></div>`;
     } else if (t.proofText) {
       proofCell = `<button class="btn btn-ghost btn-xs" onclick="viewProof('${t.id}')"><i class="ti ti-eye"></i> View Proof</button>`;
     } else if (t.proofType==='dailylink' || t.proofType==='auto') {
@@ -1546,9 +1636,14 @@ function renderTasks() {
 function viewProof(id) {
   const t=S.tasks.find(x=>x.id===id); if(!t)return;
   $('proofSub').textContent=(t.jobTitle||'—')+' · '+(t.workerName||'Unknown');
-  const imgHtml = t.proofImageUrl ? `<img class="proof-modal-img" src="${t.proofImageUrl}" onclick="openLightbox('${t.proofImageUrl}')">` : '';
+  const imgs = proofImagesOf(t);
+  const imgsHtml = imgs.length
+    ? (imgs.length===1
+        ? `<img class="proof-modal-img" src="${imgs[0]}" onclick="openLightbox('${imgs[0]}')">`
+        : `<div class="proof-shots-grid">${imgs.map((u,i)=>`<div class="proof-shot-item"><span class="proof-shot-label">Screenshot ${i+1}</span><img src="${u}" onclick="openLightbox('${u}')"></div>`).join('')}</div>`)
+    : '';
   $('proofContent').innerHTML=`
-    ${imgHtml}
+    ${imgsHtml}
     <div class="proof-box"><div class="proof-lbl">Worker Note / Text</div>${t.proofText||'(no text provided)'}</div>
     <div class="detail-grid">
       <div class="detail-box"><div class="dl">Reward</div><div class="dv" style="color:var(--teal)">+${fmtAmt(t.reward)}</div></div>
@@ -1577,26 +1672,30 @@ async function approveTask(id) {
   }catch(e){ console.error(e); showToast('❌ Approve failed — check Firestore permissions','error'); }
 }
 
-// Permanently delete a task submission doc AND its uploaded screenshot from
+// Permanently delete a task submission doc AND its uploaded screenshot(s) from
 // Firebase Storage (if any), so Storage usage doesn't keep growing. This does
 // NOT touch the user's balance — if the task was already approved & credited,
-// approve/reject that already happened stays as-is; this only clears the record + file.
+// approve/reject that already happened stays as-is; this only clears the record + file(s).
 async function deleteTaskSubmission(id) {
   const t=S.tasks.find(x=>x.id===id); if(!t)return;
-  const hasImg = !!t.proofImageUrl;
+  const imgs = proofImagesOf(t);
+  const hasImg = imgs.length>0;
   const warn = hasImg
-    ? `"${t.jobTitle||'this submission'}" — এই সাবমিশনটি ও এর স্ক্রিনশট Firebase Storage থেকে স্থায়ীভাবে মুছে ফেলতে চান?`
+    ? `"${t.jobTitle||'this submission'}" — এই সাবমিশনটি ও এর ${imgs.length>1?imgs.length+'টি স্ক্রিনশট':'স্ক্রিনশট'} Firebase Storage থেকে স্থায়ীভাবে মুছে ফেলতে চান?`
     : `"${t.jobTitle||'this submission'}" সাবমিশনটি স্থায়ীভাবে মুছে ফেলতে চান?`;
   if (!confirm(warn)) return;
   const fb=window._fb; if(!fb)return;
   try{
-    if (hasImg) {
-      try { await fb.deleteObject(fb.fbStorageRef(fb.storage, t.proofImageUrl)); }
-      catch(e){ console.warn('Storage file already removed or delete failed:', e); }
+    // NOTE: proof images may now live on Cloudinary (external URLs) instead of
+    // Firebase Storage — deleteObject() only works for actual Firebase Storage
+    // refs, so any Cloudinary URL is simply skipped here (harmless no-op).
+    for (const url of imgs) {
+      try { await fb.deleteObject(fb.fbStorageRef(fb.storage, url)); }
+      catch(e){ /* not a Firebase Storage URL (e.g. Cloudinary) or already removed — ignore */ }
     }
     await fb.deleteDoc(fb.doc(fb.db,'taskSubmissions',id));
-    addLog(`🗑️ Submission deleted: ${t.workerName||'Unknown'} — "${t.jobTitle||''}"${hasImg?' (screenshot removed from Storage)':''}`,'job','red');
-    showToast(hasImg?'🗑️ Submission & screenshot deleted':'🗑️ Submission deleted','warn');
+    addLog(`🗑️ Submission deleted: ${t.workerName||'Unknown'} — "${t.jobTitle||''}"${hasImg?` (${imgs.length} screenshot${imgs.length>1?'s':''} cleared)`:''}`,'job','red');
+    showToast(hasImg?'🗑️ Submission & screenshot(s) deleted':'🗑️ Submission deleted','warn');
   }catch(e){ console.error(e); showToast('❌ Delete failed — check Firestore/Storage permissions','error'); }
 }
 
