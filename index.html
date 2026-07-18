@@ -56,31 +56,18 @@ a{color:inherit;text-decoration:none}
 /* ===== SHELL ===== */
 #adminShell{display:none;height:100vh;flex-direction:row;overflow:hidden}
 
-/* ===== SIDEBAR ===== */
-.sidebar{width:var(--sidebar);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;height:100vh}
-.sb-brand{padding:18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;cursor:pointer}
-.sb-icon{width:36px;height:36px;border-radius:10px;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
-.sb-name{font-size:15px;font-weight:800;color:var(--green)}
-.sb-sub{font-size:9.5px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:1px}
-.sb-nav{flex:1;overflow-y:auto;padding:8px 0}
-.sb-section{padding:10px 14px 4px;font-size:9.5px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.8px}
-.sb-item{display:flex;align-items:center;gap:10px;padding:8px 10px;margin:1px 6px;border-radius:var(--radius);cursor:pointer;transition:.15s;color:var(--text2);font-size:13px;font-weight:600;position:relative}
-.sb-item:hover{background:var(--bg3);color:var(--text)}
-.sb-item.active{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
-.sb-item i{font-size:17px;width:20px;text-align:center;flex-shrink:0}
-.sb-badge{margin-left:auto;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:800;background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
-.sb-badge.blue{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-border)}
-.sb-badge.green{background:var(--green-bg);color:var(--green);border-color:var(--green-border)}
-.sb-logout{padding:12px 14px;border-top:1px solid var(--border)}
-.btn-logout{width:100%;padding:9px;border-radius:var(--radius);background:var(--red-bg);border:1px solid var(--red-border);color:var(--red);font-weight:700;font-size:12.5px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;transition:.15s}
-.btn-logout:hover{background:var(--red);color:#fff}
+/* ===== SIDEBAR (retired — replaced by in-page Quick Menu, kept for legacy id targeting only) ===== */
+.sidebar{display:none !important}
 
 /* ===== MAIN ===== */
-.main-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.main-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;width:100%}
 
 /* ===== TOPBAR ===== */
 .topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:60px;flex-shrink:0}
 .tb-left{display:flex;align-items:center;gap:10px}
+.tb-brand{display:flex;align-items:center;gap:9px;cursor:pointer}
+.tb-brand-icon{width:32px;height:32px;border-radius:9px;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.tb-brand-name{font-size:14px;font-weight:800;color:var(--green)}
 .tb-breadcrumb{font-size:12px;color:var(--text3);display:flex;align-items:center;gap:6px}
 .tb-page{font-size:15px;font-weight:800;color:var(--text)}
 .tb-right{display:flex;align-items:center;gap:8px}
@@ -98,6 +85,22 @@ a{color:inherit;text-decoration:none}
 .screen{display:none}
 .screen.active{display:block;animation:fadeUp .2s ease}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ===== QUICK MENU (mobile-app style vertical nav list, shown on Dashboard) ===== */
+.qm-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;margin-bottom:20px}
+.qm-section-lbl{font-size:9.5px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;padding:12px 16px 6px}
+.qm-row{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;transition:.15s;border-bottom:1px solid var(--border)}
+.qm-row:last-child{border-bottom:none}
+.qm-row:hover{background:rgba(255,255,255,.02)}
+.qm-row:active{background:rgba(255,255,255,.04)}
+.qm-icon{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.qm-text{flex:1;min-width:0}
+.qm-label{font-size:13.5px;font-weight:700;color:var(--text)}
+.qm-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.qm-chev{font-size:16px;color:var(--text3);flex-shrink:0}
+.qm-badge{font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:20px;flex-shrink:0;background:var(--red-bg);color:var(--red);border:1px solid var(--red-border);display:none}
+.qm-badge.blue{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-border)}
+.qm-badge.show{display:inline-block}
 
 /* ===== DASHBOARD HERO ===== */
 .dash-hero{background:linear-gradient(135deg,rgba(34,197,94,0.06),rgba(59,130,246,0.04));border:1px solid var(--border2);border-radius:var(--r-xl);padding:24px 28px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
@@ -143,6 +146,20 @@ a{color:inherit;text-decoration:none}
 .sec-label{font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin:20px 0 10px;display:flex;align-items:center;gap:10px}
 .sec-label::after{content:'';flex:1;height:1px;background:var(--border)}
 
+/* ===== STATUS TABS (Withdrawals etc.) ===== */
+.status-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.status-tab{display:flex;align-items:center;gap:7px;padding:9px 14px;border-radius:var(--radius);background:var(--bg2);border:1px solid var(--border);cursor:pointer;font-size:12.5px;font-weight:700;color:var(--text2);transition:.15s}
+.status-tab:hover{border-color:var(--border3);color:var(--text)}
+.status-tab .stab-count{font-size:10.5px;font-weight:800;padding:1px 7px;border-radius:20px;background:var(--bg4);color:var(--text2)}
+.status-tab.active{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+.status-tab.active .stab-count{background:var(--green);color:#000}
+.status-tab[data-tab="processing"].active{background:var(--blue-bg);border-color:var(--blue-border);color:var(--blue)}
+.status-tab[data-tab="processing"].active .stab-count{background:var(--blue);color:#fff}
+.status-tab[data-tab="pending"].active{background:var(--amber-bg);border-color:var(--amber-border);color:var(--amber)}
+.status-tab[data-tab="pending"].active .stab-count{background:var(--amber);color:#000}
+.status-tab[data-tab="rejected"].active{background:var(--red-bg);border-color:var(--red-border);color:var(--red)}
+.status-tab[data-tab="rejected"].active .stab-count{background:var(--red);color:#fff}
+
 /* ===== CARD ===== */
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;margin-bottom:16px}
 .card-title{font-size:13.5px;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:8px;color:var(--text)}
@@ -184,6 +201,8 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
 .btn-warning:hover{background:var(--amber);color:#000}
 .btn-info{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border)}
 .btn-info:hover{background:var(--blue);color:#fff}
+.btn-message{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-border)}
+.btn-message:hover{background:var(--purple);color:#fff}
 
 /* ===== FORM ===== */
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -359,8 +378,12 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
 .proof-shot-item img{width:100%;height:120px;object-fit:cover;border-radius:var(--radius);background:#000;cursor:zoom-in;border:1px solid var(--border)}
 .proof-shot-label{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.7);color:#fff;font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:6px}
 
+/* ===== REJECT REASON DISPLAY (visible next to rejected items) ===== */
+.reject-reason-box{display:flex;gap:8px;align-items:flex-start;background:var(--red-bg);border:1px solid var(--red-border);border-radius:8px;padding:8px 10px;margin-top:6px;font-size:11.5px;color:var(--red);line-height:1.5}
+.reject-reason-box i{font-size:14px;margin-top:1px;flex-shrink:0}
+
 @media(max-width:1100px){.stats-grid{grid-template-columns:repeat(2,1fr)}.quick-actions{grid-template-columns:1fr 1fr}}
-@media(max-width:800px){.sidebar{display:none}.two-col,.three-col{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}}
+@media(max-width:800px){.two-col,.three-col{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.content-area{padding:16px}.topbar{padding:0 14px}}
 </style>
 </head>
 <body>
@@ -409,52 +432,13 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
 <!-- ===== ADMIN SHELL ===== -->
 <div id="adminShell">
 
-  <!-- Sidebar -->
-  <div class="sidebar">
-    <div class="sb-brand" onclick="goScreen('dashboard')">
-      <div class="sb-icon">🐝</div>
-      <div>
-        <div class="sb-name">WorkHive</div>
-        <div class="sb-sub">Admin Panel</div>
-      </div>
-    </div>
-    <div class="sb-nav">
-      <div class="sb-section">Overview</div>
-      <div class="sb-item active" onclick="goScreen('dashboard')" data-screen="dashboard"><i class="ti ti-layout-dashboard"></i> Dashboard</div>
-
-      <div class="sb-section">Users</div>
-      <div class="sb-item" onclick="goScreen('users')" data-screen="users"><i class="ti ti-users"></i> User Management <span class="sb-badge blue" id="nb-users">0</span></div>
-
-      <div class="sb-section">Jobs & Tasks</div>
-      <div class="sb-item" onclick="goScreen('jobs')" data-screen="jobs"><i class="ti ti-briefcase"></i> Job Approvals <span class="sb-badge" id="nb-jobs">0</span></div>
-      <div class="sb-item" onclick="goScreen('tasks')" data-screen="tasks"><i class="ti ti-checks"></i> Task Submissions <span class="sb-badge" id="nb-tasks">0</span></div>
-
-      <div class="sb-section">Finance</div>
-      <div class="sb-item" onclick="goScreen('deposits')" data-screen="deposits"><i class="ti ti-arrow-bar-to-down"></i> Deposits <span class="sb-badge" id="nb-deposits">0</span></div>
-      <div class="sb-item" onclick="goScreen('withdrawals')" data-screen="withdrawals"><i class="ti ti-arrow-bar-up"></i> Withdrawals <span class="sb-badge" id="nb-withdrawals">0</span></div>
-      <div class="sb-item" onclick="goScreen('payment-methods')" data-screen="payment-methods"><i class="ti ti-credit-card"></i> Payment Methods</div>
-
-      <div class="sb-section">Communication</div>
-      <div class="sb-item" onclick="goScreen('telegram')" data-screen="telegram"><i class="ti ti-brand-telegram"></i> Telegram Bot</div>
-      <div class="sb-item" onclick="goScreen('broadcast')" data-screen="broadcast"><i class="ti ti-speakerphone"></i> Broadcast</div>
-      <div class="sb-item" onclick="goScreen('notifications')" data-screen="notifications"><i class="ti ti-bell"></i> Notifications <span class="sb-badge" id="nb-notifs">0</span></div>
-
-      <div class="sb-section">System</div>
-      <div class="sb-item" onclick="goScreen('settings')" data-screen="settings"><i class="ti ti-settings"></i> Site Settings</div>
-      <div class="sb-item" onclick="goScreen('logs')" data-screen="logs"><i class="ti ti-file-description"></i> Activity Logs</div>
-      <div class="sb-item" onclick="exportUsers()"><i class="ti ti-download"></i> Export CSV</div>
-    </div>
-    <div class="sb-logout">
-      <button class="btn-logout" onclick="doLogout()"><i class="ti ti-logout" style="font-size:16px"></i> Logout</button>
-    </div>
-  </div>
-
   <!-- Main -->
   <div class="main-wrap">
     <div class="topbar">
       <div class="tb-left">
-        <div>
-          <div class="tb-breadcrumb">Admin <i class="ti ti-chevron-right" style="font-size:12px"></i> <span id="pageName">Dashboard</span></div>
+        <div class="tb-brand" onclick="goScreen('dashboard')">
+          <div class="tb-brand-icon">🐝</div>
+          <div class="tb-brand-name">WorkHive</div>
         </div>
       </div>
       <div class="tb-right">
@@ -484,6 +468,88 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
             <div class="hs-item"><div class="hs-val" id="hs-users">0</div><div class="hs-lbl">Users</div></div>
             <div class="hs-item"><div class="hs-val" id="hs-deposits">$0</div><div class="hs-lbl">Deposits</div></div>
             <div class="hs-item"><div class="hs-val" id="hs-jobs">0</div><div class="hs-lbl">Active Jobs</div></div>
+          </div>
+        </div>
+
+        <!-- ===== QUICK MENU — vertical, line-by-line, mobile-app style nav ===== -->
+        <div class="qm-wrap">
+          <div class="qm-section-lbl">Users</div>
+          <div class="qm-row" onclick="goScreen('users')">
+            <div class="qm-icon blue-bg" style="background:var(--blue-bg);color:var(--blue)"><i class="ti ti-users"></i></div>
+            <div class="qm-text"><div class="qm-label">User Management</div><div class="qm-sub">সকল ইউজার দেখুন, ব্যান/আনব্যান, KYC ভেরিফাই</div></div>
+            <span class="qm-badge blue" id="nb-users">0</span>
+            <i class="ti ti-chevron-right qm-chev"></i>
+          </div>
+
+          <div class="qm-section-lbl">Jobs & Tasks</div>
+          <div class="qm-row" onclick="goScreen('jobs')">
+            <div class="qm-icon" style="background:var(--purple-bg);color:var(--purple)"><i class="ti ti-briefcase"></i></div>
+            <div class="qm-text"><div class="qm-label">Job Approvals</div><div class="qm-sub">নতুন জব অনুমোদন বা রিজেক্ট করুন</div></div>
+            <span class="qm-badge" id="nb-jobs">0</span>
+            <i class="ti ti-chevron-right qm-chev"></i>
+          </div>
+          <div class="qm-row" onclick="goScreen('tasks')">
+            <div class="qm-icon" style="background:var(--teal-bg);color:var(--teal)"><i class="ti ti-checks"></i></div>
+            <div class="qm-text"><div class="qm-label">Task Submissions</div><div class="qm-sub">Worker-দের স্ক্রিনশট প্রুফ রিভিউ করুন</div></div>
+            <span class="qm-badge" id="nb-tasks">0</span>
+            <i class="ti ti-chevron-right qm-chev"></i>
+          </div>
+
+          <div class="qm-section-lbl">Finance</div>
+          <div class="qm-row" onclick="goScreen('deposits')">
+            <div class="qm-icon" style="background:var(--green-bg);color:var(--green)"><i class="ti ti-arrow-bar-to-down"></i></div>
+            <div class="qm-text"><div class="qm-label">Deposits</div><div class="qm-sub">ডিপোজিট রিকোয়েস্ট কনফার্ম করুন</div></div>
+            <span class="qm-badge" id="nb-deposits">0</span>
+            <i class="ti ti-chevron-right qm-chev"></i>
+          </div>
+          <div class="qm-row" onclick="goScreen('withdrawals')">
+            <div class="qm-icon" style="background:var(--amber-bg);color:var(--amber)"><i class="ti ti-arrow-bar-up"></i></div>
+            <div class="qm-text"><div class="qm-label">Withdrawals</div><div class="qm-sub">Pending, Processing, Completed, Rejected</div></div>
+            <span class="qm-badge" id="nb-withdrawals">0</span>
+            <i class="ti ti-chevron-right qm-chev"></i>
+          </div>
+          <div class="qm-row" onclick="goScreen('payment-methods')">
+            <div class="qm-icon" style="background:var(--bg4);color:var(--text2)"><i class="ti ti-credit-card"></i></div>
+            <div class="qm-text"><div class="qm-label">Payment Methods</div><div class="qm-sub">bKash, Nagad, USDT ইত্যাদি পরিচালনা</div></div>
+            <i class="ti ti-chevron-right qm-chev"></i>
+          </div>
+
+          <div class="qm-section-lbl">Communication</div>
+          <div class="qm-row" onclick="goScreen('telegram')">
+            <div class="qm-icon" style="background:var(--blue-bg);color:var(--blue)"><i class="ti ti-brand-telegram"></i></div>
+            <div class="qm-text"><div class="qm-label">Telegram Bot</div><div class="qm-sub">অটো-নোটিফিকেশন কনফিগার করুন</div></div>
+            <i class="ti ti-chevron-right qm-chev"></i>
+          </div>
+          <div class="qm-row" onclick="goScreen('broadcast')">
+            <div class="qm-icon" style="background:var(--pink-bg);color:var(--pink)"><i class="ti ti-speakerphone"></i></div>
+            <div class="qm-text"><div class="qm-label">Broadcast</div><div class="qm-sub">সব ইউজারকে মেসেজ পাঠান</div></div>
+            <i class="ti ti-chevron-right qm-chev"></i>
+          </div>
+          <div class="qm-row" onclick="goScreen('notifications')">
+            <div class="qm-icon" style="background:var(--red-bg);color:var(--red)"><i class="ti ti-bell"></i></div>
+            <div class="qm-text"><div class="qm-label">Notifications</div><div class="qm-sub">এডমিন নোটিফিকেশন দেখুন</div></div>
+            <span class="qm-badge" id="nb-notifs">0</span>
+            <i class="ti ti-chevron-right qm-chev"></i>
+          </div>
+
+          <div class="qm-section-lbl">System</div>
+          <div class="qm-row" onclick="goScreen('settings')">
+            <div class="qm-icon" style="background:var(--bg4);color:var(--text2)"><i class="ti ti-settings"></i></div>
+            <div class="qm-text"><div class="qm-label">Site Settings</div><div class="qm-sub">User App-এ লাইভ কনফিগার করুন</div></div>
+            <i class="ti ti-chevron-right qm-chev"></i>
+          </div>
+          <div class="qm-row" onclick="goScreen('logs')">
+            <div class="qm-icon" style="background:var(--bg4);color:var(--text2)"><i class="ti ti-file-description"></i></div>
+            <div class="qm-text"><div class="qm-label">Activity Logs</div><div class="qm-sub">সব এডমিন অ্যাকশনের হিস্টোরি</div></div>
+            <i class="ti ti-chevron-right qm-chev"></i>
+          </div>
+          <div class="qm-row" onclick="exportUsers()">
+            <div class="qm-icon" style="background:var(--bg4);color:var(--text2)"><i class="ti ti-download"></i></div>
+            <div class="qm-text"><div class="qm-label">Export CSV</div><div class="qm-sub">সব ইউজারের তথ্য ডাউনলোড করুন</div></div>
+          </div>
+          <div class="qm-row" onclick="doLogout()">
+            <div class="qm-icon" style="background:var(--red-bg);color:var(--red)"><i class="ti ti-logout"></i></div>
+            <div class="qm-text"><div class="qm-label" style="color:var(--red)">Logout</div></div>
           </div>
         </div>
 
@@ -615,16 +681,9 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
       <div class="screen" id="screen-tasks">
         <div class="sec-hd">
           <h2><button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')" style="margin-right:6px"><i class="ti ti-arrow-left"></i></button><i class="ti ti-checks"></i> Task Submissions</h2>
-          <div class="sec-actions">
-            <select class="styled-select" onchange="filterTasks(this.value)">
-              <option value="all">All</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-            </select>
-          </div>
         </div>
-        <div class="alert warn"><i class="ti ti-alert-triangle"></i> Task approve করলেই Worker এর balance credit হবে। Reject করলে কোনো balance change হবে না। Submission মুছে ফেললে (Delete) সংশ্লিষ্ট স্ক্রিনশটও Firebase Storage থেকে স্থায়ীভাবে মুছে যাবে।</div>
+        <div class="alert warn"><i class="ti ti-alert-triangle"></i> Task approve করলেই Worker এর balance credit হবে। Reject করলে কোনো balance change হবে না — 💬 আইকনে ক্লিক করে reason লিখলে সেটা Worker-এর নোটিফিকেশনে ও টাস্ক হিস্টোরিতে দেখাবে। Submission মুছে ফেললে (Delete) সংশ্লিষ্ট স্ক্রিনশটও Firebase Storage থেকে স্থায়ীভাবে মুছে যাবে।</div>
+        <div class="status-tabs" id="taskTabs"></div>
         <div class="card">
           <div class="tbl-wrap">
             <table>
@@ -639,16 +698,9 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
       <div class="screen" id="screen-deposits">
         <div class="sec-hd">
           <h2><button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')" style="margin-right:6px"><i class="ti ti-arrow-left"></i></button><i class="ti ti-arrow-bar-to-down"></i> Deposit Requests</h2>
-          <div class="sec-actions">
-            <select class="styled-select" onchange="filterDeposits(this.value)">
-              <option value="all">All</option>
-              <option value="pending">Pending</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="rejected">Rejected</option>
-            </select>
-          </div>
         </div>
-        <div class="alert danger"><i class="ti ti-lock"></i> শুধুমাত্র আপনার Confirm এর পরেই User এর Balance আপডেট হবে।</div>
+        <div class="alert danger"><i class="ti ti-lock"></i> শুধুমাত্র আপনার Confirm এর পরেই User এর Balance আপডেট হবে। 💬 আইকনে reason লিখে Reject করলে User নোটিফিকেশনে কারণ দেখতে পাবে।</div>
+        <div class="status-tabs" id="depositTabs"></div>
         <div class="card">
           <div class="tbl-wrap">
             <table>
@@ -664,7 +716,8 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
         <div class="sec-hd">
           <h2><button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')" style="margin-right:6px"><i class="ti ti-arrow-left"></i></button><i class="ti ti-arrow-bar-up"></i> Withdrawal Requests</h2>
         </div>
-        <div class="alert danger"><i class="ti ti-lock"></i> Withdrawal শুধুমাত্র আপনার Send/Complete করার পরেই সম্পন্ন হবে। Reject করলে Amount ফেরত যাবে।</div>
+        <div class="alert danger"><i class="ti ti-lock"></i> Withdrawal শুধুমাত্র আপনার Send/Complete করার পরেই সম্পন্ন হবে। Reject করলে Amount ফেরত যাবে এবং 💬 কারণ User-কে জানানো হবে।</div>
+        <div class="status-tabs" id="withdrawTabs"></div>
         <div class="card">
           <div class="tbl-wrap">
             <table>
@@ -872,10 +925,10 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
 <div class="modal-overlay" id="rejectModal">
   <div class="modal-box">
     <div class="modal-hd">
-      <div><div class="modal-title" id="rejectTitle">Reject</div><div class="modal-sub" id="rejectSub"></div></div>
+      <div><div class="modal-title" id="rejectTitle"><i class="ti ti-message-circle-2" style="vertical-align:-3px;color:var(--purple)"></i> Reject</div><div class="modal-sub" id="rejectSub"></div></div>
       <div class="modal-close" onclick="closeModal('rejectModal')"><i class="ti ti-x"></i></div>
     </div>
-    <div class="field"><label>Rejection Reason</label><textarea id="rejectReason" rows="3" placeholder="কারণ লিখুন — user দেখতে পাবে…"></textarea></div>
+    <div class="field"><label>Rejection Reason (User এটা দেখতে পাবে)</label><textarea id="rejectReason" rows="3" placeholder="যেমন: স্ক্রিনশট স্পষ্ট নয় / ভুল তথ্য / সময়সীমা পার হয়ে গেছে…"></textarea></div>
     <div style="display:flex;gap:10px;margin-top:8px">
       <button class="btn btn-ghost" style="flex:1" onclick="closeModal('rejectModal')">Cancel</button>
       <button class="btn btn-danger" style="flex:1" onclick="confirmReject()"><i class="ti ti-x"></i> Confirm Reject</button>
@@ -950,7 +1003,7 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
     <div class="field" id="pjShotsField" style="display:none">
       <label>Number of Screenshots Required</label>
       <input type="number" id="pjShots" value="1" min="1" max="6">
-      <div class="lf-hint">Worker App-এ এই সংখ্যক আলাদা "Screenshot 1, Screenshot 2…" আপলোড বক্স দেখাবে — সবগুলো না দিলে Submit করা যাবে না।</div>
+      <div class="lf-hint">Worker App-এ এই সংখ্যক আলাদা "Screenshot 1, Screenshot 2…" আপলোড বক্স দেখাবে — সবগুলো না দিলে Submit করা যাবে না। <strong>⚠️ User App-এ এখনো এই মাল্টি-স্ক্রিনশট আপলোড ফিচারটি যোগ করা প্রয়োজন — নিচের "ইউজার সাইট নোট" দেখুন।</strong></div>
     </div>
     <div class="alert info" id="pjDailyHint" style="display:none"><i class="ti ti-info-circle"></i> এই টাইপে কোনো Worker Limit নেই — সব ইউজার প্রতি ২৪ ঘণ্টায় একবার এই লিংক(গুলো) ভিজিট করে reward পাবে, এবং লিংকে ভিজিট করে ফিরে এলে balance অটোমেটিক যোগ হয়ে যাবে (কোনো proof review লাগবে না)।</div>
     <div class="field"><label>Target Country</label><input type="text" id="pjCountry" placeholder="Global / Bangladesh / ..." value="Global"></div>
@@ -1038,7 +1091,8 @@ onAuthStateChanged(auth, user => {
 const S = {
   users: [], jobs: [], deposits: [], withdrawals: [], tasks: [], methods: [],
   adminNotifs: [], logs: [],
-  jobFilter: 'all', depFilter: 'all', taskFilter: 'all',
+  jobFilter: 'all', depFilter: 'pending', taskFilter: 'pending',
+  wdFilter: 'pending',
   logFilter: 'all', userFilter: 'all',
   _rejectCtx: null, _balUid: null,
   tg: { token: '', chatId: '', connected: false },
@@ -1095,6 +1149,7 @@ function initAdmin() {
   renderSignupChart(); renderSysStatus();
   addLinkField(); // seed the first link input row
   updatePjTypeUI();
+  renderStatusTabs('withdrawTabs','wd'); renderStatusTabs('depositTabs','dep'); renderStatusTabs('taskTabs','task');
   waitFb().then(() => { loadUsers(); listenJobs(); listenDeposits(); listenWithdrawals(); listenTasks(); listenMethods(); listenSettings(); });
   // load saved TG
   const t = ls('wha_tg_token'), ch = ls('wha_tg_chat');
@@ -1135,10 +1190,44 @@ const pageNames = { dashboard:'Dashboard', users:'User Management', jobs:'Job Ap
 function goScreen(name) {
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   const sc = $('screen-'+name); if(sc) sc.classList.add('active');
-  document.querySelectorAll('.sb-item[data-screen]').forEach(i=>i.classList.remove('active'));
-  const si = document.querySelector(`.sb-item[data-screen="${name}"]`); if(si) si.classList.add('active');
-  $('pageName').textContent = pageNames[name]||name;
   window.scrollTo(0,0);
+}
+
+// ===== STATUS TABS (reusable for withdrawals / deposits / tasks) =====
+// kind: 'wd' -> S.withdrawals + S.wdFilter, 'dep' -> S.deposits + S.depFilter, 'task' -> S.tasks + S.taskFilter
+const TAB_DEFS = {
+  wd:   { list:'withdrawals', filterKey:'wdFilter',   render:'renderWithdrawals', tabs:[
+            {key:'pending',label:'Pending',icon:'ti-clock'},
+            {key:'processing',label:'Processing',icon:'ti-loader'},
+            {key:'completed',label:'Completed',icon:'ti-circle-check'},
+            {key:'rejected',label:'Rejected',icon:'ti-circle-x'}] },
+  dep:  { list:'deposits', filterKey:'depFilter', render:'renderDeposits', tabs:[
+            {key:'pending',label:'Pending',icon:'ti-clock'},
+            {key:'confirmed',label:'Confirmed',icon:'ti-circle-check'},
+            {key:'rejected',label:'Rejected',icon:'ti-circle-x'}] },
+  task: { list:'tasks', filterKey:'taskFilter', render:'renderTasks', tabs:[
+            {key:'pending',label:'Pending',icon:'ti-clock'},
+            {key:'approved',label:'Approved',icon:'ti-circle-check'},
+            {key:'rejected',label:'Rejected',icon:'ti-circle-x'}] },
+};
+function renderStatusTabs(containerId, kind) {
+  const def = TAB_DEFS[kind]; const el = $(containerId); if(!el||!def) return;
+  const list = S[def.list]||[];
+  const activeFilter = S[def.filterKey];
+  const allCount = list.length;
+  let html = `<div class="status-tab ${activeFilter==='all'?'active':''}" data-tab="all" onclick="setStatusFilter('${kind}','all')"><i class="ti ti-list"></i> All <span class="stab-count">${allCount}</span></div>`;
+  def.tabs.forEach(t=>{
+    const cnt = list.filter(x=>x.status===t.key).length;
+    html += `<div class="status-tab ${activeFilter===t.key?'active':''}" data-tab="${t.key}" onclick="setStatusFilter('${kind}','${t.key}')"><i class="ti ${t.icon}"></i> ${t.label} <span class="stab-count">${cnt}</span></div>`;
+  });
+  el.innerHTML = html;
+}
+function setStatusFilter(kind, val) {
+  const def = TAB_DEFS[kind];
+  S[def.filterKey] = val;
+  const containerId = kind==='wd'?'withdrawTabs':kind==='dep'?'depositTabs':'taskTabs';
+  renderStatusTabs(containerId, kind);
+  window[def.render]();
 }
 
 // ===== NOTIFY USER =====
@@ -1188,7 +1277,7 @@ function listenDeposits() {
     S.deposits = [];
     snap.forEach(d => S.deposits.push({id:d.id,...d.data()}));
     S.deposits.sort((a,b)=>(b._ts||0)-(a._ts||0));
-    renderDeposits(); renderDashDeposits(); updateStats(); updateBadges();
+    renderDeposits(); renderDashDeposits(); updateStats(); updateBadges(); renderStatusTabs('depositTabs','dep');
   }, (e)=>{console.warn('listenDeposits error (check Firestore Rules / Auth):',e);});
 }
 
@@ -1199,7 +1288,7 @@ function listenWithdrawals() {
     S.withdrawals = [];
     snap.forEach(d => S.withdrawals.push({id:d.id,...d.data()}));
     S.withdrawals.sort((a,b)=>(b._ts||0)-(a._ts||0));
-    renderWithdrawals(); renderDashWithdrawals(); updateStats(); updateBadges();
+    renderWithdrawals(); renderDashWithdrawals(); updateStats(); updateBadges(); renderStatusTabs('withdrawTabs','wd');
   }, (e)=>{console.warn('listenWithdrawals error (check Firestore Rules / Auth):',e);});
 }
 
@@ -1210,7 +1299,7 @@ function listenTasks() {
     S.tasks = [];
     snap.forEach(d => S.tasks.push({id:d.id,...d.data()}));
     S.tasks.sort((a,b)=>(b._ts||0)-(a._ts||0));
-    renderTasks(); updateStats(); updateBadges();
+    renderTasks(); updateStats(); updateBadges(); renderStatusTabs('taskTabs','task');
   }, (e)=>{console.warn('listenTasks error (check Firestore Rules / Auth):',e);});
 }
 
@@ -1313,7 +1402,7 @@ function updateBadges() {
   setBadge('nb-withdrawals',pw,'red');
   setBadge('nb-notifs',pn,'red');
   $('topDot').style.display=pn>0?'block':'none';
-  function setBadge(id,n,cls){ const el=$(id); if(!el)return; el.textContent=n; el.style.display=n>0?'':'none'; }
+  function setBadge(id,n,cls){ const el=$(id); if(!el)return; el.textContent=n; if(el.classList.contains('qm-badge')){ el.classList.toggle('show', n>0); } else { el.style.display=n>0?'':'none'; } }
 }
 
 // ===== RENDER: USERS =====
@@ -1456,10 +1545,10 @@ function renderJobs() {
       </div>
       <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:11px;font-size:12.5px;color:var(--text2);margin-bottom:12px;line-height:1.6">${j.instructions||'(no instructions)'}</div>
       ${links.length?`<div style="margin-bottom:10px">${links.map((lnk,i)=>`<div style="font-size:12px;color:var(--blue);margin-bottom:4px"><i class="ti ti-link" style="font-size:13px;vertical-align:-1px"></i> ${links.length>1?`<b>Link ${i+1}:</b> `:''}<a href="${lnk}" target="_blank" style="color:var(--blue)">${lnk}</a></div>`).join('')}</div>`:''}
-      ${j.rejectReason?`<div class="alert danger"><i class="ti ti-alert-circle"></i> Rejection: ${j.rejectReason}</div>`:''}
+      ${j.rejectReason?`<div class="reject-reason-box"><i class="ti ti-message-circle-2"></i> <div><strong>Rejection reason:</strong> ${j.rejectReason}</div></div>`:''}
       ${j.status==='pending'?`<div style="display:flex;gap:10px">
         <button class="btn btn-approve" style="flex:1" onclick="approveJob('${j.id}')"><i class="ti ti-check"></i> Approve & Publish</button>
-        <button class="btn btn-danger" style="flex:1" onclick="openReject('job','${j.id}','${(j.title||'').replace(/'/g,"\\'")}')"><i class="ti ti-x"></i> Reject</button>
+        <button class="btn btn-message" onclick="openReject('job','${j.id}','${(j.title||'').replace(/'/g,"\\'")}')"><i class="ti ti-message-circle-2"></i> Reject with Reason</button>
       </div>`:j.status==='approved'?`<div style="display:flex;gap:10px;align-items:center">
         <div class="alert success" style="flex:1;margin-bottom:0"><i class="ti ti-circle-check"></i> Live — Workers can see and complete this job.</div>
         <button class="btn btn-danger btn-sm" onclick="deleteJob('${j.id}','${(j.title||'').replace(/'/g,"\\'")}')"><i class="ti ti-trash"></i> Remove</button>
@@ -1609,6 +1698,7 @@ function renderTasks() {
     } else {
       proofCell = '<span style="color:var(--text3);font-size:11px">Link task</span>';
     }
+    const statusCell = `<span class="badge ${t.status==='approved'?'green':t.status==='pending'?'amber':'red'}">${t.status||'pending'}</span>${t.status==='rejected'&&t.rejectReason?`<div style="font-size:10.5px;color:var(--red);margin-top:4px;max-width:160px;line-height:1.4"><i class="ti ti-message-circle-2" style="font-size:12px;vertical-align:-1px"></i> ${t.rejectReason}</div>`:''}`;
     return `
     <tr>
       <td>
@@ -1621,11 +1711,11 @@ function renderTasks() {
       <td>${proofCell}</td>
       <td style="color:var(--teal);font-weight:800">+${fmtAmt(t.reward)}</td>
       <td style="font-size:12px;color:var(--text2)">${t.date||'—'}</td>
-      <td><span class="badge ${t.status==='approved'?'green':t.status==='pending'?'amber':'red'}">${t.status||'pending'}</span></td>
+      <td>${statusCell}</td>
       <td>
         <div style="display:flex;gap:5px;flex-wrap:wrap">
           ${t.status==='pending'?`<button class="btn btn-approve btn-xs" onclick="approveTask('${t.id}')"><i class="ti ti-check"></i></button>
-          <button class="btn btn-danger btn-xs" onclick="openReject('task','${t.id}','${(t.jobTitle||'').replace(/'/g,"\\'")}')"><i class="ti ti-x"></i></button>`:''}
+          <button class="btn btn-message btn-xs" title="Reject with reason" onclick="openReject('task','${t.id}','${(t.jobTitle||'').replace(/'/g,"\\'")}')"><i class="ti ti-message-circle-2"></i></button>`:''}
           <button class="btn btn-ghost btn-xs" title="Delete permanently (also removes screenshot from storage)" onclick="deleteTaskSubmission('${t.id}')"><i class="ti ti-trash" style="color:var(--red)"></i></button>
         </div>
       </td>
@@ -1651,8 +1741,9 @@ function viewProof(id) {
       <div class="detail-box"><div class="dl">Worker</div><div class="dv" style="font-size:13px">${t.workerName}</div></div>
       <div class="detail-box"><div class="dl">Date</div><div class="dv" style="font-size:13px">${t.date||'—'}</div></div>
     </div>
+    ${t.status==='rejected'&&t.rejectReason?`<div class="reject-reason-box"><i class="ti ti-message-circle-2"></i> <div><strong>Rejection reason:</strong> ${t.rejectReason}</div></div>`:''}
     ${t.status==='pending'?`<div style="display:flex;gap:10px;margin-top:4px">
-      <button class="btn btn-danger" style="flex:1" onclick="closeModal('proofModal');openReject('task','${t.id}','${(t.jobTitle||'').replace(/'/g,"\\'")}')"><i class="ti ti-x"></i> Reject</button>
+      <button class="btn btn-message" style="flex:1" onclick="closeModal('proofModal');openReject('task','${t.id}','${(t.jobTitle||'').replace(/'/g,"\\'")}')"><i class="ti ti-message-circle-2"></i> Reject with Reason</button>
       <button class="btn btn-approve" style="flex:1" onclick="closeModal('proofModal');approveTask('${t.id}')"><i class="ti ti-check"></i> Approve & Credit</button>
     </div>`:`<div class="alert ${t.status==='approved'?'success':'danger'}"><i class="ti ti-${t.status==='approved'?'circle-check':'circle-x'}"></i> ${t.status==='approved'?'Already approved.':'Already rejected.'}</div>`}
     <button class="btn btn-ghost" style="width:100%;margin-top:8px;color:var(--red);border-color:rgba(239,68,68,.25)" onclick="closeModal('proofModal');deleteTaskSubmission('${t.id}')"><i class="ti ti-trash"></i> Delete Submission & Free Storage</button>`;
@@ -1710,11 +1801,11 @@ function renderDeposits() {
       <td style="color:var(--teal);font-weight:800;font-size:15px">${fmtAmt(d.amount)}</td>
       <td><div style="font-size:11.5px;font-family:monospace;color:var(--text2)">${d.txnId||d.txId||'—'}</div><div class="td-sub">${d.senderNumber||'—'}</div></td>
       <td style="font-size:12px;color:var(--text2)">${d.date||'—'}</td>
-      <td><span class="badge ${d.status==='confirmed'?'green':d.status==='rejected'?'red':'amber'}">${d.status||'pending'}</span></td>
+      <td><span class="badge ${d.status==='confirmed'?'green':d.status==='rejected'?'red':'amber'}">${d.status||'pending'}</span>${d.status==='rejected'&&d.rejectReason?`<div style="font-size:10.5px;color:var(--red);margin-top:4px;max-width:160px;line-height:1.4"><i class="ti ti-message-circle-2" style="font-size:12px;vertical-align:-1px"></i> ${d.rejectReason}</div>`:''}</td>
       <td>${d.status==='pending'?`<div style="display:flex;gap:5px">
         <button class="btn btn-approve btn-xs" onclick="confirmDeposit('${d.id}')"><i class="ti ti-check"></i> Confirm</button>
-        <button class="btn btn-danger btn-xs" onclick="openReject('deposit','${d.id}','${d.method} ${fmtAmt(d.amount)}')"><i class="ti ti-x"></i></button>
-      </div>`:d.status==='confirmed'?`<span style="color:var(--teal);font-size:12px;font-weight:700"><i class="ti ti-circle-check" style="vertical-align:-2px"></i> Credited</span>`:`<span style="color:var(--red);font-size:11.5px">${d.rejectReason||'Rejected'}</span>`}</td>
+        <button class="btn btn-message btn-xs" title="Reject with reason" onclick="openReject('deposit','${d.id}','${d.method} ${fmtAmt(d.amount)}')"><i class="ti ti-message-circle-2"></i></button>
+      </div>`:d.status==='confirmed'?`<span style="color:var(--teal);font-size:12px;font-weight:700"><i class="ti ti-circle-check" style="vertical-align:-2px"></i> Credited</span>`:`<span style="color:var(--red);font-size:11.5px">Rejected</span>`}</td>
     </tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:24px">No deposits found</td></tr>';
 }
 
@@ -1736,7 +1827,8 @@ async function confirmDeposit(id) {
 
 // ===== RENDER: WITHDRAWALS =====
 function renderWithdrawals() {
-  $('withdrawTbody').innerHTML=S.withdrawals.map(w=>`
+  const list=S.wdFilter==='all'?S.withdrawals:S.withdrawals.filter(w=>w.status===S.wdFilter);
+  $('withdrawTbody').innerHTML=list.map(w=>`
     <tr>
       <td><div class="td-primary">${w.userName||'Unknown'}</div><div class="td-sub">${w.userEmail||'—'}</div></td>
       <td><span style="font-size:13px;font-weight:700">${w.method||'—'}</span></td>
@@ -1744,12 +1836,27 @@ function renderWithdrawals() {
       <td style="color:var(--teal);font-weight:800;font-size:15px">${fmtAmt(w.net)}</td>
       <td style="font-size:11.5px;font-family:monospace;color:var(--text2);max-width:130px;overflow:hidden;text-overflow:ellipsis">${w.account||'—'}</td>
       <td style="font-size:12px;color:var(--text2)">${w.date||'—'}</td>
-      <td><span class="badge ${w.status==='completed'?'green':w.status==='rejected'?'red':w.status==='processing'?'blue':'amber'}">${w.status||'pending'}</span></td>
-      <td>${w.status!=='completed'&&w.status!=='rejected'?`<div style="display:flex;gap:5px">
+      <td><span class="badge ${w.status==='completed'?'green':w.status==='rejected'?'red':w.status==='processing'?'blue':'amber'}">${w.status||'pending'}</span>${w.status==='rejected'&&w.rejectReason?`<div style="font-size:10.5px;color:var(--red);margin-top:4px;max-width:150px;line-height:1.4"><i class="ti ti-message-circle-2" style="font-size:12px;vertical-align:-1px"></i> ${w.rejectReason}</div>`:''}</td>
+      <td>${w.status==='pending'?`<div style="display:flex;gap:5px;flex-wrap:wrap">
+        <button class="btn btn-info btn-xs" onclick="markProcessing('${w.id}')"><i class="ti ti-loader"></i> Processing</button>
         <button class="btn btn-approve btn-xs" onclick="completeWithdraw('${w.id}')"><i class="ti ti-send"></i> Send</button>
-        <button class="btn btn-danger btn-xs" onclick="openReject('withdrawal','${w.id}','${w.method} ${fmtAmt(w.amount)}')"><i class="ti ti-x"></i></button>
-      </div>`:w.status==='completed'?`<span style="color:var(--teal);font-size:12px;font-weight:700"><i class="ti ti-circle-check" style="vertical-align:-2px"></i> Sent</span>`:`<span style="color:var(--red);font-size:11.5px">${w.rejectReason||'Rejected'}</span>`}</td>
+        <button class="btn btn-message btn-xs" title="Reject with reason" onclick="openReject('withdrawal','${w.id}','${w.method} ${fmtAmt(w.amount)}')"><i class="ti ti-message-circle-2"></i></button>
+      </div>`:w.status==='processing'?`<div style="display:flex;gap:5px;flex-wrap:wrap">
+        <button class="btn btn-approve btn-xs" onclick="completeWithdraw('${w.id}')"><i class="ti ti-send"></i> Send</button>
+        <button class="btn btn-message btn-xs" title="Reject with reason" onclick="openReject('withdrawal','${w.id}','${w.method} ${fmtAmt(w.amount)}')"><i class="ti ti-message-circle-2"></i></button>
+      </div>`:w.status==='completed'?`<span style="color:var(--teal);font-size:12px;font-weight:700"><i class="ti ti-circle-check" style="vertical-align:-2px"></i> Sent</span>`:`<span style="color:var(--red);font-size:11.5px">Rejected</span>`}</td>
     </tr>`).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:24px">No withdrawals found</td></tr>';
+}
+
+async function markProcessing(id) {
+  const w=S.withdrawals.find(x=>x.id===id); if(!w)return;
+  const fb=window._fb; if(!fb)return;
+  try{
+    await fb.updateDoc(fb.doc(fb.db,'withdrawals',id),{status:'processing'});
+    addLog(`⏳ Withdrawal marked processing: ${w.userName} — ${fmtAmt(w.amount)} via ${w.method}`,'withdrawal','blue');
+    notifyUser(w.userId,'⏳ Withdrawal Processing',`Your withdrawal of ${fmtAmt(w.amount)} via ${w.method} is now being processed.`);
+    showToast('⏳ Marked as processing','info');
+  }catch(e){ console.error(e); showToast('❌ Update failed — check Firestore permissions','error'); }
 }
 
 async function completeWithdraw(id) {
@@ -1766,11 +1873,11 @@ async function completeWithdraw(id) {
   }catch(e){ console.error(e); showToast('❌ Send failed — check Firestore permissions','error'); }
 }
 
-// ===== UNIFIED REJECT =====
+// ===== UNIFIED REJECT (message-icon powered, shows reason to the member) =====
 function openReject(type, id, label) {
   S._rejectCtx={type,id};
   const titles={job:'Reject Job',deposit:'Reject Deposit',withdrawal:'Reject Withdrawal',task:'Reject Task Submission'};
-  $('rejectTitle').textContent=titles[type]||'Reject';
+  $('rejectTitle').innerHTML=`<i class="ti ti-message-circle-2" style="vertical-align:-3px;color:var(--purple)"></i> ${titles[type]||'Reject'}`;
   $('rejectSub').textContent=(label||'')+' — কারণ লিখুন (user দেখবে)';
   $('rejectReason').value='';
   openModal('rejectModal');
@@ -2071,7 +2178,7 @@ function renderDashPendingJobs() {
       </div>
       <div style="display:flex;gap:5px;flex-shrink:0">
         <button class="btn btn-approve btn-xs" onclick="approveJob('${j.id}')"><i class="ti ti-check"></i></button>
-        <button class="btn btn-danger btn-xs" onclick="openReject('job','${j.id}','${(j.title||'').replace(/'/g,"\\'")}')"><i class="ti ti-x"></i></button>
+        <button class="btn btn-message btn-xs" onclick="openReject('job','${j.id}','${(j.title||'').replace(/'/g,"\\'")}')"><i class="ti ti-message-circle-2"></i></button>
       </div>
     </div>`).join('');
 }
