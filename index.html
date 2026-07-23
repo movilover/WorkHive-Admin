@@ -774,8 +774,10 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
           <div class="card">
             <div class="card-title"><i class="ti ti-bell-ringing"></i> OneSignal Push Notifications</div>
             <div class="alert info"><i class="ti ti-info-circle"></i> এটা সেট করলে অ্যাডমিন প্যানেল থেকে যেকোনো action (Task Reject, Withdrawal Processing/Sent, Deposit Confirm/Reject, Job Approve/Reject ইত্যাদি) এর সাথে সাথেই ইউজারের ফোনে <strong>আসল push notification</strong> (heads-up পপআপ + সাউন্ড) পাঠানো হবে — শুধু in-app notification list-এ না।</div>
-            <div class="field"><label>OneSignal App ID</label><input type="text" id="osAppId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></div>
-            <div class="field"><label>REST API Key</label><input type="password" id="osRestKey" placeholder="OneSignal Dashboard → Settings → Keys & IDs"></div>
+            <div class="alert warn"><i class="ti ti-alert-triangle"></i> ২০২৪ সালের নভেম্বরের পর OneSignal পুরনো ("Legacy") REST API Key বাতিল করে নতুন "Rich" API Key চালু করেছে, এবং পুরনো Legacy App API Key ২০২৬-এর Q1 থেকে সম্পূর্ণভাবে অচল হয়ে যাচ্ছে। নিচের REST API Key ফিল্ডে অবশ্যই <strong>OneSignal Dashboard → Settings → Keys & IDs</strong> থেকে নতুন <strong>Rich API Key</strong> ব্যবহার করুন — পুরনো (legacy) key দিলে push পাঠানো ব্যর্থ হতে পারে।</div>
+            <div class="field"><label>OneSignal App ID</label><input type="text" id="osAppId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" value="93de5a5d-7a31-487f-9549-4e3c41144f39"></div>
+            <div class="lf-hint" style="margin-top:-8px;margin-bottom:12px">এই App ID টা পাবলিক (secret না) এবং তোমার Android অ্যাপে (MainActivity.java, OneSignal.initWithContext) যেটা বসানো আছে সেটাই এখানে আগে থেকে বসানো আছে। ভিন্ন App ID ব্যবহার করলে দুটো জায়গায় মিলছে কিনা নিশ্চিত করো।</div>
+            <div class="field"><label>REST API Key</label><input type="password" id="osRestKey" placeholder="OneSignal Dashboard → Settings → Keys & IDs → REST/Rich API Key"></div>
             <div class="lf-hint" style="margin-bottom:10px">⚠️ এই key টি secret — এটা browser-এ localStorage-এ save হয়। শুধু বিশ্বস্ত ডিভাইস থেকে এই admin panel access করুন।</div>
             <button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="saveOneSignalConfig()"><i class="ti ti-device-floppy"></i> Save Configuration</button>
             <button class="btn btn-ghost" style="width:100%" onclick="testOneSignalBroadcastPush()"><i class="ti ti-send"></i> Send Test Push (All Subscribed Devices)</button>
@@ -793,6 +795,10 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
             <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:12px;font-family:monospace;font-size:11.5px;color:var(--teal);white-space:pre-wrap;line-height:1.6">// Firebase Auth login সফল হওয়ার পরে:
 if (window.Capacitor?.Plugins?.OneSignal) {
   window.Capacitor.Plugins.OneSignal.login({ externalId: firebaseUser.uid });
+}
+// লগআউটের সময় (পরের ইউজার আগের ইউজারের পুশ না পায়, তাই):
+if (window.Capacitor?.Plugins?.OneSignal) {
+  window.Capacitor.Plugins.OneSignal.logout();
 }</div>
             <div class="lf-hint" style="margin-top:10px">এই লাইনটা যোগ না করলে, এই admin panel থেকে push পাঠানো হলেও OneSignal জানবে না কোন ফোনে পাঠাতে হবে — তাই কিছুই পৌঁছাবে না। লাইভ সাইটের JS ফাইলটা শেয়ার করলে আমি সঠিক জায়গায় বসিয়ে দিতে পারি।</div>
           </div>
@@ -1284,29 +1290,46 @@ function setOsConnected(ok) {
 // Firebase UID, which must have been linked on-device via
 // Capacitor.Plugins.OneSignal.login({ externalId: uid }) on the live site —
 // see the "জরুরি" card in the Telegram screen for that missing piece.
+//
+// Uses the current https://api.onesignal.com endpoint with "Key" auth (the
+// old https://onesignal.com/api/v1/ + "Basic" auth pair is OneSignal's
+// legacy scheme, tied to Legacy API Keys that OneSignal has been retiring
+// since Nov 2024 — Legacy App API Keys stop working entirely in Q1 2026).
+// Make sure the REST API Key configured above is a "Rich" API Key from
+// OneSignal Dashboard → Settings → Keys & IDs, not an old Legacy key.
 async function sendPushNotification(uid, title, message) {
   const appId = S.os.appId || ls('wha_os_appid');
   const restKey = S.os.restKey || ls('wha_os_restkey');
   if (!appId || !restKey || !uid) return; // OneSignal not configured, or no target uid — silently skip
   try {
-    await fetch('https://onesignal.com/api/v1/notifications', {
+    const res = await fetch('https://api.onesignal.com/notifications', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
-        'Authorization': 'Basic ' + restKey,
+        'Authorization': 'Key ' + restKey,
       },
       body: JSON.stringify({
         app_id: appId,
-        include_external_user_ids: [uid],
-        channel_for_external_user_ids: 'push',
+        target_channel: 'push',
+        include_aliases: { external_id: [uid] },
         headings: { en: title },
         contents: { en: message },
-        android_channel_id_key: 'workhive_alerts', // ignored if not found; native channel already has HIGH priority + sound
-        android_channel_id: undefined, // OneSignal expects the *OneSignal-side* channel UUID here, not the Android string id — left unset so it falls back to the app's default channel
+        // "workhive_alerts" is the Android Notification Channel already created
+        // natively in MainActivity.java (createWorkHiveNotificationChannel), with
+        // the custom "টুংটুং" chime + heads-up importance wired to it. Because that
+        // channel is created on-device (not in the OneSignal dashboard), the
+        // correct field to reuse it is `existing_android_channel_id` — the plain
+        // `android_channel_id` field expects a channel UUID created *inside*
+        // OneSignal's own dashboard instead, and would fail/ignore this string id.
+        existing_android_channel_id: 'workhive_alerts',
         priority: 10,
         android_visibility: 1,
       }),
     });
+    const d = await res.json().catch(()=>({}));
+    if (!res.ok || (d && d.errors)) {
+      console.warn('OneSignal push not delivered:', d.errors || d);
+    }
   } catch (e) {
     console.warn('OneSignal push failed:', e);
   }
@@ -1316,18 +1339,21 @@ async function testOneSignalBroadcastPush() {
   const restKey = S.os.restKey || ls('wha_os_restkey');
   if (!appId || !restKey) { showToast('আগে OneSignal configure করুন', 'error'); return; }
   try {
-    const res = await fetch('https://onesignal.com/api/v1/notifications', {
+    const res = await fetch('https://api.onesignal.com/notifications', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json; charset=utf-8', 'Authorization': 'Basic ' + restKey },
+      headers: { 'Content-Type': 'application/json; charset=utf-8', 'Authorization': 'Key ' + restKey },
       body: JSON.stringify({
         app_id: appId,
         included_segments: ['Subscribed Users'],
         headings: { en: '🐝 WorkHive Test Push' },
         contents: { en: 'এটা একটা টেস্ট পুশ নোটিফিকেশন — সব সাবস্ক্রাইবড ডিভাইসে যাবে।' },
+        existing_android_channel_id: 'workhive_alerts',
+        priority: 10,
       }),
     });
     const d = await res.json();
-    showToast(d.id ? `✅ Test push sent to ${d.recipients||0} device(s)` : '❌ ' + (d.errors ? JSON.stringify(d.errors) : 'Failed'), d.id ? 'success' : 'error');
+    const recipients = d.id ? (d.recipients ?? (d.errors ? 0 : '')) : 0;
+    showToast(d.id ? `✅ Test push sent${recipients!==''?` to ${recipients} device(s)`:''}` : '❌ ' + (d.errors ? JSON.stringify(d.errors) : 'Failed'), d.id ? 'success' : 'error');
   } catch (e) { showToast('❌ Network error sending test push', 'error'); }
 }
 
