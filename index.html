@@ -768,6 +768,35 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
             <div id="tgEvents"></div>
           </div>
         </div>
+
+        <!-- ===== ONESIGNAL PUSH NOTIFICATIONS ===== -->
+        <div class="two-col" style="margin-top:16px">
+          <div class="card">
+            <div class="card-title"><i class="ti ti-bell-ringing"></i> OneSignal Push Notifications</div>
+            <div class="alert info"><i class="ti ti-info-circle"></i> এটা সেট করলে অ্যাডমিন প্যানেল থেকে যেকোনো action (Task Reject, Withdrawal Processing/Sent, Deposit Confirm/Reject, Job Approve/Reject ইত্যাদি) এর সাথে সাথেই ইউজারের ফোনে <strong>আসল push notification</strong> (heads-up পপআপ + সাউন্ড) পাঠানো হবে — শুধু in-app notification list-এ না।</div>
+            <div class="field"><label>OneSignal App ID</label><input type="text" id="osAppId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></div>
+            <div class="field"><label>REST API Key</label><input type="password" id="osRestKey" placeholder="OneSignal Dashboard → Settings → Keys & IDs"></div>
+            <div class="lf-hint" style="margin-bottom:10px">⚠️ এই key টি secret — এটা browser-এ localStorage-এ save হয়। শুধু বিশ্বস্ত ডিভাইস থেকে এই admin panel access করুন।</div>
+            <button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="saveOneSignalConfig()"><i class="ti ti-device-floppy"></i> Save Configuration</button>
+            <button class="btn btn-ghost" style="width:100%" onclick="testOneSignalBroadcastPush()"><i class="ti ti-send"></i> Send Test Push (All Subscribed Devices)</button>
+            <div class="tg-status">
+              <div class="tg-dot off" id="osDot"></div>
+              <div>
+                <div style="font-size:13px;font-weight:700" id="osStatusText">Not Configured</div>
+                <div style="font-size:11px;color:var(--text3)" id="osInfo">Configure above to enable real push notifications</div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title"><i class="ti ti-alert-triangle"></i> জরুরি — একটা ধাপ এখনো বাকি</div>
+            <div class="alert warn"><i class="ti ti-alert-triangle"></i> এই admin panel পুশ পাঠানোর সময় নির্দিষ্ট ইউজারকে target করে <code>Firebase UID</code> দিয়ে (OneSignal "External ID")। কিন্তু কোনো ইউজারের ফোন OneSignal-কে তার Firebase UID জানায় না, যতক্ষণ না আপনার লাইভ সাইটের (movilover.github.io/WorkHive) কোডে লগইনের পরে এই কল যুক্ত করা হয়:</div>
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:12px;font-family:monospace;font-size:11.5px;color:var(--teal);white-space:pre-wrap;line-height:1.6">// Firebase Auth login সফল হওয়ার পরে:
+if (window.Capacitor?.Plugins?.OneSignal) {
+  window.Capacitor.Plugins.OneSignal.login({ externalId: firebaseUser.uid });
+}</div>
+            <div class="lf-hint" style="margin-top:10px">এই লাইনটা যোগ না করলে, এই admin panel থেকে push পাঠানো হলেও OneSignal জানবে না কোন ফোনে পাঠাতে হবে — তাই কিছুই পৌঁছাবে না। লাইভ সাইটের JS ফাইলটা শেয়ার করলে আমি সঠিক জায়গায় বসিয়ে দিতে পারি।</div>
+          </div>
+        </div>
       </div>
 
       <!-- ===== BROADCAST ===== -->
@@ -1096,6 +1125,7 @@ const S = {
   logFilter: 'all', userFilter: 'all',
   _rejectCtx: null, _balUid: null,
   tg: { token: '', chatId: '', connected: false },
+  os: { appId: '', restKey: '', connected: false },
   bcHistory: [],
   settings: { name: 'WorkHive', minWd: 5, minDep: 1, fee: 5, refGen1: 0.5, refGen2: 0.25, refGen3: 0.10,
     supportEmail: 'support@workhive.app', supportHours: '9 AM – 11 PM', supportResponse: 'Within 12 hours',
@@ -1154,6 +1184,9 @@ function initAdmin() {
   // load saved TG
   const t = ls('wha_tg_token'), ch = ls('wha_tg_chat');
   if (t && ch) { S.tg = {token:t,chatId:ch,connected:true}; setTimeout(() => { setTgConnected(true); const ti=$('tgToken');if(ti)ti.value=t; const ci=$('tgChatId');if(ci)ci.value=ch; }, 200); }
+  // load saved OneSignal config
+  const oa = ls('wha_os_appid'), ok = ls('wha_os_restkey');
+  if (oa && ok) { S.os = {appId:oa, restKey:ok, connected:true}; setTimeout(() => { setOsConnected(true); const ai=$('osAppId');if(ai)ai.value=oa; const ri=$('osRestKey');if(ri)ri.value=ok; }, 200); }
 }
 function updateClock() { $('adminClock').textContent = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
 
@@ -1230,11 +1263,80 @@ function setStatusFilter(kind, val) {
   window[def.render]();
 }
 
-// ===== NOTIFY USER =====
+// ===== ONESIGNAL PUSH (real device notification: heads-up popup + sound) =====
+function saveOneSignalConfig() {
+  const appId = v('osAppId'), restKey = v('osRestKey');
+  if (!appId) { showToast('OneSignal App ID দিন', 'error'); return; }
+  if (!restKey) { showToast('REST API Key দিন', 'error'); return; }
+  S.os = { appId, restKey, connected: true };
+  ls('wha_os_appid', appId); ls('wha_os_restkey', restKey);
+  setOsConnected(true);
+  addLog('🔔 OneSignal push configuration saved', 'settings', 'green');
+  showToast('✅ OneSignal configured!', 'success');
+}
+function setOsConnected(ok) {
+  const dot = $('osDot'); const st = $('osStatusText'); const bi = $('osInfo');
+  if (dot) dot.className = 'tg-dot ' + (ok ? 'ok' : 'off');
+  if (st) st.textContent = ok ? 'Configured' : 'Not Configured';
+  if (bi) bi.textContent = ok ? 'Ready to send real push notifications' : 'Configure above to enable real push notifications';
+}
+// Low-level call to OneSignal's REST API. Targets a specific user by their
+// Firebase UID, which must have been linked on-device via
+// Capacitor.Plugins.OneSignal.login({ externalId: uid }) on the live site —
+// see the "জরুরি" card in the Telegram screen for that missing piece.
+async function sendPushNotification(uid, title, message) {
+  const appId = S.os.appId || ls('wha_os_appid');
+  const restKey = S.os.restKey || ls('wha_os_restkey');
+  if (!appId || !restKey || !uid) return; // OneSignal not configured, or no target uid — silently skip
+  try {
+    await fetch('https://onesignal.com/api/v1/notifications', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Authorization': 'Basic ' + restKey,
+      },
+      body: JSON.stringify({
+        app_id: appId,
+        include_external_user_ids: [uid],
+        channel_for_external_user_ids: 'push',
+        headings: { en: title },
+        contents: { en: message },
+        android_channel_id_key: 'workhive_alerts', // ignored if not found; native channel already has HIGH priority + sound
+        android_channel_id: undefined, // OneSignal expects the *OneSignal-side* channel UUID here, not the Android string id — left unset so it falls back to the app's default channel
+        priority: 10,
+        android_visibility: 1,
+      }),
+    });
+  } catch (e) {
+    console.warn('OneSignal push failed:', e);
+  }
+}
+async function testOneSignalBroadcastPush() {
+  const appId = S.os.appId || ls('wha_os_appid');
+  const restKey = S.os.restKey || ls('wha_os_restkey');
+  if (!appId || !restKey) { showToast('আগে OneSignal configure করুন', 'error'); return; }
+  try {
+    const res = await fetch('https://onesignal.com/api/v1/notifications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json; charset=utf-8', 'Authorization': 'Basic ' + restKey },
+      body: JSON.stringify({
+        app_id: appId,
+        included_segments: ['Subscribed Users'],
+        headings: { en: '🐝 WorkHive Test Push' },
+        contents: { en: 'এটা একটা টেস্ট পুশ নোটিফিকেশন — সব সাবস্ক্রাইবড ডিভাইসে যাবে।' },
+      }),
+    });
+    const d = await res.json();
+    showToast(d.id ? `✅ Test push sent to ${d.recipients||0} device(s)` : '❌ ' + (d.errors ? JSON.stringify(d.errors) : 'Failed'), d.id ? 'success' : 'error');
+  } catch (e) { showToast('❌ Network error sending test push', 'error'); }
+}
+
+// ===== NOTIFY USER (in-app Firestore notification + real OneSignal push together) =====
 async function notifyUser(uid, title, msg, icon='🔔') {
   if (!uid || !window._fb) return;
   const fb = window._fb;
   try { await fb.addDoc(fb.collection(fb.db,'users',uid,'notifications'),{title,msg,icon,unread:true,createdAt:fb.serverTimestamp()}); } catch(e){}
+  sendPushNotification(uid, title, msg); // fire-and-forget real device push, in addition to the in-app one above
 }
 
 // ===== FIRESTORE: USERS =====
