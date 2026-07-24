@@ -1,0 +1,2421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WorkHive Admin Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.10.0/dist/tabler-icons.min.css">
+<style>
+:root {
+  --bg:#0A0C10;--bg2:#10141C;--bg3:#161C28;--bg4:#1E2535;--bg5:#252E42;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.10);--border3:rgba(255,255,255,0.16);
+  --text:#E8EBF5;--text2:#8892AA;--text3:#4A5470;
+  --green:#22C55E;--green2:#16A34A;--green-bg:rgba(34,197,94,0.1);--green-border:rgba(34,197,94,0.2);
+  --blue:#3B82F6;--blue-bg:rgba(59,130,246,0.1);--blue-border:rgba(59,130,246,0.2);
+  --amber:#F59E0B;--amber-bg:rgba(245,158,11,0.1);--amber-border:rgba(245,158,11,0.2);
+  --red:#EF4444;--red-bg:rgba(239,68,68,0.1);--red-border:rgba(239,68,68,0.2);
+  --purple:#A855F7;--purple-bg:rgba(168,85,247,0.1);--purple-border:rgba(168,85,247,0.2);
+  --teal:#14B8A6;--teal-bg:rgba(20,184,166,0.1);--teal-border:rgba(20,184,166,0.2);
+  --pink:#EC4899;--pink-bg:rgba(236,72,153,0.1);
+  --radius:10px;--r-lg:16px;--r-xl:22px;
+  --sidebar:240px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:4px}
+a{color:inherit;text-decoration:none}
+
+/* ===== LOGIN ===== */
+#loginScreen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;
+  background-image:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(34,197,94,0.06),transparent)}
+.login-card{width:100%;max-width:400px;padding:40px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-xl);box-shadow:0 32px 64px rgba(0,0,0,0.6)}
+.login-brand{display:flex;align-items:center;gap:12px;margin-bottom:32px;justify-content:center}
+.brand-icon{width:48px;height:48px;border-radius:14px;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 8px 20px rgba(34,197,94,0.3)}
+.brand-name{font-size:22px;font-weight:800;color:var(--green);letter-spacing:-0.5px}
+.brand-label{font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:1px}
+.login-title{font-size:24px;font-weight:800;text-align:center;margin-bottom:4px}
+.login-sub{font-size:12px;color:var(--text3);text-align:center;margin-bottom:28px}
+.lf{margin-bottom:14px}
+.lf label{display:block;font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.lf input{width:100%;padding:11px 14px;border-radius:var(--radius);background:rgba(255,255,255,0.04);border:1px solid var(--border2);color:var(--text);font-family:inherit;font-size:13px;font-weight:600;outline:none;transition:.2s}
+.lf input:focus{border-color:rgba(34,197,94,0.5);background:rgba(34,197,94,0.03)}
+.lf-hint{font-size:10.5px;color:var(--text3);margin-top:5px}
+.pw-wrap{position:relative}
+.pw-wrap input{padding-right:42px}
+.pw-eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--text3);font-size:16px;display:flex}
+.btn-login{width:100%;padding:13px;border-radius:var(--radius);background:var(--green);color:#000;font-weight:800;font-size:14px;cursor:pointer;border:none;font-family:inherit;box-shadow:0 4px 16px rgba(34,197,94,0.3);transition:.15s;margin-top:4px}
+.btn-login:hover{background:var(--green2);box-shadow:0 8px 24px rgba(34,197,94,0.4)}
+.login-err{color:var(--red);font-size:12px;font-weight:600;text-align:center;min-height:16px;margin-bottom:10px}
+.lockout-msg{background:var(--red-bg);border:1px solid var(--red-border);border-radius:var(--radius);padding:10px 14px;font-size:12px;color:var(--red);font-weight:600;margin-bottom:12px;display:none}
+.sec-note{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:18px;font-size:11px;color:var(--text3)}
+
+/* ===== SHELL ===== */
+#adminShell{display:none;height:100vh;flex-direction:row;overflow:hidden}
+
+/* ===== SIDEBAR (retired — replaced by in-page Quick Menu, kept for legacy id targeting only) ===== */
+.sidebar{display:none !important}
+
+/* ===== MAIN ===== */
+.main-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;width:100%}
+
+/* ===== TOPBAR ===== */
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:60px;flex-shrink:0}
+.tb-left{display:flex;align-items:center;gap:10px}
+.tb-brand{display:flex;align-items:center;gap:9px;cursor:pointer}
+.tb-brand-icon{width:32px;height:32px;border-radius:9px;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.tb-brand-name{font-size:14px;font-weight:800;color:var(--green)}
+.tb-breadcrumb{font-size:12px;color:var(--text3);display:flex;align-items:center;gap:6px}
+.tb-page{font-size:15px;font-weight:800;color:var(--text)}
+.tb-right{display:flex;align-items:center;gap:8px}
+.tb-clock{font-size:12px;color:var(--text2);font-weight:700;background:var(--bg3);border:1px solid var(--border);padding:5px 11px;border-radius:8px;font-variant-numeric:tabular-nums}
+.tb-notif{width:36px;height:36px;border-radius:var(--radius);background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;font-size:17px;transition:.15s}
+.tb-notif:hover{border-color:var(--border3)}
+.notif-dot{position:absolute;top:7px;right:7px;width:7px;height:7px;border-radius:50%;background:var(--red);border:1.5px solid var(--bg2);display:none}
+.admin-chip{display:flex;align-items:center;gap:8px;background:var(--green-bg);border:1px solid var(--green-border);border-radius:var(--radius);padding:5px 11px 5px 7px;cursor:pointer;transition:.15s}
+.admin-chip:hover{background:rgba(34,197,94,0.15)}
+.chip-av{width:26px;height:26px;border-radius:7px;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#000}
+.chip-name{font-size:12px;font-weight:800;color:var(--green)}
+
+/* ===== CONTENT ===== */
+.content-area{flex:1;overflow-y:auto;padding:22px 24px}
+.screen{display:none}
+.screen.active{display:block;animation:fadeUp .2s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ===== QUICK MENU (mobile-app style vertical nav list, shown on Dashboard) ===== */
+.qm-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;margin-bottom:20px}
+.qm-section-lbl{font-size:9.5px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;padding:12px 16px 6px}
+.qm-row{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;transition:.15s;border-bottom:1px solid var(--border)}
+.qm-row:last-child{border-bottom:none}
+.qm-row:hover{background:rgba(255,255,255,.02)}
+.qm-row:active{background:rgba(255,255,255,.04)}
+.qm-icon{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.qm-text{flex:1;min-width:0}
+.qm-label{font-size:13.5px;font-weight:700;color:var(--text)}
+.qm-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.qm-chev{font-size:16px;color:var(--text3);flex-shrink:0}
+.qm-badge{font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:20px;flex-shrink:0;background:var(--red-bg);color:var(--red);border:1px solid var(--red-border);display:none}
+.qm-badge.blue{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-border)}
+.qm-badge.show{display:inline-block}
+.qm-status-pill{font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;flex-shrink:0;white-space:nowrap}
+.qm-status-pill.ok{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.qm-status-pill.off{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+
+/* ===== DASHBOARD HERO ===== */
+.dash-hero{background:linear-gradient(135deg,rgba(34,197,94,0.06),rgba(59,130,246,0.04));border:1px solid var(--border2);border-radius:var(--r-xl);padding:24px 28px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.hero-greeting{font-size:11.5px;color:var(--teal);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+.hero-title{font-size:26px;font-weight:900;letter-spacing:-0.5px}
+.hero-title span{color:var(--green)}
+.hero-sub{font-size:12.5px;color:var(--text2);margin-top:6px}
+.hero-stats{display:flex;gap:24px}
+.hs-item{text-align:center}
+.hs-val{font-size:20px;font-weight:900;color:var(--green)}
+.hs-lbl{font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+
+/* ===== STATS GRID ===== */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;cursor:pointer;transition:.2s;position:relative;overflow:hidden}
+.stat-card:hover{border-color:var(--border3);transform:translateY(-1px)}
+.stat-card::before{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;opacity:.08}
+.stat-card.green::before{background:var(--green)}
+.stat-card.blue::before{background:var(--blue)}
+.stat-card.amber::before{background:var(--amber)}
+.stat-card.purple::before{background:var(--purple)}
+.stat-card.teal::before{background:var(--teal)}
+.stat-card.red::before{background:var(--red)}
+.sc-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:12px}
+.sc-icon.green{background:var(--green-bg);color:var(--green)}
+.sc-icon.blue{background:var(--blue-bg);color:var(--blue)}
+.sc-icon.amber{background:var(--amber-bg);color:var(--amber)}
+.sc-icon.purple{background:var(--purple-bg);color:var(--purple)}
+.sc-icon.teal{background:var(--teal-bg);color:var(--teal)}
+.sc-icon.red{background:var(--red-bg);color:var(--red)}
+.sc-val{font-size:26px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1}
+.sc-label{font-size:11.5px;color:var(--text2);font-weight:600;margin-top:4px}
+.sc-badge{display:inline-block;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:6px;margin-top:8px}
+.sc-badge.up{background:var(--green-bg);color:var(--green)}
+.sc-badge.warn{background:var(--amber-bg);color:var(--amber)}
+.sc-badge.down{background:var(--red-bg);color:var(--red)}
+
+/* ===== SECTION HEADER ===== */
+.sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+.sec-hd h2{font-size:17px;font-weight:800;display:flex;align-items:center;gap:8px}
+.sec-hd h2 i{font-size:19px;color:var(--text2)}
+.sec-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sec-label{font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin:20px 0 10px;display:flex;align-items:center;gap:10px}
+.sec-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ===== STATUS TABS (Withdrawals etc.) ===== */
+.status-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.status-tab{display:flex;align-items:center;gap:7px;padding:9px 14px;border-radius:var(--radius);background:var(--bg2);border:1px solid var(--border);cursor:pointer;font-size:12.5px;font-weight:700;color:var(--text2);transition:.15s}
+.status-tab:hover{border-color:var(--border3);color:var(--text)}
+.status-tab .stab-count{font-size:10.5px;font-weight:800;padding:1px 7px;border-radius:20px;background:var(--bg4);color:var(--text2)}
+.status-tab.active{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+.status-tab.active .stab-count{background:var(--green);color:#000}
+.status-tab[data-tab="processing"].active{background:var(--blue-bg);border-color:var(--blue-border);color:var(--blue)}
+.status-tab[data-tab="processing"].active .stab-count{background:var(--blue);color:#fff}
+.status-tab[data-tab="pending"].active{background:var(--amber-bg);border-color:var(--amber-border);color:var(--amber)}
+.status-tab[data-tab="pending"].active .stab-count{background:var(--amber);color:#000}
+.status-tab[data-tab="rejected"].active{background:var(--red-bg);border-color:var(--red-border);color:var(--red)}
+.status-tab[data-tab="rejected"].active .stab-count{background:var(--red);color:#fff}
+
+/* ===== CARD ===== */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;margin-bottom:16px}
+.card-title{font-size:13.5px;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:8px;color:var(--text)}
+.card-title i{font-size:16px;color:var(--text2)}
+
+/* ===== TABLE ===== */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+table th{font-size:10.5px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;padding:10px 14px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
+table td{padding:12px 14px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle}
+table tr:last-child td{border-bottom:none}
+table tbody tr:hover td{background:rgba(255,255,255,.015)}
+.td-primary{font-weight:700;color:var(--text)}
+.td-sub{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* ===== BADGE ===== */
+.badge{display:inline-block;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.badge.green{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.badge.amber{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border)}
+.badge.red{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+.badge.blue{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border)}
+.badge.purple{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-border)}
+.badge.teal{background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal-border)}
+
+/* ===== BUTTONS ===== */
+.btn{padding:8px 15px;border-radius:var(--radius);border:none;font-weight:700;font-size:12.5px;cursor:pointer;font-family:inherit;transition:.15s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:active{transform:scale(.96)}
+.btn-sm{padding:6px 12px;font-size:11.5px;border-radius:8px}
+.btn-xs{padding:4px 9px;font-size:11px;border-radius:7px}
+.btn-primary{background:var(--green);color:#000;font-weight:800}
+.btn-primary:hover{background:var(--green2)}
+.btn-ghost{background:var(--bg3);color:var(--text2);border:1px solid var(--border2)}
+.btn-ghost:hover{border-color:var(--border3);color:var(--text)}
+.btn-approve{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.btn-approve:hover{background:var(--green);color:#000}
+.btn-danger{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+.btn-danger:hover{background:var(--red);color:#fff}
+.btn-warning{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border)}
+.btn-warning:hover{background:var(--amber);color:#000}
+.btn-info{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border)}
+.btn-info:hover{background:var(--blue);color:#fff}
+.btn-message{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-border)}
+.btn-message:hover{background:var(--purple);color:#fff}
+
+/* ===== FORM ===== */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.field input,.field select,.field textarea{width:100%;padding:10px 13px;border-radius:var(--radius);background:rgba(255,255,255,0.04);border:1px solid var(--border2);color:var(--text);font-family:inherit;font-size:13px;font-weight:600;outline:none;transition:.15s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:rgba(34,197,94,0.5);background:rgba(34,197,94,0.02)}
+.field select option{background:var(--bg3)}
+.field textarea{resize:vertical;min-height:80px}
+.styled-select{padding:8px 12px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-size:12.5px;font-weight:700;outline:none;font-family:inherit;cursor:pointer}
+.search-wrap{position:relative}
+.search-wrap i{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--text3);pointer-events:none}
+.search-wrap input{padding-left:36px;padding-right:14px;min-width:220px}
+
+/* ===== ALERT ===== */
+.alert{display:flex;gap:10px;padding:11px 14px;border-radius:var(--radius);margin-bottom:14px;font-size:12.5px;font-weight:600;align-items:flex-start;line-height:1.5}
+.alert i{font-size:16px;margin-top:1px;flex-shrink:0}
+.alert.info{background:var(--blue-bg);border:1px solid var(--blue-border);color:var(--blue)}
+.alert.warn{background:var(--amber-bg);border:1px solid var(--amber-border);color:var(--amber)}
+.alert.success{background:var(--green-bg);border:1px solid var(--green-border);color:var(--green)}
+.alert.danger{background:var(--red-bg);border:1px solid var(--red-border);color:var(--red)}
+
+/* ===== MODAL ===== */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal-box{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-xl);padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,0.8);animation:popIn .25s cubic-bezier(.34,1.56,.64,1)}
+@keyframes popIn{from{opacity:0;transform:scale(.93)}to{opacity:1;transform:none}}
+.modal-hd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px}
+.modal-title{font-size:18px;font-weight:800;letter-spacing:-0.3px}
+.modal-sub{font-size:12px;color:var(--text2);margin-top:3px}
+.modal-close{width:30px;height:30px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:16px;transition:.15s;flex-shrink:0}
+.modal-close:hover{border-color:var(--border3);color:var(--text)}
+
+/* ===== TOAST ===== */
+.toast{position:fixed;top:20px;right:20px;padding:12px 18px;border-radius:var(--r-lg);font-size:13px;font-weight:700;z-index:9999;min-width:260px;transform:translateX(120%);transition:transform .3s cubic-bezier(.34,1.56,.64,1);display:flex;align-items:center;gap:9px;backdrop-filter:blur(12px)}
+.toast.show{transform:none}
+.toast.success{background:rgba(34,197,94,0.1);border:1px solid var(--green-border);color:var(--green)}
+.toast.error{background:rgba(239,68,68,0.1);border:1px solid var(--red-border);color:var(--red)}
+.toast.info{background:rgba(59,130,246,0.1);border:1px solid var(--blue-border);color:var(--blue)}
+.toast.warn{background:rgba(245,158,11,0.1);border:1px solid var(--amber-border);color:var(--amber)}
+
+/* ===== TOGGLE ===== */
+.toggle{position:relative;width:42px;height:22px;cursor:pointer;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-track{position:absolute;inset:0;border-radius:22px;background:var(--bg4);border:1px solid var(--border2);transition:.2s}
+.toggle input:checked + .toggle-track{background:var(--green2);border-color:transparent}
+.toggle-thumb{position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+.toggle input:checked ~ .toggle-thumb{transform:translateX(20px)}
+
+/* ===== USER AVATAR ===== */
+.user-av{width:36px;height:36px;border-radius:10px;background:var(--blue-bg);border:1px solid var(--blue-border);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--blue);flex-shrink:0}
+
+/* ===== CHART ===== */
+.chart-bars{display:flex;align-items:flex-end;gap:6px;height:100px}
+.cbar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px}
+.cbar{width:100%;border-radius:5px 5px 0 0;min-height:4px;background:var(--green);opacity:.6;transition:.6s cubic-bezier(.34,1.2,.64,1)}
+.cbar:hover{opacity:1}
+.cbar-lbl{font-size:9.5px;color:var(--text3);text-align:center}
+
+/* ===== JOB CARD ===== */
+.job-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;margin-bottom:12px;transition:.15s}
+.job-card:hover{border-color:var(--border2)}
+.job-card.pending{border-color:rgba(245,158,11,.2)}
+.job-card.approved{border-color:rgba(34,197,94,.15)}
+.job-card.rejected{border-color:rgba(239,68,68,.15)}
+.job-poster{display:flex;align-items:center;gap:10px;padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:14px}
+.poster-av{width:40px;height:40px;border-radius:10px;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#000;flex-shrink:0}
+.poster-stats-mini{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.psm{text-align:center;background:rgba(255,255,255,.03);border-radius:8px;padding:8px 4px}
+.psm-val{font-size:14px;font-weight:800;color:var(--teal)}
+.psm-lbl{font-size:9px;color:var(--text3);font-weight:700;text-transform:uppercase;margin-top:1px}
+
+/* ===== DETAIL BOX ===== */
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.detail-box{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:12px}
+.detail-box .dl{font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.detail-box .dv{font-size:15px;font-weight:800}
+
+/* ===== LOG ITEM ===== */
+.log-item{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)}
+.log-item:last-child{border-bottom:none}
+.log-dot{width:7px;height:7px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.log-dot.green{background:var(--teal)}.log-dot.blue{background:var(--blue)}.log-dot.red{background:var(--red)}.log-dot.amber{background:var(--amber)}
+.log-text{font-size:12.5px;color:var(--text2);flex:1;line-height:1.5}
+.log-text strong{color:var(--text);font-weight:700}
+.log-time{font-size:10.5px;color:var(--text3);white-space:nowrap;margin-left:6px}
+
+/* ===== TELEGRAM ===== */
+.tg-step{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.tg-step:last-child{border-bottom:none}
+.tg-num{width:26px;height:26px;border-radius:50%;background:var(--blue-bg);border:1px solid var(--blue-border);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0;margin-top:1px}
+.tg-body{font-size:12.5px;color:var(--text2);line-height:1.6}
+.tg-body strong{color:var(--text)}
+.tg-status{display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:12px 15px;margin-top:14px}
+.tg-dot{width:9px;height:9px;border-radius:50%}
+.tg-dot.ok{background:var(--green);box-shadow:0 0 6px rgba(34,197,94,.4)}
+.tg-dot.off{background:var(--red)}
+
+/* ===== METHOD CARD ===== */
+.method-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;display:flex;flex-direction:column;gap:12px;transition:.15s}
+.method-card:hover{border-color:var(--border2)}
+
+/* ===== NOTIF CARD ===== */
+.notif-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;display:flex;gap:14px;margin-bottom:10px;cursor:pointer;transition:.15s}
+.notif-card.unread{border-color:rgba(34,197,94,.2);background:rgba(34,197,94,.02)}
+.notif-card:hover{border-color:var(--border2)}
+.notif-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+
+/* ===== QUICK ACTION BTNS ===== */
+.quick-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.qa-btn{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px 16px;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:12px;text-align:left}
+.qa-btn:hover{border-color:var(--border3);transform:translateY(-1px)}
+.qa-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.qa-label{font-size:13px;font-weight:800}
+.qa-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.qa-badge{margin-left:auto;font-size:11px;font-weight:800;padding:3px 9px;border-radius:20px;flex-shrink:0}
+
+/* ===== TWO-COL GRID ===== */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+
+/* ===== PROOF BOX ===== */
+.proof-box{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:13px;margin-bottom:12px;font-size:13px;color:var(--text2);line-height:1.6}
+.proof-lbl{font-size:10px;color:var(--text3);font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+
+/* ===== MAP BAR ===== */
+.map-bar-row{display:flex;align-items:center;gap:10px;padding:5px 0}
+.map-country{font-size:12px;color:var(--text2);width:80px;flex-shrink:0}
+.map-track{flex:1;height:6px;background:var(--bg4);border-radius:4px;overflow:hidden}
+.map-fill{height:100%;border-radius:4px;background:var(--green);opacity:.7}
+.map-num{font-size:12px;color:var(--text2);font-weight:700;width:38px;text-align:right;flex-shrink:0}
+
+/* ===== SYS STATUS ===== */
+.sys-item{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;display:flex;align-items:center;gap:10px}
+.sys-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;animation:pulse 2s infinite}
+.sys-dot.online{background:var(--green)}
+.sys-dot.warn{background:var(--amber);animation:none}
+.sys-dot.offline{background:var(--red);animation:none}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.sys-label{font-size:13px;font-weight:700}
+.sys-status{font-size:11px;color:var(--text3);margin-top:1px}
+
+/* ===== PENDING JOB ROW ===== */
+.pj-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.pj-row:last-child{border-bottom:none}
+
+/* ===== USER CHIP ===== */
+.user-chip{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);transition:.15s}
+.user-chip:hover{border-color:var(--border2)}
+
+/* ===== BALANCE CHIP ===== */
+.bal-chip{display:inline-flex;align-items:center;gap:5px;font-size:14px;font-weight:800;color:var(--teal)}
+
+/* ===== PROOF THUMB (admin task table) ===== */
+.proof-thumb-btn{display:inline-flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:4px 8px 4px 4px;cursor:pointer;transition:.15s}
+.proof-thumb-btn:hover{border-color:var(--green-border)}
+.proof-thumb-btn img{width:30px;height:30px;object-fit:cover;border-radius:6px;flex-shrink:0}
+.proof-modal-img{width:100%;max-height:360px;object-fit:contain;border-radius:var(--radius);background:#000;margin-bottom:10px;cursor:zoom-in}
+.img-lightbox{position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:500;display:none;align-items:center;justify-content:center;padding:24px;cursor:zoom-out}
+.img-lightbox.show{display:flex}
+.img-lightbox img{max-width:100%;max-height:100%;border-radius:8px}
+
+/* ===== MULTI-LINK INPUT ROWS (job posting) ===== */
+.link-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+.link-row input{flex:1}
+.link-row .link-num{width:22px;height:22px;border-radius:6px;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;color:var(--text3);flex-shrink:0}
+.link-row-remove{width:34px;height:34px;border-radius:var(--radius);background:var(--red-bg);border:1px solid var(--red-border);color:var(--red);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:.15s}
+.link-row-remove:hover{background:var(--red);color:#fff}
+
+/* ===== MULTI-SCREENSHOT PROOF DISPLAY (admin task review) ===== */
+.proof-shots-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:10px}
+.proof-shot-item{position:relative}
+.proof-shot-item img{width:100%;height:120px;object-fit:cover;border-radius:var(--radius);background:#000;cursor:zoom-in;border:1px solid var(--border)}
+.proof-shot-label{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.7);color:#fff;font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:6px}
+
+/* ===== REJECT REASON DISPLAY (visible next to rejected items) ===== */
+.reject-reason-box{display:flex;gap:8px;align-items:flex-start;background:var(--red-bg);border:1px solid var(--red-border);border-radius:8px;padding:8px 10px;margin-top:6px;font-size:11.5px;color:var(--red);line-height:1.5}
+.reject-reason-box i{font-size:14px;margin-top:1px;flex-shrink:0}
+
+@media(max-width:1100px){.stats-grid{grid-template-columns:repeat(2,1fr)}.quick-actions{grid-template-columns:1fr 1fr}}
+@media(max-width:800px){.two-col,.three-col{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.content-area{padding:16px}.topbar{padding:0 14px}}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+<div class="img-lightbox" id="imgLightbox" onclick="closeLightbox()"><img id="lightboxImg" src=""></div>
+
+<!-- ===== LOGIN ===== -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="brand-icon">🐝</div>
+      <div>
+        <div class="brand-name">WorkHive Admin</div>
+        <div class="brand-label">Secure Control Panel</div>
+      </div>
+    </div>
+    <div class="login-title">Sign In</div>
+    <div class="login-sub">All actions are logged & encrypted</div>
+    <div class="lockout-msg" id="lockoutMsg"></div>
+    <div class="login-err" id="loginErr"></div>
+    <div class="lf">
+      <label>Username</label>
+      <input type="text" id="loginUser" placeholder="admin" autocomplete="username">
+    </div>
+    <div class="lf">
+      <label>Password</label>
+      <div class="pw-wrap">
+        <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
+        <span class="pw-eye" onclick="togglePass()"><i class="ti ti-eye"></i></span>
+      </div>
+    </div>
+    <div class="lf">
+      <label>Security Code</label>
+      <input type="text" id="loginCode" placeholder="6-digit code" maxlength="6" inputmode="numeric">
+      <div class="lf-hint">Default code: <strong>272727</strong></div>
+    </div>
+    <div class="login-err" id="loginErr2"></div>
+    <button class="btn-login" onclick="doLogin()">
+      <i class="ti ti-lock" style="font-size:15px;vertical-align:-2px"></i> Secure Login
+    </button>
+    <div class="sec-note"><i class="ti ti-shield-check" style="font-size:14px"></i> 256-bit encrypted · 3 attempts max</div>
+  </div>
+</div>
+
+<!-- ===== ADMIN SHELL ===== -->
+<div id="adminShell">
+
+  <!-- Main -->
+  <div class="main-wrap">
+    <div class="topbar">
+      <div class="tb-left">
+        <div class="tb-brand" onclick="goScreen('dashboard')">
+          <div class="tb-brand-icon">🐝</div>
+          <div class="tb-brand-name">WorkHive</div>
+        </div>
+      </div>
+      <div class="tb-right">
+        <div class="tb-clock" id="adminClock">00:00:00</div>
+        <div class="tb-notif" onclick="goScreen('notifications')">
+          <i class="ti ti-bell" style="font-size:18px;color:var(--text2)"></i>
+          <div class="notif-dot" id="topDot"></div>
+        </div>
+        <div class="admin-chip" onclick="goScreen('settings')">
+          <div class="chip-av">A</div>
+          <span class="chip-name">Super Admin</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="content-area">
+
+      <!-- ===== DASHBOARD ===== -->
+      <div class="screen active" id="screen-dashboard">
+        <div class="dash-hero">
+          <div>
+            <div class="hero-greeting">👋 Welcome back, Super Admin</div>
+            <div class="hero-title">WorkHive <span>Control Center</span></div>
+            <div class="hero-sub">সব ডিপোজিট, উইথড্রয়াল, জব ও টাস্ক শুধু আপনার অনুমোদনে সম্পন্ন হবে।</div>
+          </div>
+          <div class="hero-stats">
+            <div class="hs-item"><div class="hs-val" id="hs-users">0</div><div class="hs-lbl">Users</div></div>
+            <div class="hs-item"><div class="hs-val" id="hs-deposits">$0</div><div class="hs-lbl">Deposits</div></div>
+            <div class="hs-item"><div class="hs-val" id="hs-jobs">0</div><div class="hs-lbl">Active Jobs</div></div>
+          </div>
+        </div>
+
+        <!-- ===== QUICK MENU — vertical, line-by-line, mobile-app style nav ===== -->
+        <div class="qm-wrap">
+          <div class="qm-section-lbl">Users</div>
+          <div class="qm-row" onclick="goScreen('users')">
+            <div class="qm-icon blue-bg" style="background:var(--blue-bg);color:var(--blue)"><i class="ti ti-users"></i></div>
+            <div class="qm-text"><div class="qm-label">User Management</div><div class="qm-sub">সকল ইউজার দেখুন, ব্যান/আনব্যান, KYC ভেরিফাই</div></div>
+            <span class="qm-badge blue" id="nb-users">0</span>
+            <i class="ti ti-chevron-right qm-chev"></i>
+          </div>
+
+          <div class="qm-section-lbl">Jobs & Tasks</div>
+          <div class="qm-row" onclick="goScreen('jobs')">
+            <div class="qm-icon" style="background:var(--purple-bg);color:var(--purple)"><i class="ti ti-briefcase"></i></div>
+            <div class="qm-text"><div class="qm-label">Job Approvals</div><div class="qm-sub">নতুন জব অনুমোদন বা রিজেক্ট করুন</div></div>
+            <span class="qm-badge" id="nb-jobs">0</span>
+            <i class="ti ti-chevron-right qm-chev"></i>
+          </div>
+          <div class="qm-row" onclick="goScreen('tasks')">
+            <div class="qm-icon" style="background:var(--teal-bg);color:var(--teal)"><i class="ti ti-checks"></i></div>
+            <div class="qm-text"><div class="qm-label">Task Submissions</div><div class="qm-sub">Worker-দের স্ক্রিনশট প্রুফ রিভিউ করুন</div></div>
+            <span class="qm-badge" id="nb-tasks">0</span>
+            <i class="ti ti-chevron-right qm-chev"></i>
+          </div>
+
+          <div class="qm-section-lbl">Finance</div>
+          <div class="qm-row" onclick="goScreen('deposits')">
+            <div class="qm-icon" style="background:var(--green-bg);color:var(--green)"><i class="ti ti-arrow-bar-to-down"></i></div>
+            <div class="qm-text"><div class="qm-label">Deposits</div><div class="qm-sub">ডিপোজিট রিকোয়েস্ট কনফার্ম করুন</div></div>
+            <span class="qm-badge" id="nb-deposits">0</span>
+            <i class="ti ti-chevron-right qm-chev"></i>
+          </div>
+          <div class="qm-row" onclick="goScreen('withdrawals')">
+            <div class="qm-icon" style="background:var(--amber-bg);color:var(--amber)"><i class="ti ti-arrow-bar-up"></i></div>
+            <div class="qm-text"><div class="qm-label">Withdrawals</div><div class="qm-sub">Pending, Processing, Completed, Rejected</div></div>
+            <span class="qm-badge" id="nb-withdrawals">0</span>
+            <i class="ti ti-chevron-right qm-chev"></i>
+          </div>
+          <div class="qm-row" onclick="goScreen('payment-methods')">
+            <div class="qm-icon" style="background:var(--bg4);color:var(--text2)"><i class="ti ti-credit-card"></i></div>
+            <div class="qm-text"><div class="qm-label">Payment Methods</div><div class="qm-sub">bKash, Nagad, USDT ইত্যাদি পরিচালনা</div></div>
+            <i class="ti ti-chevron-right qm-chev"></i>
+          </div>
+
+          <div class="qm-section-lbl">Communication</div>
+          <div class="qm-row" onclick="goPushSettings()">
+            <div class="qm-icon" style="background:var(--green-bg);color:var(--green)"><i class="ti ti-bell-ringing"></i></div>
+            <div class="qm-text"><div class="qm-label">🔔 Push Notification (OneSignal)</div><div class="qm-sub">App ID ও REST API Key বসিয়ে সেটআপ করুন — এখানেই একমাত্র জায়গা</div></div>
+            <span class="qm-status-pill off" id="qmPushStatus">Not Configured</span>
+            <i class="ti ti-chevron-right qm-chev"></i>
+          </div>
+          <div class="qm-row" onclick="goScreen('telegram')">
+            <div class="qm-icon" style="background:var(--blue-bg);color:var(--blue)"><i class="ti ti-brand-telegram"></i></div>
+            <div class="qm-text"><div class="qm-label">Telegram Bot</div><div class="qm-sub">Telegram-এ অটো-নোটিফিকেশন কনফিগার করুন</div></div>
+            <i class="ti ti-chevron-right qm-chev"></i>
+          </div>
+          <div class="qm-row" onclick="goScreen('broadcast')">
+            <div class="qm-icon" style="background:var(--pink-bg);color:var(--pink)"><i class="ti ti-speakerphone"></i></div>
+            <div class="qm-text"><div class="qm-label">Broadcast</div><div class="qm-sub">সব ইউজারকে মেসেজ পাঠান</div></div>
+            <i class="ti ti-chevron-right qm-chev"></i>
+          </div>
+          <div class="qm-row" onclick="goScreen('notifications')">
+            <div class="qm-icon" style="background:var(--red-bg);color:var(--red)"><i class="ti ti-bell"></i></div>
+            <div class="qm-text"><div class="qm-label">Notifications</div><div class="qm-sub">এডমিন নোটিফিকেশন দেখুন</div></div>
+            <span class="qm-badge" id="nb-notifs">0</span>
+            <i class="ti ti-chevron-right qm-chev"></i>
+          </div>
+
+          <div class="qm-section-lbl">System</div>
+          <div class="qm-row" onclick="goScreen('settings')">
+            <div class="qm-icon" style="background:var(--bg4);color:var(--text2)"><i class="ti ti-settings"></i></div>
+            <div class="qm-text"><div class="qm-label">Site Settings</div><div class="qm-sub">User App-এ লাইভ কনফিগার করুন</div></div>
+            <i class="ti ti-chevron-right qm-chev"></i>
+          </div>
+          <div class="qm-row" onclick="goScreen('logs')">
+            <div class="qm-icon" style="background:var(--bg4);color:var(--text2)"><i class="ti ti-file-description"></i></div>
+            <div class="qm-text"><div class="qm-label">Activity Logs</div><div class="qm-sub">সব এডমিন অ্যাকশনের হিস্টোরি</div></div>
+            <i class="ti ti-chevron-right qm-chev"></i>
+          </div>
+          <div class="qm-row" onclick="exportUsers()">
+            <div class="qm-icon" style="background:var(--bg4);color:var(--text2)"><i class="ti ti-download"></i></div>
+            <div class="qm-text"><div class="qm-label">Export CSV</div><div class="qm-sub">সব ইউজারের তথ্য ডাউনলোড করুন</div></div>
+          </div>
+          <div class="qm-row" onclick="doLogout()">
+            <div class="qm-icon" style="background:var(--red-bg);color:var(--red)"><i class="ti ti-logout"></i></div>
+            <div class="qm-text"><div class="qm-label" style="color:var(--red)">Logout</div></div>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card green" onclick="goScreen('users')">
+            <div class="sc-icon green"><i class="ti ti-users"></i></div>
+            <div class="sc-val" id="stat-users">0</div>
+            <div class="sc-label">Total Users</div>
+            <span class="sc-badge up" id="stat-kyc-badge">0 KYC pending</span>
+          </div>
+          <div class="stat-card blue" onclick="goScreen('deposits')">
+            <div class="sc-icon blue"><i class="ti ti-arrow-bar-to-down"></i></div>
+            <div class="sc-val" id="stat-dep">$0</div>
+            <div class="sc-label">Confirmed Deposits</div>
+            <span class="sc-badge warn" id="stat-dep-pending">0 pending</span>
+          </div>
+          <div class="stat-card amber" onclick="goScreen('withdrawals')">
+            <div class="sc-icon amber"><i class="ti ti-arrow-bar-up"></i></div>
+            <div class="sc-val" id="stat-wd">$0</div>
+            <div class="sc-label">Pending Withdrawals</div>
+            <span class="sc-badge warn" id="stat-wd-count">0 requests</span>
+          </div>
+          <div class="stat-card purple" onclick="goScreen('jobs')">
+            <div class="sc-icon purple"><i class="ti ti-briefcase"></i></div>
+            <div class="sc-val" id="stat-jobs">0</div>
+            <div class="sc-label">Active Jobs</div>
+            <span class="sc-badge warn" id="stat-jobs-pending">0 pending</span>
+          </div>
+          <div class="stat-card teal" onclick="goScreen('tasks')">
+            <div class="sc-icon teal"><i class="ti ti-check-box"></i></div>
+            <div class="sc-val" id="stat-tasks">0</div>
+            <div class="sc-label">Task Submissions</div>
+            <span class="sc-badge warn" id="stat-tasks-pending">0 pending</span>
+          </div>
+          <div class="stat-card red">
+            <div class="sc-icon red"><i class="ti ti-alert-triangle"></i></div>
+            <div class="sc-val" id="stat-kyc">0</div>
+            <div class="sc-label">KYC Pending</div>
+            <span class="sc-badge down">Need review</span>
+          </div>
+        </div>
+
+        <div class="two-col" style="margin-bottom:16px">
+          <div class="card">
+            <div class="card-title"><i class="ti ti-chart-bar"></i> Weekly Signups</div>
+            <div class="chart-bars" id="signupChart"></div>
+          </div>
+          <div class="card">
+            <div class="card-title"><i class="ti ti-clock-hour-3"></i> Pending Jobs — Quick Actions</div>
+            <div id="dashPendingJobs"><div style="color:var(--text3);font-size:13px;text-align:center;padding:20px">No pending jobs</div></div>
+          </div>
+        </div>
+
+        <div class="three-col" style="margin-bottom:16px">
+          <div class="card">
+            <div class="card-title"><i class="ti ti-arrow-bar-to-down"></i> Recent Deposits</div>
+            <div id="dashDeposits"></div>
+          </div>
+          <div class="card">
+            <div class="card-title"><i class="ti ti-arrow-bar-up"></i> Recent Withdrawals</div>
+            <div id="dashWithdrawals"></div>
+          </div>
+          <div class="card">
+            <div class="card-title"><i class="ti ti-world"></i> Users by Country</div>
+            <div id="dashCountry"></div>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="card">
+            <div class="card-title"><i class="ti ti-activity"></i> Recent Activity</div>
+            <div id="dashActivity"></div>
+          </div>
+          <div class="card">
+            <div class="card-title"><i class="ti ti-server"></i> System Status</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="sysStatus">
+              <div class="sys-item"><div class="sys-dot online"></div><div><div class="sys-label">Server</div><div class="sys-status">Online</div></div></div>
+              <div class="sys-item"><div class="sys-dot online"></div><div><div class="sys-label">Firebase</div><div class="sys-status" id="fbStatus">Connecting…</div></div></div>
+              <div class="sys-item"><div class="sys-dot" id="tgSysDot" style="background:var(--red)"></div><div><div class="sys-label">Telegram Bot</div><div class="sys-status" id="tgSysStatus">Not connected</div></div></div>
+              <div class="sys-item"><div class="sys-dot" id="osSysDot" style="background:var(--red)"></div><div><div class="sys-label">Push (OneSignal)</div><div class="sys-status" id="osSysStatus">Not configured</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== USERS ===== -->
+      <div class="screen" id="screen-users">
+        <div class="sec-hd">
+          <h2><button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')" style="margin-right:6px"><i class="ti ti-arrow-left"></i></button><i class="ti ti-users"></i> User Management</h2>
+          <div class="sec-actions">
+            <div class="search-wrap"><i class="ti ti-search"></i><input class="field" style="margin:0" type="text" id="userSearch" placeholder="Search users…" oninput="filterUsers(this.value)"></div>
+            <select class="styled-select" onchange="filterUsersByStatus(this.value)">
+              <option value="all">All Users</option>
+              <option value="active">Active</option>
+              <option value="banned">Banned</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="exportUsers()"><i class="ti ti-download"></i> Export CSV</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>#</th><th>User</th><th>Joined</th><th>Balance</th><th>Tasks</th><th>KYC</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="userTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== JOBS ===== -->
+      <div class="screen" id="screen-jobs">
+        <div class="sec-hd">
+          <h2><button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')" style="margin-right:6px"><i class="ti ti-arrow-left"></i></button><i class="ti ti-briefcase"></i> Job Approvals</h2>
+          <div class="sec-actions">
+            <select class="styled-select" onchange="filterJobs(this.value)">
+              <option value="all">All Jobs</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="openModal('postJobModal')"><i class="ti ti-plus"></i> Post New Job</button>
+          </div>
+        </div>
+        <div class="alert info"><i class="ti ti-info-circle"></i> জব পোস্ট করার পরে শুধুমাত্র আপনার অনুমোদনের পরেই তা Worker দের কাছে দৃশ্যমান হবে। Admin নিজে জব পোস্ট করলে তা সাথে সাথেই Live হয়ে যাবে।</div>
+        <div id="jobList"></div>
+      </div>
+
+      <!-- ===== TASKS ===== -->
+      <div class="screen" id="screen-tasks">
+        <div class="sec-hd">
+          <h2><button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')" style="margin-right:6px"><i class="ti ti-arrow-left"></i></button><i class="ti ti-checks"></i> Task Submissions</h2>
+        </div>
+        <div class="alert warn"><i class="ti ti-alert-triangle"></i> Task approve করলেই Worker এর balance credit হবে। Reject করলে কোনো balance change হবে না — 💬 আইকনে ক্লিক করে reason লিখলে সেটা Worker-এর নোটিফিকেশনে ও টাস্ক হিস্টোরিতে দেখাবে। Submission মুছে ফেললে (Delete) সংশ্লিষ্ট স্ক্রিনশটও Firebase Storage থেকে স্থায়ীভাবে মুছে যাবে।</div>
+        <div class="status-tabs" id="taskTabs"></div>
+        <div class="card">
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Worker</th><th>Task / Job</th><th>Proof</th><th>Reward</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="taskTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== DEPOSITS ===== -->
+      <div class="screen" id="screen-deposits">
+        <div class="sec-hd">
+          <h2><button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')" style="margin-right:6px"><i class="ti ti-arrow-left"></i></button><i class="ti ti-arrow-bar-to-down"></i> Deposit Requests</h2>
+        </div>
+        <div class="alert danger"><i class="ti ti-lock"></i> শুধুমাত্র আপনার Confirm এর পরেই User এর Balance আপডেট হবে। 💬 আইকনে reason লিখে Reject করলে User নোটিফিকেশনে কারণ দেখতে পাবে।</div>
+        <div class="status-tabs" id="depositTabs"></div>
+        <div class="card">
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>User</th><th>Method</th><th>Amount</th><th>TxID / Sender</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="depositTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== WITHDRAWALS ===== -->
+      <div class="screen" id="screen-withdrawals">
+        <div class="sec-hd">
+          <h2><button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')" style="margin-right:6px"><i class="ti ti-arrow-left"></i></button><i class="ti ti-arrow-bar-up"></i> Withdrawal Requests</h2>
+        </div>
+        <div class="alert danger"><i class="ti ti-lock"></i> Withdrawal শুধুমাত্র আপনার Send/Complete করার পরেই সম্পন্ন হবে। Reject করলে Amount ফেরত যাবে এবং 💬 কারণ User-কে জানানো হবে।</div>
+        <div class="status-tabs" id="withdrawTabs"></div>
+        <div class="card">
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>User</th><th>Method</th><th>Requested</th><th>Net Amount</th><th>Account / Wallet</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="withdrawTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== PAYMENT METHODS ===== -->
+      <div class="screen" id="screen-payment-methods">
+        <div class="sec-hd">
+          <h2><button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')" style="margin-right:6px"><i class="ti ti-arrow-left"></i></button><i class="ti ti-credit-card"></i> Payment Methods</h2>
+          <button class="btn btn-primary btn-sm" onclick="openModal('addMethodModal')"><i class="ti ti-plus"></i> Add Method</button>
+        </div>
+        <div class="alert info"><i class="ti ti-info-circle"></i> Enable/disable methods, account numbers update করুন, Logo সেট করুন এবং deposit/withdraw fee % set করুন।</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px" id="methodsGrid"></div>
+      </div>
+
+      <!-- ===== TELEGRAM ===== -->
+      <div class="screen" id="screen-telegram">
+        <div class="sec-hd">
+          <h2><button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')" style="margin-right:6px"><i class="ti ti-arrow-left"></i></button><i class="ti ti-brand-telegram"></i> Telegram Bot &amp; Push Notifications</h2>
+        </div>
+        <div class="two-col">
+          <div class="card">
+            <div class="card-title"><i class="ti ti-robot"></i> Bot Configuration</div>
+            <div class="tg-step"><div class="tg-num">1</div><div class="tg-body">Telegram-এ <strong>@BotFather</strong> খুঁজুন এবং <strong>/newbot</strong> পাঠান</div></div>
+            <div class="tg-step"><div class="tg-num">2</div><div class="tg-body">Bot তৈরি করে <strong>HTTP API Token</strong> কপি করুন</div></div>
+            <div class="tg-step"><div class="tg-num">3</div><div class="tg-body"><strong>@userinfobot</strong> থেকে আপনার Chat ID নিন</div></div>
+            <div style="margin-top:14px">
+              <div class="field"><label>Bot Token</label><input type="text" id="tgToken" placeholder="123456:AAExxxxxx"></div>
+              <div class="field"><label>Admin Chat ID</label><input type="text" id="tgChatId" placeholder="-100xxxxxxxxxx"></div>
+              <button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="connectTelegram()"><i class="ti ti-plug"></i> Connect Bot</button>
+              <button class="btn btn-ghost" style="width:100%" onclick="testTelegram()"><i class="ti ti-send"></i> Send Test Message</button>
+            </div>
+            <div class="tg-status">
+              <div class="tg-dot off" id="tgDot"></div>
+              <div>
+                <div style="font-size:13px;font-weight:700" id="tgStatusText">Not Connected</div>
+                <div style="font-size:11px;color:var(--text3)" id="tgBotInfo">Configure above to connect</div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title"><i class="ti ti-bell-ringing"></i> Auto-Notification Events</div>
+            <div id="tgEvents"></div>
+          </div>
+        </div>
+
+        <!-- ===== ONESIGNAL PUSH NOTIFICATIONS ===== -->
+        <div class="two-col" style="margin-top:16px" id="oneSignalCard">
+          <div class="card">
+            <div class="card-title"><i class="ti ti-bell-ringing"></i> OneSignal Push Notifications</div>
+            <div class="alert info"><i class="ti ti-info-circle"></i> এটা সেট করলে অ্যাডমিন প্যানেল থেকে যেকোনো action (Task Reject, Withdrawal Processing/Sent, Deposit Confirm/Reject, Job Approve/Reject ইত্যাদি) এর সাথে সাথেই ইউজারের ফোনে <strong>আসল push notification</strong> (heads-up পপআপ + সাউন্ড) পাঠানো হবে — শুধু in-app notification list-এ না।</div>
+            <div class="alert warn"><i class="ti ti-alert-triangle"></i> ২০২৪ সালের নভেম্বরের পর OneSignal পুরনো ("Legacy") REST API Key বাতিল করে নতুন "Rich" API Key চালু করেছে, এবং পুরনো Legacy App API Key ২০২৬-এর Q1 থেকে সম্পূর্ণভাবে অচল হয়ে যাচ্ছে। নিচের REST API Key ফিল্ডে অবশ্যই <strong>OneSignal Dashboard → Settings → Keys & IDs</strong> থেকে নতুন <strong>Rich API Key</strong> ব্যবহার করুন — পুরনো (legacy) key দিলে push পাঠানো ব্যর্থ হতে পারে।</div>
+            <div class="field"><label>OneSignal App ID</label><input type="text" id="osAppId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" value="93de5a5d-7a31-487f-9549-4e3c41144f39"></div>
+            <div class="lf-hint" style="margin-top:-8px;margin-bottom:12px">এই App ID টা পাবলিক (secret না) এবং তোমার Android অ্যাপে (MainActivity.java, OneSignal.initWithContext) যেটা বসানো আছে সেটাই এখানে আগে থেকে বসানো আছে। ভিন্ন App ID ব্যবহার করলে দুটো জায়গায় মিলছে কিনা নিশ্চিত করো।</div>
+            <div class="field"><label>REST API Key</label><input type="password" id="osRestKey" placeholder="OneSignal Dashboard → Settings → Keys & IDs → REST/Rich API Key"></div>
+            <div class="lf-hint" style="margin-bottom:10px">⚠️ এই key টি secret — এটা browser-এ localStorage-এ save হয়। শুধু বিশ্বস্ত ডিভাইস থেকে এই admin panel access করুন।</div>
+            <button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="saveOneSignalConfig()"><i class="ti ti-device-floppy"></i> Save Configuration</button>
+            <button class="btn btn-ghost" style="width:100%" onclick="testOneSignalBroadcastPush()"><i class="ti ti-send"></i> Send Test Push (All Subscribed Devices)</button>
+            <div class="tg-status">
+              <div class="tg-dot off" id="osDot"></div>
+              <div>
+                <div style="font-size:13px;font-weight:700" id="osStatusText">Not Configured</div>
+                <div style="font-size:11px;color:var(--text3)" id="osInfo">Configure above to enable real push notifications</div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title"><i class="ti ti-alert-triangle"></i> জরুরি — একটা ধাপ এখনো বাকি</div>
+            <div class="alert warn"><i class="ti ti-alert-triangle"></i> এই admin panel পুশ পাঠানোর সময় নির্দিষ্ট ইউজারকে target করে <code>Firebase UID</code> দিয়ে (OneSignal "External ID")। কিন্তু কোনো ইউজারের ফোন OneSignal-কে তার Firebase UID জানায় না, যতক্ষণ না আপনার লাইভ সাইটের (movilover.github.io/WorkHive) কোডে লগইনের পরে এই কল যুক্ত করা হয়:</div>
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:12px;font-family:monospace;font-size:11.5px;color:var(--teal);white-space:pre-wrap;line-height:1.6">// Firebase Auth login সফল হওয়ার পরে:
+if (window.Capacitor?.Plugins?.OneSignal) {
+  window.Capacitor.Plugins.OneSignal.login({ externalId: firebaseUser.uid });
+}
+// লগআউটের সময় (পরের ইউজার আগের ইউজারের পুশ না পায়, তাই):
+if (window.Capacitor?.Plugins?.OneSignal) {
+  window.Capacitor.Plugins.OneSignal.logout();
+}</div>
+            <div class="lf-hint" style="margin-top:10px">এই লাইনটা যোগ না করলে, এই admin panel থেকে push পাঠানো হলেও OneSignal জানবে না কোন ফোনে পাঠাতে হবে — তাই কিছুই পৌঁছাবে না। লাইভ সাইটের JS ফাইলটা শেয়ার করলে আমি সঠিক জায়গায় বসিয়ে দিতে পারি।</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== BROADCAST ===== -->
+      <div class="screen" id="screen-broadcast">
+        <div class="sec-hd">
+          <h2><button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')" style="margin-right:6px"><i class="ti ti-arrow-left"></i></button><i class="ti ti-speakerphone"></i> Broadcast Message</h2>
+        </div>
+        <div class="two-col">
+          <div class="card">
+            <div class="card-title"><i class="ti ti-pencil"></i> Compose</div>
+            <div class="field"><label>Target Audience</label>
+              <select id="bcTarget"><option value="all">All Users</option><option value="kyc_verified">KYC Verified</option><option value="kyc_pending">KYC Pending</option></select>
+            </div>
+            <div class="field"><label>Channel</label>
+              <select id="bcChannel"><option value="notification">In-App Notification</option><option value="telegram">Telegram</option><option value="both">Both</option></select>
+            </div>
+            <div class="field"><label>Title</label><input type="text" id="bcTitle" placeholder="e.g. New Tasks Available!"></div>
+            <div class="field"><label>Message</label><textarea id="bcBody" placeholder="Write your message…"></textarea></div>
+            <button class="btn btn-primary" style="width:100%" onclick="sendBroadcast()"><i class="ti ti-speakerphone"></i> Send Broadcast</button>
+          </div>
+          <div class="card">
+            <div class="card-title"><i class="ti ti-history"></i> Broadcast History</div>
+            <div id="bcHistory"><div style="color:var(--text3);font-size:13px;text-align:center;padding:24px">No broadcasts yet</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== NOTIFICATIONS ===== -->
+      <div class="screen" id="screen-notifications">
+        <div class="sec-hd">
+          <h2><button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')" style="margin-right:6px"><i class="ti ti-arrow-left"></i></button><i class="ti ti-bell"></i> Admin Notifications</h2>
+          <button class="btn btn-ghost btn-sm" onclick="markAllRead()"><i class="ti ti-check-all"></i> Mark all read</button>
+        </div>
+        <div id="notifList"></div>
+      </div>
+
+      <!-- ===== SETTINGS ===== -->
+      <div class="screen" id="screen-settings">
+        <div class="sec-hd">
+          <h2><button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')" style="margin-right:6px"><i class="ti ti-arrow-left"></i></button><i class="ti ti-settings"></i> Site Settings</h2>
+        </div>
+        <div class="alert info"><i class="ti ti-info-circle"></i> এই পেজের সব Setting সরাসরি User App-এ লাইভ আপডেট হয় (siteSettings/global)।</div>
+        <div class="two-col">
+          <div>
+            <div class="card">
+              <div class="card-title"><i class="ti ti-world"></i> General Settings</div>
+              <div class="field"><label>Platform Name</label><input type="text" id="setName" value="WorkHive"></div>
+              <div class="field"><label>Minimum Withdrawal ($)</label><input type="number" id="setMinWd" value="5" min="1"></div>
+              <div class="field"><label>Minimum Deposit ($)</label><input type="number" id="setMinDep" value="1" min="0.5"></div>
+              <div class="field"><label>Default Withdraw Fee (%)</label><input type="number" id="setFee" value="5" min="0" max="30"></div>
+              <button class="btn btn-primary" style="width:100%" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> Save General Settings</button>
+            </div>
+            <div class="card">
+              <div class="card-title"><i class="ti ti-users-group"></i> 3-Generation Referral Rewards</div>
+              <div class="field"><label>Gen 1 Reward — Direct Referral ($)</label><input type="number" id="setRefGen1" value="0.50" step="0.01" min="0"></div>
+              <div class="field"><label>Gen 2 Reward ($)</label><input type="number" id="setRefGen2" value="0.25" step="0.01" min="0"></div>
+              <div class="field"><label>Gen 3 Reward ($)</label><input type="number" id="setRefGen3" value="0.10" step="0.01" min="0"></div>
+              <button class="btn btn-primary" style="width:100%" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> Save Referral Settings</button>
+            </div>
+            <div class="card">
+              <div class="card-title"><i class="ti ti-headset"></i> Support Info</div>
+              <div class="field"><label>Support Email</label><input type="text" id="setSupportEmail" value="support@workhive.app"></div>
+              <div class="field"><label>Support / Live Chat Hours</label><input type="text" id="setSupportHours" value="9 AM – 11 PM"></div>
+              <div class="field"><label>Average Response Time</label><input type="text" id="setSupportResponse" value="Within 12 hours"></div>
+              <button class="btn btn-primary" style="width:100%" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> Save Support Settings</button>
+            </div>
+          </div>
+          <div>
+            <div class="card">
+              <div class="card-title"><i class="ti ti-lock"></i> Security Settings</div>
+              <div class="field"><label>New Admin Password</label><input type="password" id="newPass" placeholder="Leave blank to keep current"></div>
+              <div class="field"><label>New Security Code (6 digits)</label><input type="text" id="newCode" placeholder="6-digit code" maxlength="6"></div>
+              <div class="alert warn"><i class="ti ti-alert-triangle"></i> Security code পরিবর্তন করলে সঙ্গে সঙ্গে effective হবে।</div>
+              <button class="btn btn-warning" style="width:100%" onclick="saveSecurity()"><i class="ti ti-lock"></i> Update Security</button>
+            </div>
+            <div class="card">
+              <div class="card-title"><i class="ti ti-speakerphone"></i> Site-Wide Banner (User App)</div>
+              <div class="field"><label>Banner Message (ফাঁকা রাখলে banner hide হবে)</label><textarea id="setBannerMsg" placeholder="e.g. 🎉 নতুন টাস্ক যুক্ত হয়েছে!" rows="2"></textarea></div>
+              <div class="field"><label>Banner Type</label>
+                <select id="setBannerType"><option value="info">Info (Blue)</option><option value="warn">Warning (Amber)</option><option value="success">Success (Green)</option></select>
+              </div>
+              <button class="btn btn-primary" style="width:100%" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> Save Banner</button>
+            </div>
+            <div class="card">
+              <div class="card-title"><i class="ti ti-disc"></i> Daily Spin Feature</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0">
+                <div>
+                  <div style="font-size:14px;font-weight:700">Enable Daily Spin</div>
+                  <div style="font-size:12px;color:var(--text3);margin-top:2px">Off হলে User App-এ spin disable থাকবে</div>
+                </div>
+                <label class="toggle"><input type="checkbox" id="toggleSpin" checked onchange="saveSettings()"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title"><i class="ti ti-tool"></i> Maintenance Mode</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0">
+                <div>
+                  <div style="font-size:14px;font-weight:700">Enable Maintenance Mode</div>
+                  <div style="font-size:12px;color:var(--text3);margin-top:2px">Users see maintenance page</div>
+                </div>
+                <label class="toggle"><input type="checkbox" id="toggleMaint"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== LOGS ===== -->
+      <div class="screen" id="screen-logs">
+        <div class="sec-hd">
+          <h2><button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')" style="margin-right:6px"><i class="ti ti-arrow-left"></i></button><i class="ti ti-file-description"></i> Activity Logs</h2>
+          <div class="sec-actions">
+            <select class="styled-select" onchange="filterLogs(this.value)">
+              <option value="all">All Types</option>
+              <option value="login">Login</option>
+              <option value="deposit">Deposit</option>
+              <option value="withdrawal">Withdrawal</option>
+              <option value="job">Jobs</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" onclick="clearLogs()"><i class="ti ti-trash"></i> Clear Logs</button>
+          </div>
+        </div>
+        <div class="card"><div id="logsContainer"></div></div>
+      </div>
+
+    </div><!-- content-area -->
+  </div><!-- main-wrap -->
+</div><!-- adminShell -->
+
+<!-- ===== MODALS ===== -->
+
+<!-- User Detail -->
+<div class="modal-overlay" id="userDetailModal">
+  <div class="modal-box" style="max-width:580px">
+    <div class="modal-hd">
+      <div><div class="modal-title" id="udTitle">User Detail</div><div class="modal-sub" id="udSub"></div></div>
+      <div class="modal-close" onclick="closeModal('userDetailModal')"><i class="ti ti-x"></i></div>
+    </div>
+    <div id="udContent"></div>
+  </div>
+</div>
+
+<!-- Task Proof -->
+<div class="modal-overlay" id="proofModal">
+  <div class="modal-box">
+    <div class="modal-hd">
+      <div><div class="modal-title">Task Proof Review</div><div class="modal-sub" id="proofSub"></div></div>
+      <div class="modal-close" onclick="closeModal('proofModal')"><i class="ti ti-x"></i></div>
+    </div>
+    <div id="proofContent"></div>
+  </div>
+</div>
+
+<!-- Reject Reason -->
+<div class="modal-overlay" id="rejectModal">
+  <div class="modal-box">
+    <div class="modal-hd">
+      <div><div class="modal-title" id="rejectTitle"><i class="ti ti-message-circle-2" style="vertical-align:-3px;color:var(--purple)"></i> Reject</div><div class="modal-sub" id="rejectSub"></div></div>
+      <div class="modal-close" onclick="closeModal('rejectModal')"><i class="ti ti-x"></i></div>
+    </div>
+    <div class="field"><label>Rejection Reason (User এটা দেখতে পাবে)</label><textarea id="rejectReason" rows="3" placeholder="যেমন: স্ক্রিনশট স্পষ্ট নয় / ভুল তথ্য / সময়সীমা পার হয়ে গেছে…"></textarea></div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('rejectModal')">Cancel</button>
+      <button class="btn btn-danger" style="flex:1" onclick="confirmReject()"><i class="ti ti-x"></i> Confirm Reject</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Payment Method -->
+<div class="modal-overlay" id="addMethodModal">
+  <div class="modal-box">
+    <div class="modal-hd">
+      <div><div class="modal-title">Add Payment Method</div><div class="modal-sub">নতুন deposit/withdrawal method যোগ করুন</div></div>
+      <div class="modal-close" onclick="closeModal('addMethodModal')"><i class="ti ti-x"></i></div>
+    </div>
+    <div class="field"><label>Method Name</label><input type="text" id="nmName" placeholder="e.g. bKash, Nagad, USDT"></div>
+    <div class="field">
+      <label>Method Logo (Image — Optional)</label>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div id="nmLogoPreview" style="width:46px;height:46px;border-radius:10px;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden;flex-shrink:0">📷</div>
+        <input type="file" id="nmLogoFile" accept="image/*" onchange="previewMethodLogo(this)" style="font-size:12px;flex:1">
+      </div>
+      <div class="lf-hint">Logo দিলে Emoji এর জায়গায় Logo দেখানো হবে (Recommended: ছোট, square ছবি)</div>
+    </div>
+    <div class="field"><label>Emoji Icon (Logo না দিলে এটা ব্যবহার হবে)</label><input type="text" id="nmEmoji" placeholder="📱" maxlength="4"></div>
+    <div class="field"><label>Account Number / Wallet Address</label><input type="text" id="nmNumber" placeholder="01XXXXXXXXX"></div>
+    <div class="form-grid">
+      <div class="field"><label>Min Deposit ($)</label><input type="number" id="nmMin" value="1" min="0.5"></div>
+      <div class="field"><label>Deposit Fee (%)</label><input type="number" id="nmDepFee" value="0" min="0" max="30" step="0.1"></div>
+    </div>
+    <div class="field"><label>Withdraw Fee (%)</label><input type="number" id="nmWdFee" value="5" min="0" max="30" step="0.1"></div>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('addMethodModal')">Cancel</button>
+      <button class="btn btn-primary" style="flex:1" onclick="addMethod()"><i class="ti ti-plus"></i> Add Method</button>
+    </div>
+  </div>
+</div>
+
+<!-- Post New Job (Admin posts directly, instantly live) -->
+<div class="modal-overlay" id="postJobModal">
+  <div class="modal-box" style="max-width:560px">
+    <div class="modal-hd">
+      <div><div class="modal-title">Post New Micro Job</div><div class="modal-sub">Admin থেকে পোস্ট করা জব সাথে সাথেই Live হবে</div></div>
+      <div class="modal-close" onclick="closeModal('postJobModal')"><i class="ti ti-x"></i></div>
+    </div>
+    <div class="field"><label>Job Title</label><input type="text" id="pjTitle" placeholder="e.g. Like & Comment on Facebook Post"></div>
+    <div class="form-grid">
+      <div class="field"><label>Category</label>
+        <select id="pjCategory">
+          <option>Social Media</option><option>App Download</option><option>Website Visit</option>
+          <option>Review/Rating</option><option>Watch Video</option><option>Survey</option><option>Other</option>
+        </select>
+      </div>
+      <div class="field"><label>Submission Type</label>
+        <select id="pjType" onchange="updatePjTypeUI()">
+          <option value="proof">Proof Submission (text/screenshot info)</option>
+          <option value="link">Direct Link Click Only</option>
+          <option value="dailylink">🔁 Daily Direct Link (Auto 24h Repeat)</option>
+        </select>
+      </div>
+    </div>
+    <div class="field" id="pjLinkField">
+      <label id="pjLinkLabel">Direct Link(s) (URL)</label>
+      <div id="pjLinksList"></div>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="addLinkField()"><i class="ti ti-plus"></i> Add Another Link</button>
+      <div class="lf-hint" id="pjLinkHint">একাধিক লিংক দিলে Worker-কে সবগুলো লিংকই ভিজিট করতে হবে।</div>
+    </div>
+    <div class="field"><label>Instructions</label><textarea id="pjInstructions" rows="3" placeholder="Worker-দের জন্য ধাপে ধাপে নির্দেশনা লিখুন"></textarea></div>
+    <div class="form-grid">
+      <div class="field"><label>Reward per Task ($)</label><input type="number" id="pjReward" placeholder="0.10" step="0.01" min="0.01"></div>
+      <div class="field" id="pjLimitField"><label>Worker Limit (slots)</label><input type="number" id="pjLimit" placeholder="100" min="1"></div>
+    </div>
+    <div class="field" id="pjShotsField" style="display:none">
+      <label>Number of Screenshots Required</label>
+      <input type="number" id="pjShots" value="1" min="1" max="6">
+      <div class="lf-hint">Worker App-এ এই সংখ্যক আলাদা "Screenshot 1, Screenshot 2…" আপলোড বক্স দেখাবে — সবগুলো না দিলে Submit করা যাবে না। <strong>⚠️ User App-এ এখনো এই মাল্টি-স্ক্রিনশট আপলোড ফিচারটি যোগ করা প্রয়োজন — নিচের "ইউজার সাইট নোট" দেখুন।</strong></div>
+    </div>
+    <div class="alert info" id="pjDailyHint" style="display:none"><i class="ti ti-info-circle"></i> এই টাইপে কোনো Worker Limit নেই — সব ইউজার প্রতি ২৪ ঘণ্টায় একবার এই লিংক(গুলো) ভিজিট করে reward পাবে, এবং লিংকে ভিজিট করে ফিরে এলে balance অটোমেটিক যোগ হয়ে যাবে (কোনো proof review লাগবে না)।</div>
+    <div class="field"><label>Target Country</label><input type="text" id="pjCountry" placeholder="Global / Bangladesh / ..." value="Global"></div>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('postJobModal')">Cancel</button>
+      <button class="btn btn-primary" style="flex:1" onclick="postJob()"><i class="ti ti-rocket"></i> Post & Publish Job</button>
+    </div>
+  </div>
+</div>
+
+<!-- Balance Adjust -->
+<div class="modal-overlay" id="balModal">
+  <div class="modal-box">
+    <div class="modal-hd">
+      <div><div class="modal-title">Balance Adjustment</div><div class="modal-sub" id="balSub">User balance adjust করুন</div></div>
+      <div class="modal-close" onclick="closeModal('balModal')"><i class="ti ti-x"></i></div>
+    </div>
+    <div class="field"><label>Amount (+ to add, - to deduct)</label><input type="number" id="balAmt" placeholder="e.g. 5.00 or -2.50" step="0.01"></div>
+    <div class="field"><label>Reason (optional)</label><input type="text" id="balReason" placeholder="e.g. Bonus, correction…"></div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('balModal')">Cancel</button>
+      <button class="btn btn-primary" style="flex:1" onclick="confirmBalAdj()"><i class="ti ti-check"></i> Apply</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore, collection, getDocs, doc, updateDoc, addDoc, onSnapshot,
+  query, where, orderBy, serverTimestamp, increment, setDoc, deleteDoc, getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  getAuth, signInAnonymously, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import {
+  getStorage, ref as fbStorageRef, deleteObject
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+
+const cfg = {
+  apiKey: "AIzaSyCeA-269WRHJCehg9Z__tlre_EbZcfanlY",
+  authDomain: "workhive-35207.firebaseapp.com",
+  projectId: "workhive-35207",
+  storageBucket: "workhive-35207.firebasestorage.app",
+  messagingSenderId: "567915693960",
+  appId: "1:567915693960:web:db6b3c3165c125c8d51c3d"
+};
+const app = initializeApp(cfg);
+const db = getFirestore(app);
+const auth = getAuth(app);
+const storage = getStorage(app);
+window._fb = { db, auth, storage, collection, getDocs, doc, updateDoc, addDoc, onSnapshot, query, where, orderBy, serverTimestamp, increment, setDoc, deleteDoc, getDoc, fbStorageRef, deleteObject };
+
+// IMPORTANT: The admin panel has no separate Firebase Authentication account of its own —
+// it only checks a local username/password/code stored in localStorage. Firestore Security
+// Rules normally require `request.auth != null` to read/write data, so WITHOUT signing the
+// admin browser into Firebase Auth, every admin read/write (deposits, withdrawals, jobs,
+// payment methods, settings, etc.) would silently fail with "permission-denied" and never
+// reach the user app — this was the main reason data wasn't syncing between the two panels.
+// Signing in anonymously gives the admin panel a valid `request.auth`, so make sure
+// "Anonymous" sign-in is enabled in Firebase Console > Authentication > Sign-in method,
+// and that your Firestore Rules (and Storage Rules — needed to delete proof screenshots)
+// allow access when `request.auth != null`.
+function fbSetStatus(text, ok) {
+  const el = document.getElementById('fbStatus');
+  if (!el) return;
+  el.textContent = text;
+  el.style.color = ok ? 'var(--green)' : 'var(--amber)';
+}
+signInAnonymously(auth).catch(err => {
+  console.warn('Admin anonymous sign-in failed:', err);
+  fbSetStatus('Auth Failed — check Firebase Console', false);
+});
+onAuthStateChanged(auth, user => {
+  window._fbReady = true;
+  if (window._fbResolve) window._fbResolve();
+  if (user) fbSetStatus('Connected (Admin Authenticated)', true);
+  else fbSetStatus('Connected (Not Authenticated)', false);
+});
+</script>
+
+<script>
+// ===== STATE =====
+const S = {
+  users: [], jobs: [], deposits: [], withdrawals: [], tasks: [], methods: [],
+  adminNotifs: [], logs: [],
+  jobFilter: 'all', depFilter: 'pending', taskFilter: 'pending',
+  wdFilter: 'pending',
+  logFilter: 'all', userFilter: 'all',
+  _rejectCtx: null, _balUid: null,
+  tg: { token: '', chatId: '', connected: false },
+  os: { appId: '', restKey: '', connected: false },
+  bcHistory: [],
+  settings: { name: 'WorkHive', minWd: 5, minDep: 1, fee: 5, refGen1: 0.5, refGen2: 0.25, refGen3: 0.10,
+    supportEmail: 'support@workhive.app', supportHours: '9 AM – 11 PM', supportResponse: 'Within 12 hours',
+    banner: '', bannerType: 'info', spinEnabled: true },
+};
+
+const TG_EVENTS = [
+  { id: 'e1', label: 'New User Registration', icon: 'ti-user-plus', enabled: true, msg: '👤 New user: {name} ({email})' },
+  { id: 'e2', label: 'Deposit Request', icon: 'ti-arrow-bar-to-down', enabled: true, msg: '💰 Deposit: {user} — ${amount} via {method}. TxID: {txnId}' },
+  { id: 'e3', label: 'Withdrawal Request', icon: 'ti-arrow-bar-up', enabled: true, msg: '📤 Withdrawal: {user} wants ${amount} via {method} to {account}' },
+  { id: 'e4', label: 'New Job Submitted', icon: 'ti-briefcase', enabled: true, msg: '💼 New job by {user}: "{title}" — needs approval' },
+  { id: 'e5', label: 'Task Proof Submitted', icon: 'ti-check-box', enabled: true, msg: '🎯 {user} submitted proof for "{task}"' },
+  { id: 'e6', label: 'User Banned', icon: 'ti-ban', enabled: true, msg: '⛔ User {name} has been banned' },
+];
+
+// ===== FB WAIT =====
+window._fbReadyPromise = new Promise(r => { window._fbResolve = r; });
+if (window._fbReady) window._fbResolve();
+async function waitFb() { if (!window._fb || !window._fbReady) await Promise.race([window._fbReadyPromise, new Promise(r => setTimeout(r, 6000))]); return !!window._fb; }
+
+// ===== AUTH =====
+let attempts = 0, lockUntil = null;
+function doLogin() {
+  const u = v('loginUser'), p = v('loginPass'), c = v('loginCode'), err = $('loginErr');
+  if (lockUntil && Date.now() < lockUntil) { err.textContent = `🔒 Locked. Wait ${Math.ceil((lockUntil-Date.now())/1000)}s`; return; }
+  if (!u || !p || !c) { err.textContent = 'All fields are required'; return; }
+  const cu = ls('wha_user') || 'admin', cp = ls('wha_pass') || 'WorkHive@2024!', cc = ls('wha_code') || '272727';
+  if (u === cu && p === cp && c === cc) {
+    attempts = 0; sessionStorage.setItem('wh_tok', '1');
+    $('loginScreen').style.display = 'none';
+    $('adminShell').style.display = 'flex';
+    initAdmin(); showToast('Welcome, Admin!', 'success');
+  } else {
+    attempts++;
+    if (attempts >= 3) { lockUntil = Date.now() + 30000; err.textContent = '🔒 Locked for 30 seconds'; setTimeout(() => { lockUntil=null;attempts=0;err.textContent=''; }, 30000); }
+    else { err.textContent = `Invalid credentials. ${3-attempts} attempt${3-attempts!==1?'s':''} left.`; }
+    const lb = document.querySelector('.login-card');
+    lb.style.animation = 'none'; lb.offsetHeight;
+    lb.style.animation = 'shake .4s ease';
+    if (!$('shakeStyle')) { const s=document.createElement('style');s.id='shakeStyle';s.textContent='@keyframes shake{0%,100%{transform:none}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}';document.head.appendChild(s); }
+  }
+}
+function doLogout() { if (!confirm('Logout?')) return; sessionStorage.removeItem('wh_tok'); location.reload(); }
+function togglePass() { const i=$('loginPass'); i.type=i.type==='password'?'text':'password'; }
+document.addEventListener('keydown', e => { if (e.key==='Enter') { if ($('loginScreen').style.display!=='none') doLogin(); } if (e.key==='Escape') document.querySelectorAll('.modal-overlay.show').forEach(m=>m.classList.remove('show')); });
+
+// ===== INIT =====
+function initAdmin() {
+  updateClock(); setInterval(updateClock, 1000);
+  addLog('🔐 Admin logged in', 'login', 'success');
+  renderSignupChart(); renderSysStatus();
+  addLinkField(); // seed the first link input row
+  updatePjTypeUI();
+  renderStatusTabs('withdrawTabs','wd'); renderStatusTabs('depositTabs','dep'); renderStatusTabs('taskTabs','task');
+  waitFb().then(() => { loadUsers(); listenJobs(); listenDeposits(); listenWithdrawals(); listenTasks(); listenMethods(); listenSettings(); });
+  // load saved TG
+  const t = ls('wha_tg_token'), ch = ls('wha_tg_chat');
+  if (t && ch) { S.tg = {token:t,chatId:ch,connected:true}; setTimeout(() => { setTgConnected(true); const ti=$('tgToken');if(ti)ti.value=t; const ci=$('tgChatId');if(ci)ci.value=ch; }, 200); }
+  // load saved OneSignal config
+  const oa = ls('wha_os_appid'), ok = ls('wha_os_restkey');
+  if (oa && ok) { S.os = {appId:oa, restKey:ok, connected:true}; setTimeout(() => { setOsConnected(true); const ai=$('osAppId');if(ai)ai.value=oa; const ri=$('osRestKey');if(ri)ri.value=ok; }, 200); }
+  else { setOsConnected(false); }
+}
+function updateClock() { $('adminClock').textContent = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
+
+// ===== HELPERS =====
+function $(id) { return document.getElementById(id); }
+function v(id) { return ($(id)||{}).value?.trim()||''; }
+function ls(k,val) { if(val!==undefined) { localStorage.setItem(k,val); return; } return localStorage.getItem(k)||''; }
+function fmtAmt(n) { return '$'+(parseFloat(n)||0).toFixed(2); }
+function fmtDate(ts) { if(!ts) return '—'; if(ts.toDate) return ts.toDate().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); return ts; }
+function initials(name) { return (name||'?').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase()||'?'; }
+function avColor(n) { const colors=['blue','purple','teal','amber','pink']; const i=(n||'').charCodeAt(0)%colors.length; return colors[i]||'blue'; }
+function resizeImageFile(file, maxSize, callback) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      let w = img.width, h = img.height;
+      if (w > h) { if (w > maxSize) { h *= maxSize / w; w = maxSize; } }
+      else { if (h > maxSize) { w *= maxSize / h; h = maxSize; } }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      callback(canvas.toDataURL('image/png', 0.85));
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function openLightbox(url) { const lb=$('imgLightbox'); $('lightboxImg').src=url; lb.classList.add('show'); }
+function closeLightbox() { $('imgLightbox').classList.remove('show'); }
+
+// ===== NAVIGATION =====
+const pageNames = { dashboard:'Dashboard', users:'User Management', jobs:'Job Approvals', tasks:'Task Submissions', deposits:'Deposits', withdrawals:'Withdrawals', 'payment-methods':'Payment Methods', telegram:'Telegram Bot', broadcast:'Broadcast', notifications:'Notifications', settings:'Site Settings', logs:'Activity Logs' };
+function goScreen(name) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const sc = $('screen-'+name); if(sc) sc.classList.add('active');
+  window.scrollTo(0,0);
+}
+// Dedicated shortcut: jumps to the Telegram/Push screen AND scrolls straight
+// down to the OneSignal card, so "Push Notification" in the Quick Menu takes
+// the admin directly to the input fields instead of leaving them to hunt for
+// it inside a screen labeled "Telegram Bot".
+function goPushSettings() {
+  goScreen('telegram');
+  setTimeout(() => {
+    const el = $('oneSignalCard');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 60);
+}
+
+// ===== STATUS TABS (reusable for withdrawals / deposits / tasks) =====
+// kind: 'wd' -> S.withdrawals + S.wdFilter, 'dep' -> S.deposits + S.depFilter, 'task' -> S.tasks + S.taskFilter
+const TAB_DEFS = {
+  wd:   { list:'withdrawals', filterKey:'wdFilter',   render:'renderWithdrawals', tabs:[
+            {key:'pending',label:'Pending',icon:'ti-clock'},
+            {key:'processing',label:'Processing',icon:'ti-loader'},
+            {key:'completed',label:'Completed',icon:'ti-circle-check'},
+            {key:'rejected',label:'Rejected',icon:'ti-circle-x'}] },
+  dep:  { list:'deposits', filterKey:'depFilter', render:'renderDeposits', tabs:[
+            {key:'pending',label:'Pending',icon:'ti-clock'},
+            {key:'confirmed',label:'Confirmed',icon:'ti-circle-check'},
+            {key:'rejected',label:'Rejected',icon:'ti-circle-x'}] },
+  task: { list:'tasks', filterKey:'taskFilter', render:'renderTasks', tabs:[
+            {key:'pending',label:'Pending',icon:'ti-clock'},
+            {key:'approved',label:'Approved',icon:'ti-circle-check'},
+            {key:'rejected',label:'Rejected',icon:'ti-circle-x'}] },
+};
+function renderStatusTabs(containerId, kind) {
+  const def = TAB_DEFS[kind]; const el = $(containerId); if(!el||!def) return;
+  const list = S[def.list]||[];
+  const activeFilter = S[def.filterKey];
+  const allCount = list.length;
+  let html = `<div class="status-tab ${activeFilter==='all'?'active':''}" data-tab="all" onclick="setStatusFilter('${kind}','all')"><i class="ti ti-list"></i> All <span class="stab-count">${allCount}</span></div>`;
+  def.tabs.forEach(t=>{
+    const cnt = list.filter(x=>x.status===t.key).length;
+    html += `<div class="status-tab ${activeFilter===t.key?'active':''}" data-tab="${t.key}" onclick="setStatusFilter('${kind}','${t.key}')"><i class="ti ${t.icon}"></i> ${t.label} <span class="stab-count">${cnt}</span></div>`;
+  });
+  el.innerHTML = html;
+}
+function setStatusFilter(kind, val) {
+  const def = TAB_DEFS[kind];
+  S[def.filterKey] = val;
+  const containerId = kind==='wd'?'withdrawTabs':kind==='dep'?'depositTabs':'taskTabs';
+  renderStatusTabs(containerId, kind);
+  window[def.render]();
+}
+
+// ===== ONESIGNAL PUSH (real device notification: heads-up popup + sound) =====
+function saveOneSignalConfig() {
+  const appId = v('osAppId'), restKey = v('osRestKey');
+  if (!appId) { showToast('OneSignal App ID দিন', 'error'); return; }
+  if (!restKey) { showToast('REST API Key দিন', 'error'); return; }
+  S.os = { appId, restKey, connected: true };
+  ls('wha_os_appid', appId); ls('wha_os_restkey', restKey);
+  setOsConnected(true);
+  addLog('🔔 OneSignal push configuration saved', 'settings', 'green');
+  showToast('✅ OneSignal configured!', 'success');
+}
+function setOsConnected(ok) {
+  const dot = $('osDot'); const st = $('osStatusText'); const bi = $('osInfo');
+  if (dot) dot.className = 'tg-dot ' + (ok ? 'ok' : 'off');
+  if (st) st.textContent = ok ? 'Configured' : 'Not Configured';
+  if (bi) bi.textContent = ok ? 'Ready to send real push notifications' : 'Configure above to enable real push notifications';
+  // Keep the Dashboard Quick Menu row + System Status panel in sync too, so
+  // connection state is visible without opening the Telegram/Push screen.
+  const pill = $('qmPushStatus');
+  if (pill) { pill.textContent = ok ? '🟢 Connected' : 'Not Configured'; pill.className = 'qm-status-pill ' + (ok ? 'ok' : 'off'); }
+  const sd = $('osSysDot'); const ss = $('osSysStatus');
+  if (sd) sd.style.background = ok ? 'var(--green)' : 'var(--red)';
+  if (ss) ss.textContent = ok ? 'Configured' : 'Not configured';
+}
+// Low-level call to OneSignal's REST API. Targets a specific user by their
+// Firebase UID, which must have been linked on-device via
+// Capacitor.Plugins.OneSignal.login({ externalId: uid }) on the live site —
+// see the "জরুরি" card in the Telegram screen for that missing piece.
+//
+// Uses the current https://api.onesignal.com endpoint with "Key" auth (the
+// old https://onesignal.com/api/v1/ + "Basic" auth pair is OneSignal's
+// legacy scheme, tied to Legacy API Keys that OneSignal has been retiring
+// since Nov 2024 — Legacy App API Keys stop working entirely in Q1 2026).
+// Make sure the REST API Key configured above is a "Rich" API Key from
+// OneSignal Dashboard → Settings → Keys & IDs, not an old Legacy key.
+async function sendPushNotification(uid, title, message) {
+  const appId = S.os.appId || ls('wha_os_appid');
+  const restKey = S.os.restKey || ls('wha_os_restkey');
+  if (!appId || !restKey || !uid) return; // OneSignal not configured, or no target uid — silently skip
+  try {
+    const res = await fetch('https://api.onesignal.com/notifications', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Authorization': 'Key ' + restKey,
+      },
+      body: JSON.stringify({
+        app_id: appId,
+        target_channel: 'push',
+        include_aliases: { external_id: [uid] },
+        headings: { en: title },
+        contents: { en: message },
+        // "workhive_alerts" is the Android Notification Channel already created
+        // natively in MainActivity.java (createWorkHiveNotificationChannel), with
+        // the custom "টুংটুং" chime + heads-up importance wired to it. Because that
+        // channel is created on-device (not in the OneSignal dashboard), the
+        // correct field to reuse it is `existing_android_channel_id` — the plain
+        // `android_channel_id` field expects a channel UUID created *inside*
+        // OneSignal's own dashboard instead, and would fail/ignore this string id.
+        existing_android_channel_id: 'workhive_alerts',
+        priority: 10,
+        android_visibility: 1,
+      }),
+    });
+    const d = await res.json().catch(()=>({}));
+    if (!res.ok || (d && d.errors)) {
+      console.warn('OneSignal push not delivered:', d.errors || d);
+    }
+  } catch (e) {
+    console.warn('OneSignal push failed:', e);
+  }
+}
+async function testOneSignalBroadcastPush() {
+  const appId = S.os.appId || ls('wha_os_appid');
+  const restKey = S.os.restKey || ls('wha_os_restkey');
+  if (!appId || !restKey) { showToast('আগে OneSignal configure করুন', 'error'); return; }
+  try {
+    const res = await fetch('https://api.onesignal.com/notifications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json; charset=utf-8', 'Authorization': 'Key ' + restKey },
+      body: JSON.stringify({
+        app_id: appId,
+        included_segments: ['Subscribed Users'],
+        headings: { en: '🐝 WorkHive Test Push' },
+        contents: { en: 'এটা একটা টেস্ট পুশ নোটিফিকেশন — সব সাবস্ক্রাইবড ডিভাইসে যাবে।' },
+        existing_android_channel_id: 'workhive_alerts',
+        priority: 10,
+      }),
+    });
+    const d = await res.json();
+    const recipients = d.id ? (d.recipients ?? (d.errors ? 0 : '')) : 0;
+    showToast(d.id ? `✅ Test push sent${recipients!==''?` to ${recipients} device(s)`:''}` : '❌ ' + (d.errors ? JSON.stringify(d.errors) : 'Failed'), d.id ? 'success' : 'error');
+  } catch (e) { showToast('❌ Network error sending test push', 'error'); }
+}
+
+// ===== NOTIFY USER (in-app Firestore notification + real OneSignal push together) =====
+async function notifyUser(uid, title, msg, icon='🔔') {
+  if (!uid || !window._fb) return;
+  const fb = window._fb;
+  try { await fb.addDoc(fb.collection(fb.db,'users',uid,'notifications'),{title,msg,icon,unread:true,createdAt:fb.serverTimestamp()}); } catch(e){}
+  sendPushNotification(uid, title, msg); // fire-and-forget real device push, in addition to the in-app one above
+}
+
+// ===== FIRESTORE: USERS =====
+async function loadUsers() {
+  const fb = window._fb; if (!fb) return;
+  const snap = await fb.getDocs(fb.collection(fb.db,'users')).catch((e)=>{console.warn('loadUsers failed (check Firestore Rules / Auth):',e);return null;});
+  if (!snap) return;
+  S.users = [];
+  snap.forEach(d => {
+    const u = d.data();
+    S.users.push({
+      id:d.id, name:u.name||'Unknown', email:u.email||'—', username:u.username||'',
+      balance:u.balance||0, tasks:u.tasksCompleted||0, kyc:u.kyc?'Verified':'Pending',
+      status:u.status||'active', country:u.country||'—', totalEarned:u.totalEarned||0,
+      totalWithdrawn:u.totalWithdrawn||0, phone:u.phone||'—', referralCode:u.referralCode||'—',
+      pendingAmount:u.pendingAmount||0, workerLevel:u.workerLevel||1,
+      telegramChatId:u.telegramChatId||'',
+      joined:u.createdAt?(u.createdAt.toDate?u.createdAt.toDate().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—'):'—',
+    });
+  });
+  renderUsers(); updateStats(); updateBadges(); renderDashCountry();
+}
+function findUser(id) { return S.users.find(u=>u.id===id); }
+
+// ===== FIRESTORE: JOBS =====
+function listenJobs() {
+  const fb = window._fb; if (!fb) return;
+  fb.onSnapshot(fb.collection(fb.db,'jobs'), snap => {
+    S.jobs = [];
+    snap.forEach(d => S.jobs.push({id:d.id,...d.data()}));
+    S.jobs.sort((a,b)=>(b._ts||0)-(a._ts||0));
+    renderJobs(); renderDashPendingJobs(); updateStats(); updateBadges();
+  }, (e)=>{console.warn('listenJobs error (check Firestore Rules / Auth):',e);});
+}
+
+// ===== FIRESTORE: DEPOSITS =====
+function listenDeposits() {
+  const fb = window._fb; if (!fb) return;
+  fb.onSnapshot(fb.collection(fb.db,'deposits'), snap => {
+    S.deposits = [];
+    snap.forEach(d => S.deposits.push({id:d.id,...d.data()}));
+    S.deposits.sort((a,b)=>(b._ts||0)-(a._ts||0));
+    renderDeposits(); renderDashDeposits(); updateStats(); updateBadges(); renderStatusTabs('depositTabs','dep');
+  }, (e)=>{console.warn('listenDeposits error (check Firestore Rules / Auth):',e);});
+}
+
+// ===== FIRESTORE: WITHDRAWALS =====
+function listenWithdrawals() {
+  const fb = window._fb; if (!fb) return;
+  fb.onSnapshot(fb.collection(fb.db,'withdrawals'), snap => {
+    S.withdrawals = [];
+    snap.forEach(d => S.withdrawals.push({id:d.id,...d.data()}));
+    S.withdrawals.sort((a,b)=>(b._ts||0)-(a._ts||0));
+    renderWithdrawals(); renderDashWithdrawals(); updateStats(); updateBadges(); renderStatusTabs('withdrawTabs','wd');
+  }, (e)=>{console.warn('listenWithdrawals error (check Firestore Rules / Auth):',e);});
+}
+
+// ===== FIRESTORE: TASKS =====
+function listenTasks() {
+  const fb = window._fb; if (!fb) return;
+  fb.onSnapshot(fb.collection(fb.db,'taskSubmissions'), snap => {
+    S.tasks = [];
+    snap.forEach(d => S.tasks.push({id:d.id,...d.data()}));
+    S.tasks.sort((a,b)=>(b._ts||0)-(a._ts||0));
+    renderTasks(); updateStats(); updateBadges(); renderStatusTabs('taskTabs','task');
+  }, (e)=>{console.warn('listenTasks error (check Firestore Rules / Auth):',e);});
+}
+
+// ===== FIRESTORE: METHODS =====
+function listenMethods() {
+  const fb = window._fb; if (!fb) return;
+  fb.onSnapshot(fb.collection(fb.db,'paymentMethods'), async snap => {
+    S.methods = [];
+    snap.forEach(d => S.methods.push({id:d.id,...d.data()}));
+    if (!S.methods.length) await seedMethods();
+    renderMethods();
+  }, (e)=>{console.warn('listenMethods error (check Firestore Rules / Auth):',e);});
+}
+async function seedMethods() {
+  const fb = window._fb; if (!fb) return;
+  const defaults = [
+    {name:'bKash',emoji:'📱',logo:'',number:'01711000000',minDeposit:1,depositFee:0,withdrawFee:5,enabled:true},
+    {name:'Nagad',emoji:'💳',logo:'',number:'01711000001',minDeposit:1,depositFee:0,withdrawFee:5,enabled:true},
+    {name:'Rocket',emoji:'🚀',logo:'',number:'01711000002',minDeposit:1,depositFee:0,withdrawFee:5,enabled:false},
+    {name:'USDT (TRC20)',emoji:'₮',logo:'',number:'TRxxxxxxxxxxxxxxxxxxxxxxxxxx',minDeposit:5,depositFee:0,withdrawFee:3,enabled:true},
+  ];
+  for (const m of defaults) await fb.addDoc(fb.collection(fb.db,'paymentMethods'),m).catch(()=>{});
+}
+
+// ===== FIRESTORE: SETTINGS (siteSettings/global — same doc the User App reads) =====
+function listenSettings() {
+  const fb = window._fb; if (!fb) return;
+  fb.onSnapshot(fb.doc(fb.db,'siteSettings','global'), snap => {
+    if (snap.exists()) {
+      const d = snap.data();
+      Object.assign(S.settings, {
+        name: d.name ?? S.settings.name,
+        minWd: d.minWithdraw ?? S.settings.minWd,
+        minDep: d.minDeposit ?? S.settings.minDep,
+        fee: d.withdrawFee ?? S.settings.fee,
+        refGen1: d.refGen1 ?? S.settings.refGen1,
+        refGen2: d.refGen2 ?? S.settings.refGen2,
+        refGen3: d.refGen3 ?? S.settings.refGen3,
+        supportEmail: d.supportEmail ?? S.settings.supportEmail,
+        supportHours: d.supportHours ?? S.settings.supportHours,
+        supportResponse: d.supportResponse ?? S.settings.supportResponse,
+        banner: d.banner ?? S.settings.banner,
+        bannerType: d.bannerType ?? S.settings.bannerType,
+        spinEnabled: d.spinEnabled !== undefined ? d.spinEnabled : S.settings.spinEnabled,
+      });
+      const s = S.settings;
+      if ($('setName')) $('setName').value = s.name||'WorkHive';
+      if ($('setMinWd')) $('setMinWd').value = s.minWd||5;
+      if ($('setMinDep')) $('setMinDep').value = s.minDep||1;
+      if ($('setFee')) $('setFee').value = s.fee||5;
+      if ($('setRefGen1')) $('setRefGen1').value = s.refGen1??0.5;
+      if ($('setRefGen2')) $('setRefGen2').value = s.refGen2??0.25;
+      if ($('setRefGen3')) $('setRefGen3').value = s.refGen3??0.10;
+      if ($('setSupportEmail')) $('setSupportEmail').value = s.supportEmail||'';
+      if ($('setSupportHours')) $('setSupportHours').value = s.supportHours||'';
+      if ($('setSupportResponse')) $('setSupportResponse').value = s.supportResponse||'';
+      if ($('setBannerMsg')) $('setBannerMsg').value = s.banner||'';
+      if ($('setBannerType')) $('setBannerType').value = s.bannerType||'info';
+      if ($('toggleSpin')) $('toggleSpin').checked = s.spinEnabled!==false;
+    }
+  }, (e)=>{console.warn('listenSettings error (check Firestore Rules / Auth):',e);});
+}
+
+// ===== STATS =====
+function updateStats() {
+  const pendW = S.withdrawals.filter(w=>w.status==='pending');
+  const totalPW = pendW.reduce((a,w)=>a+(w.amount||0),0);
+  const activeJobs = S.jobs.filter(j=>j.status==='approved').length;
+  const pendJobs = S.jobs.filter(j=>j.status==='pending').length;
+  const kycPend = S.users.filter(u=>u.kyc==='Pending').length;
+  const confDep = S.deposits.filter(d=>d.status==='confirmed').reduce((a,d)=>a+(d.amount||0),0);
+  const pendDep = S.deposits.filter(d=>d.status==='pending').length;
+  const pendTask = S.tasks.filter(t=>t.status==='pending').length;
+  set('stat-users', S.users.length);
+  set('stat-dep', fmtAmt(confDep));
+  set('stat-dep-pending', pendDep+' pending');
+  set('stat-wd', fmtAmt(totalPW));
+  set('stat-wd-count', pendW.length+' pending');
+  set('stat-jobs', activeJobs);
+  set('stat-jobs-pending', pendJobs+' pending');
+  set('stat-tasks', S.tasks.length);
+  set('stat-tasks-pending', pendTask+' pending');
+  set('stat-kyc', kycPend);
+  set('stat-kyc-badge', kycPend+' KYC pending');
+  set('hs-users', S.users.length);
+  set('hs-deposits', fmtAmt(confDep));
+  set('hs-jobs', activeJobs);
+  function set(id,v){const el=$(id);if(el)el.textContent=v;}
+}
+function updateBadges() {
+  const pj=S.jobs.filter(j=>j.status==='pending').length;
+  const pw=S.withdrawals.filter(w=>w.status==='pending').length;
+  const pd=S.deposits.filter(d=>d.status==='pending').length;
+  const pt=S.tasks.filter(t=>t.status==='pending').length;
+  const pn=S.adminNotifs.filter(n=>!n.read).length;
+  setBadge('nb-users',S.users.length,'blue');
+  setBadge('nb-jobs',pj,'red');
+  setBadge('nb-tasks',pt,'red');
+  setBadge('nb-deposits',pd,'red');
+  setBadge('nb-withdrawals',pw,'red');
+  setBadge('nb-notifs',pn,'red');
+  $('topDot').style.display=pn>0?'block':'none';
+  function setBadge(id,n,cls){ const el=$(id); if(!el)return; el.textContent=n; if(el.classList.contains('qm-badge')){ el.classList.toggle('show', n>0); } else { el.style.display=n>0?'':'none'; } }
+}
+
+// ===== RENDER: USERS =====
+function renderUsers(list) {
+  list = list || (S.userFilter==='all' ? S.users : S.users.filter(u=>u.status===S.userFilter));
+  $('userTbody').innerHTML = list.map((u,i) => `
+    <tr>
+      <td style="color:var(--text3);font-size:12px">${i+1}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="user-av" style="background:var(--${avColor(u.name)}-bg);color:var(--${avColor(u.name)});border-color:var(--${avColor(u.name)}-border)">${initials(u.name)}</div>
+          <div><div class="td-primary">${u.name}</div><div class="td-sub">${u.email}${u.username?' · @'+u.username:''}</div></div>
+        </div>
+      </td>
+      <td style="font-size:12px;color:var(--text2)">${u.joined}</td>
+      <td class="bal-chip">${fmtAmt(u.balance)}</td>
+      <td style="font-weight:700">${u.tasks}</td>
+      <td><span class="badge ${u.kyc==='Verified'?'green':'amber'}">${u.kyc}</span></td>
+      <td><span class="badge ${u.status==='active'?'green':'red'}">${u.status}</span></td>
+      <td>
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          <button class="btn btn-info btn-xs" onclick="viewUser('${u.id}')"><i class="ti ti-eye"></i> View</button>
+          <button class="btn btn-xs ${u.status==='active'?'btn-danger':'btn-approve'}" onclick="toggleBan('${u.id}')">${u.status==='active'?'<i class="ti ti-ban"></i>':'<i class="ti ti-check"></i>'}</button>
+          ${u.kyc==='Pending'?`<button class="btn btn-warning btn-xs" onclick="verifyKyc('${u.id}')"><i class="ti ti-id-badge"></i></button>`:''}
+        </div>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:28px">No users found</td></tr>';
+}
+function filterUsers(q) {
+  const ql=q.toLowerCase();
+  renderUsers(S.users.filter(u=>u.name.toLowerCase().includes(ql)||u.email.toLowerCase().includes(ql)||(u.username||'').toLowerCase().includes(ql)));
+}
+function filterUsersByStatus(val) { S.userFilter=val; renderUsers(); }
+
+function viewUser(id) {
+  const u=findUser(id); if(!u)return;
+  $('udTitle').textContent=u.name;
+  $('udSub').textContent='@'+(u.username||'—')+' · '+u.email;
+  $('udContent').innerHTML=`
+    <div class="detail-grid">
+      <div class="detail-box"><div class="dl">Balance</div><div class="dv" style="color:var(--teal)">${fmtAmt(u.balance)}</div></div>
+      <div class="detail-box"><div class="dl">Total Earned</div><div class="dv" style="color:var(--green)">${fmtAmt(u.totalEarned)}</div></div>
+      <div class="detail-box"><div class="dl">Pending</div><div class="dv" style="color:var(--amber)">${fmtAmt(u.pendingAmount)}</div></div>
+      <div class="detail-box"><div class="dl">Withdrawn</div><div class="dv" style="color:var(--amber)">${fmtAmt(u.totalWithdrawn)}</div></div>
+      <div class="detail-box"><div class="dl">Tasks Done</div><div class="dv">${u.tasks}</div></div>
+      <div class="detail-box"><div class="dl">Worker Level</div><div class="dv">L${u.workerLevel||1}</div></div>
+      <div class="detail-box"><div class="dl">KYC</div><div class="dv"><span class="badge ${u.kyc==='Verified'?'green':'amber'}">${u.kyc}</span></div></div>
+      <div class="detail-box"><div class="dl">Status</div><div class="dv"><span class="badge ${u.status==='active'?'green':'red'}">${u.status}</span></div></div>
+      <div class="detail-box"><div class="dl">Country</div><div class="dv" style="font-size:14px">${u.country}</div></div>
+      <div class="detail-box"><div class="dl">Phone</div><div class="dv" style="font-size:14px">${u.phone}</div></div>
+    </div>
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:12px">
+      <div style="font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Referral Code</div>
+      <div style="font-size:20px;font-weight:900;color:var(--amber);letter-spacing:3px">${u.referralCode}</div>
+    </div>
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:14px">
+      <div style="font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Joined</div>
+      <div style="font-size:14px;font-weight:700">${u.joined}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+      <button class="btn btn-warning" onclick="closeModal('userDetailModal');openBalAdj('${u.id}')"><i class="ti ti-currency-dollar"></i> Adjust Balance</button>
+      <button class="btn btn-approve" onclick="verifyKyc('${u.id}');closeModal('userDetailModal')"><i class="ti ti-id-badge"></i> Verify KYC</button>
+      <button class="btn ${u.status==='active'?'btn-danger':'btn-approve'}" onclick="toggleBan('${u.id}');closeModal('userDetailModal')">${u.status==='active'?'<i class="ti ti-ban"></i> Ban':'<i class="ti ti-check"></i> Unban'}</button>
+    </div>`;
+  openModal('userDetailModal');
+}
+
+async function toggleBan(id) {
+  const u=findUser(id); if(!u)return;
+  const newStatus = u.status==='active'?'banned':'active';
+  const fb=window._fb; if(!fb){showToast('Firebase not ready','error');return;}
+  try{
+    await fb.updateDoc(fb.doc(fb.db,'users',id),{status:newStatus});
+    u.status=newStatus; renderUsers();
+    addLog(`${newStatus==='banned'?'⛔ Banned':'✅ Unbanned'}: ${u.name}`,'user',newStatus==='banned'?'red':'green');
+    if(newStatus==='banned') sendTgEvent('e6',{name:u.name});
+    notifyUser(id, newStatus==='banned'?'⛔ Account Banned':'✅ Account Restored', newStatus==='banned'?'Your account was suspended by admin.':'Your account has been restored.');
+    showToast(newStatus==='banned'?`⛔ ${u.name} banned`:`✅ ${u.name} unbanned`, newStatus==='banned'?'error':'success');
+  }catch(e){ console.error(e); showToast('❌ Update failed — check Firestore permissions','error'); }
+}
+
+async function verifyKyc(id) {
+  const u=findUser(id); if(!u)return;
+  const fb=window._fb; if(!fb){showToast('Firebase not ready','error');return;}
+  try{
+    await fb.updateDoc(fb.doc(fb.db,'users',id),{kyc:true});
+    u.kyc='Verified'; renderUsers(); updateStats();
+    addLog(`🪪 KYC verified: ${u.name}`,'user','green');
+    notifyUser(id,'🪪 KYC Verified!','Your identity has been verified. You can now withdraw.');
+    showToast(`🪪 KYC verified: ${u.name}`,'success');
+  }catch(e){ console.error(e); showToast('❌ Update failed — check Firestore permissions','error'); }
+}
+
+// ===== RENDER: JOBS =====
+function filterJobs(val) { S.jobFilter=val; renderJobs(); }
+function jobLinksOf(j) {
+  if (Array.isArray(j.links) && j.links.length) return j.links.filter(Boolean);
+  return j.link ? [j.link] : [];
+}
+function renderJobs() {
+  const list=S.jobFilter==='all'?S.jobs:S.jobs.filter(j=>j.status===S.jobFilter);
+  const el=$('jobList');
+  if(!list.length){el.innerHTML='<div class="card" style="text-align:center;padding:40px;color:var(--text3)">No jobs found. Click "Post New Job" to publish your first micro job.</div>';return;}
+  el.innerHTML=list.map(j=>{
+    const u=findUser(j.postedBy);
+    const isAdminJob = j.postedBy==='admin';
+    const isDaily = j.type==='dailylink';
+    const links = jobLinksOf(j);
+    const shots = j.type==='proof' ? (j.screenshotCount||1) : 0;
+    return `<div class="job-card ${j.status||'pending'}">
+      <div class="job-poster">
+        <div class="poster-av" style="${isAdminJob?'background:var(--purple)':''}">${isAdminJob?'🐝':initials(j.postedByName||'?')}</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:800">${j.postedByName||'Unknown'}${isAdminJob?' <span class="badge purple" style="margin-left:6px">Admin Posted</span>':''}${isDaily?' <span class="badge teal" style="margin-left:6px">🔁 Daily Repeat</span>':''}${shots>1?` <span class="badge blue" style="margin-left:6px">📸 ${shots} Screenshots</span>`:''}${links.length>1?` <span class="badge amber" style="margin-left:6px">🔗 ${links.length} Links</span>`:''}</div>
+          <div style="font-size:11.5px;color:var(--text3)">${j.postedByEmail||'—'}</div>
+        </div>
+        ${!isAdminJob?`<button class="btn btn-info btn-sm" onclick="viewPoster('${j.postedBy||''}')"><i class="ti ti-user"></i> Profile</button>`:''}
+      </div>
+      ${u?`<div class="poster-stats-mini">
+        <div class="psm"><div class="psm-val">${fmtAmt(u.balance)}</div><div class="psm-lbl">Balance</div></div>
+        <div class="psm"><div class="psm-val">${u.tasks}</div><div class="psm-lbl">Tasks</div></div>
+        <div class="psm"><div class="psm-val"><span class="badge ${u.kyc==='Verified'?'green':'amber'}" style="font-size:9px">${u.kyc}</span></div><div class="psm-lbl">KYC</div></div>
+      </div>`:''}
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin:14px 0 10px">
+        <div style="flex:1;margin-right:14px">
+          <div style="font-size:15px;font-weight:800;margin-bottom:6px">${j.title||'Untitled'}</div>
+          <div style="font-size:12px;color:var(--text2);display:flex;flex-wrap:wrap;gap:10px">
+            <span><i class="ti ti-category" style="font-size:13px;vertical-align:-1px"></i> ${j.category||'—'}</span>
+            <span><i class="ti ti-users" style="font-size:13px;vertical-align:-1px"></i> ${isDaily?'Unlimited (repeatable)':( (j.limit||0)+' workers')}</span>
+            <span><i class="ti ti-world" style="font-size:13px;vertical-align:-1px"></i> ${j.country||'—'}</span>
+            <span>${isDaily?'🔁 24h cooldown per user':((j.filled||0)+'/'+(j.limit||0)+' filled')}</span>
+          </div>
+          <div style="font-size:11.5px;color:var(--text3);margin-top:4px"><i class="ti ti-calendar" style="font-size:12px;vertical-align:-1px"></i> ${j.submittedAt||'—'}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:22px;font-weight:900;color:var(--teal)">+${fmtAmt(j.reward)}</div>
+          <div style="font-size:10.5px;color:var(--text3)">${isDaily?'per visit / 24h':'per task'}</div>
+          <span class="badge ${j.status==='pending'?'amber':j.status==='approved'?'green':'red'}" style="margin-top:6px">${j.status||'pending'}</span>
+        </div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:11px;font-size:12.5px;color:var(--text2);margin-bottom:12px;line-height:1.6">${j.instructions||'(no instructions)'}</div>
+      ${links.length?`<div style="margin-bottom:10px">${links.map((lnk,i)=>`<div style="font-size:12px;color:var(--blue);margin-bottom:4px"><i class="ti ti-link" style="font-size:13px;vertical-align:-1px"></i> ${links.length>1?`<b>Link ${i+1}:</b> `:''}<a href="${lnk}" target="_blank" style="color:var(--blue)">${lnk}</a></div>`).join('')}</div>`:''}
+      ${j.rejectReason?`<div class="reject-reason-box"><i class="ti ti-message-circle-2"></i> <div><strong>Rejection reason:</strong> ${j.rejectReason}</div></div>`:''}
+      ${j.status==='pending'?`<div style="display:flex;gap:10px">
+        <button class="btn btn-approve" style="flex:1" onclick="approveJob('${j.id}')"><i class="ti ti-check"></i> Approve & Publish</button>
+        <button class="btn btn-message" onclick="openReject('job','${j.id}','${(j.title||'').replace(/'/g,"\\'")}')"><i class="ti ti-message-circle-2"></i> Reject with Reason</button>
+      </div>`:j.status==='approved'?`<div style="display:flex;gap:10px;align-items:center">
+        <div class="alert success" style="flex:1;margin-bottom:0"><i class="ti ti-circle-check"></i> Live — Workers can see and complete this job.</div>
+        <button class="btn btn-danger btn-sm" onclick="deleteJob('${j.id}','${(j.title||'').replace(/'/g,"\\'")}')"><i class="ti ti-trash"></i> Remove</button>
+      </div>`:`<div class="alert danger"><i class="ti ti-circle-x"></i> Rejected — Not visible to workers.</div>`}
+    </div>`;
+  }).join('');
+}
+
+function viewPoster(uid) {
+  const u=findUser(uid); if(!u){showToast('User not found','error');return;}
+  viewUser(uid);
+}
+
+async function approveJob(id) {
+  const j=S.jobs.find(x=>x.id===id); if(!j)return;
+  const fb=window._fb; if(!fb)return;
+  await fb.updateDoc(fb.doc(fb.db,'jobs',id),{status:'approved'}).catch((e)=>{console.error(e);showToast('❌ Approve failed','error');});
+  addLog(`✅ Job approved: "${j.title}" by ${j.postedByName||'Unknown'}`,'job','green');
+  sendTgEvent('e4',{user:j.postedByName||'',title:j.title||''});
+  addAdminNotif('✅ Job Approved',`"${j.title}" is now live for workers.`,'success');
+  notifyUser(j.postedBy,'✅ Job Approved!',`Your job "${j.title}" has been approved and is now live for workers.`);
+  showToast('✅ Job approved and published!','success');
+}
+
+async function deleteJob(id, title) {
+  if (!confirm(`"${title}" জবটি স্থায়ীভাবে মুছে ফেলতে চান?`)) return;
+  const fb=window._fb; if(!fb)return;
+  await fb.deleteDoc(fb.doc(fb.db,'jobs',id)).catch((e)=>{console.error(e);showToast('❌ Delete failed','error');});
+  addLog(`🗑️ Job removed: "${title}"`,'job','red');
+  showToast('🗑️ Job removed','warn');
+}
+
+// ===== POST NEW JOB (Admin) =====
+
+// Dynamic multi-link input rows. Each row: [Link N] [input] [remove ✕ if >1 row]
+let _linkFieldCount = 0;
+function addLinkField(prefillValue) {
+  _linkFieldCount++;
+  const idx = _linkFieldCount;
+  const wrap = document.createElement('div');
+  wrap.className = 'link-row';
+  wrap.id = 'linkRow' + idx;
+  wrap.innerHTML = `
+    <div class="link-num">${idx}</div>
+    <input type="text" class="pj-link-input" placeholder="https://example.com/link-${idx}" value="${prefillValue?prefillValue.replace(/"/g,'&quot;'):''}">
+    <div class="link-row-remove" onclick="removeLinkField(${idx})" title="Remove this link"><i class="ti ti-x"></i></div>`;
+  $('pjLinksList').appendChild(wrap);
+  renumberLinkFields();
+}
+function removeLinkField(idx) {
+  const list = $('pjLinksList');
+  if (list.children.length <= 1) { showToast('অন্তত একটি লিংক থাকতে হবে', 'warn'); return; }
+  const row = $('linkRow' + idx);
+  if (row) row.remove();
+  renumberLinkFields();
+}
+function renumberLinkFields() {
+  const rows = $('pjLinksList').querySelectorAll('.link-row');
+  rows.forEach((row, i) => {
+    const numEl = row.querySelector('.link-num');
+    if (numEl) numEl.textContent = i + 1;
+    const inp = row.querySelector('.pj-link-input');
+    if (inp) inp.placeholder = `https://example.com/link-${i+1}`;
+    const rem = row.querySelector('.link-row-remove');
+    if (rem) rem.style.display = rows.length > 1 ? 'flex' : 'none';
+  });
+}
+function getAllLinkInputs() {
+  return Array.from($('pjLinksList').querySelectorAll('.pj-link-input')).map(i => i.value.trim()).filter(Boolean);
+}
+function resetLinkFields() {
+  $('pjLinksList').innerHTML = '';
+  _linkFieldCount = 0;
+  addLinkField();
+}
+
+function updatePjTypeUI() {
+  const type = $('pjType')?.value;
+  const limitField = $('pjLimitField');
+  const linkLabel = $('pjLinkLabel');
+  const dailyHint = $('pjDailyHint');
+  const shotsField = $('pjShotsField');
+  const isDaily = type === 'dailylink';
+  const isProof = type === 'proof';
+  if (limitField) limitField.style.display = isDaily ? 'none' : '';
+  if (dailyHint) dailyHint.style.display = isDaily ? 'flex' : 'none';
+  if (shotsField) shotsField.style.display = isProof ? '' : 'none';
+  if (linkLabel) linkLabel.textContent = (isDaily || type==='link') ? 'Direct Link(s) (URL) — Required' : 'Direct Link(s) (URL) — Optional Reference';
+}
+async function postJob() {
+  const title=v('pjTitle'), category=$('pjCategory').value, type=$('pjType').value, instructions=v('pjInstructions'), country=v('pjCountry')||'Global';
+  const reward=parseFloat($('pjReward').value)||0;
+  const links = getAllLinkInputs();
+  const screenshotCount = type==='proof' ? Math.max(1, Math.min(6, parseInt($('pjShots').value)||1)) : 1;
+  let limit=parseInt($('pjLimit').value)||0;
+  if(!title){showToast('Job Title দিন','error');return;}
+  if(!reward||reward<=0){showToast('সঠিক Reward amount দিন','error');return;}
+  if((type==='link'||type==='dailylink')&&!links.length){showToast('অন্তত একটি Direct Link দিন','error');return;}
+  if(type==='dailylink'){ limit = 999999; }
+  else if(!limit||limit<=0){showToast('সঠিক Worker Limit দিন','error');return;}
+  const fb=window._fb; if(!fb){showToast('Firebase not ready','error');return;}
+  try{
+    await fb.addDoc(fb.collection(fb.db,'jobs'),{
+      title, category, type,
+      links,                              // ← full array of links (new)
+      link: links[0] || '',               // ← kept for backward compatibility with older code paths
+      instructions, reward, limit, filled:0, country,
+      screenshotCount,                    // ← how many screenshot slots the worker app must show
+      postedBy:'admin', postedByName:'WorkHive Admin', postedByEmail:'admin@workhive.app',
+      status:'approved',
+      submittedAt:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),
+      _ts:Date.now(), createdAt: fb.serverTimestamp()
+    });
+    closeModal('postJobModal');
+    ['pjTitle','pjInstructions'].forEach(id=>{ if($(id)) $(id).value=''; });
+    resetLinkFields();
+    if($('pjCountry')) $('pjCountry').value='Global';
+    if($('pjReward')) $('pjReward').value='';
+    if($('pjLimit')) $('pjLimit').value='';
+    if($('pjShots')) $('pjShots').value='1';
+    if($('pjType')) { $('pjType').value='proof'; updatePjTypeUI(); }
+    const typeLabel = type==='dailylink' ? ' (🔁 Daily 24h Repeat Link)' : type==='link' ? ' (Direct Link)' : '';
+    const extraLabel = (links.length>1?` · ${links.length} links`:'') + (type==='proof'&&screenshotCount>1?` · ${screenshotCount} screenshots required`:'');
+    addLog(`🆕 Admin posted new job: "${title}"${typeLabel} (+${fmtAmt(reward)}${type==='dailylink'?'/visit':'/task'}${type==='dailylink'?'':', '+limit+' slots'})${extraLabel}`,'job','green');
+    addAdminNotif('🆕 New Job Posted', `"${title}" is now live${type==='dailylink'?' as a daily-repeat link task':' for '+limit+' workers'}.`, 'success');
+    showToast('✅ Job posted and is now live for workers!','success');
+  }catch(e){ console.error(e); showToast('❌ Post failed — check Firestore permissions','error'); }
+}
+
+// ===== RENDER: TASKS =====
+function filterTasks(val) { S.taskFilter=val; renderTasks(); }
+function proofImagesOf(t) {
+  if (Array.isArray(t.proofImageUrls) && t.proofImageUrls.length) return t.proofImageUrls.filter(Boolean);
+  return t.proofImageUrl ? [t.proofImageUrl] : [];
+}
+function renderTasks() {
+  const list=S.taskFilter==='all'?S.tasks:S.tasks.filter(t=>t.status===S.taskFilter);
+  $('taskTbody').innerHTML=list.map(t=>{
+    const imgs = proofImagesOf(t);
+    let proofCell;
+    if (imgs.length) {
+      proofCell = `<div class="proof-thumb-btn" onclick="viewProof('${t.id}')"><img src="${imgs[0]}" alt="proof"><span style="font-size:11px;font-weight:700;color:var(--text2)"><i class="ti ti-photo" style="font-size:13px;vertical-align:-2px"></i> ${imgs.length>1?imgs.length+' photos':'View'}</span></div>`;
+    } else if (t.proofText) {
+      proofCell = `<button class="btn btn-ghost btn-xs" onclick="viewProof('${t.id}')"><i class="ti ti-eye"></i> View Proof</button>`;
+    } else if (t.proofType==='dailylink' || t.proofType==='auto') {
+      proofCell = `<span style="color:var(--teal);font-size:11px;font-weight:700"><i class="ti ti-bolt" style="font-size:13px;vertical-align:-2px"></i> Auto</span>`;
+    } else {
+      proofCell = '<span style="color:var(--text3);font-size:11px">Link task</span>';
+    }
+    const statusCell = `<span class="badge ${t.status==='approved'?'green':t.status==='pending'?'amber':'red'}">${t.status||'pending'}</span>${t.status==='rejected'&&t.rejectReason?`<div style="font-size:10.5px;color:var(--red);margin-top:4px;max-width:160px;line-height:1.4"><i class="ti ti-message-circle-2" style="font-size:12px;vertical-align:-1px"></i> ${t.rejectReason}</div>`:''}`;
+    return `
+    <tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:9px">
+          <div class="user-av" style="width:30px;height:30px;font-size:12px">${initials(t.workerName||'?')}</div>
+          <div><div class="td-primary">${t.workerName||'Unknown'}</div><div class="td-sub">${t.workerEmail||'—'}</div></div>
+        </div>
+      </td>
+      <td style="font-size:12.5px;font-weight:700;max-width:160px;overflow:hidden;text-overflow:ellipsis">${t.jobTitle||'—'}</td>
+      <td>${proofCell}</td>
+      <td style="color:var(--teal);font-weight:800">+${fmtAmt(t.reward)}</td>
+      <td style="font-size:12px;color:var(--text2)">${t.date||'—'}</td>
+      <td>${statusCell}</td>
+      <td>
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          ${t.status==='pending'?`<button class="btn btn-approve btn-xs" onclick="approveTask('${t.id}')"><i class="ti ti-check"></i></button>
+          <button class="btn btn-message btn-xs" title="Reject with reason" onclick="openReject('task','${t.id}','${(t.jobTitle||'').replace(/'/g,"\\'")}')"><i class="ti ti-message-circle-2"></i></button>`:''}
+          <button class="btn btn-ghost btn-xs" title="Delete permanently (also removes screenshot from storage)" onclick="deleteTaskSubmission('${t.id}')"><i class="ti ti-trash" style="color:var(--red)"></i></button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:24px">No task submissions</td></tr>';
+}
+
+function viewProof(id) {
+  const t=S.tasks.find(x=>x.id===id); if(!t)return;
+  $('proofSub').textContent=(t.jobTitle||'—')+' · '+(t.workerName||'Unknown');
+  const imgs = proofImagesOf(t);
+  const imgsHtml = imgs.length
+    ? (imgs.length===1
+        ? `<img class="proof-modal-img" src="${imgs[0]}" onclick="openLightbox('${imgs[0]}')">`
+        : `<div class="proof-shots-grid">${imgs.map((u,i)=>`<div class="proof-shot-item"><span class="proof-shot-label">Screenshot ${i+1}</span><img src="${u}" onclick="openLightbox('${u}')"></div>`).join('')}</div>`)
+    : '';
+  $('proofContent').innerHTML=`
+    ${imgsHtml}
+    <div class="proof-box"><div class="proof-lbl">Worker Note / Text</div>${t.proofText||'(no text provided)'}</div>
+    <div class="detail-grid">
+      <div class="detail-box"><div class="dl">Reward</div><div class="dv" style="color:var(--teal)">+${fmtAmt(t.reward)}</div></div>
+      <div class="detail-box"><div class="dl">Category</div><div class="dv" style="font-size:13px">${t.category||'—'}</div></div>
+      <div class="detail-box"><div class="dl">Worker</div><div class="dv" style="font-size:13px">${t.workerName}</div></div>
+      <div class="detail-box"><div class="dl">Date</div><div class="dv" style="font-size:13px">${t.date||'—'}</div></div>
+    </div>
+    ${t.status==='rejected'&&t.rejectReason?`<div class="reject-reason-box"><i class="ti ti-message-circle-2"></i> <div><strong>Rejection reason:</strong> ${t.rejectReason}</div></div>`:''}
+    ${t.status==='pending'?`<div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn btn-message" style="flex:1" onclick="closeModal('proofModal');openReject('task','${t.id}','${(t.jobTitle||'').replace(/'/g,"\\'")}')"><i class="ti ti-message-circle-2"></i> Reject with Reason</button>
+      <button class="btn btn-approve" style="flex:1" onclick="closeModal('proofModal');approveTask('${t.id}')"><i class="ti ti-check"></i> Approve & Credit</button>
+    </div>`:`<div class="alert ${t.status==='approved'?'success':'danger'}"><i class="ti ti-${t.status==='approved'?'circle-check':'circle-x'}"></i> ${t.status==='approved'?'Already approved.':'Already rejected.'}</div>`}
+    <button class="btn btn-ghost" style="width:100%;margin-top:8px;color:var(--red);border-color:rgba(239,68,68,.25)" onclick="closeModal('proofModal');deleteTaskSubmission('${t.id}')"><i class="ti ti-trash"></i> Delete Submission & Free Storage</button>`;
+  openModal('proofModal');
+}
+
+async function approveTask(id) {
+  const t=S.tasks.find(x=>x.id===id); if(!t)return;
+  const fb=window._fb; if(!fb)return;
+  try{
+    await fb.updateDoc(fb.doc(fb.db,'taskSubmissions',id),{status:'approved'});
+    if(t.workerId) await fb.updateDoc(fb.doc(fb.db,'users',t.workerId),{balance:fb.increment(t.reward||0),totalEarned:fb.increment(t.reward||0),tasksCompleted:fb.increment(1)}).catch(()=>{});
+    if(t.jobId&&t.jobId!=='spin') fb.updateDoc(fb.doc(fb.db,'jobs',t.jobId),{filled:fb.increment(1)}).catch(()=>{});
+    addLog(`✅ Task approved: ${t.workerName} — "${t.jobTitle}" +${fmtAmt(t.reward)}`,'job','green');
+    notifyUser(t.workerId,'✅ Task Approved!',`"${t.jobTitle}" proof approved — ${fmtAmt(t.reward)} added to your balance.`);
+    showToast(`✅ Task approved — ${fmtAmt(t.reward)} credited`,'success');
+  }catch(e){ console.error(e); showToast('❌ Approve failed — check Firestore permissions','error'); }
+}
+
+// Permanently delete a task submission doc AND its uploaded screenshot(s) from
+// Firebase Storage (if any), so Storage usage doesn't keep growing. This does
+// NOT touch the user's balance — if the task was already approved & credited,
+// approve/reject that already happened stays as-is; this only clears the record + file(s).
+async function deleteTaskSubmission(id) {
+  const t=S.tasks.find(x=>x.id===id); if(!t)return;
+  const imgs = proofImagesOf(t);
+  const hasImg = imgs.length>0;
+  const warn = hasImg
+    ? `"${t.jobTitle||'this submission'}" — এই সাবমিশনটি ও এর ${imgs.length>1?imgs.length+'টি স্ক্রিনশট':'স্ক্রিনশট'} Firebase Storage থেকে স্থায়ীভাবে মুছে ফেলতে চান?`
+    : `"${t.jobTitle||'this submission'}" সাবমিশনটি স্থায়ীভাবে মুছে ফেলতে চান?`;
+  if (!confirm(warn)) return;
+  const fb=window._fb; if(!fb)return;
+  try{
+    // NOTE: proof images may now live on Cloudinary (external URLs) instead of
+    // Firebase Storage — deleteObject() only works for actual Firebase Storage
+    // refs, so any Cloudinary URL is simply skipped here (harmless no-op).
+    for (const url of imgs) {
+      try { await fb.deleteObject(fb.fbStorageRef(fb.storage, url)); }
+      catch(e){ /* not a Firebase Storage URL (e.g. Cloudinary) or already removed — ignore */ }
+    }
+    await fb.deleteDoc(fb.doc(fb.db,'taskSubmissions',id));
+    addLog(`🗑️ Submission deleted: ${t.workerName||'Unknown'} — "${t.jobTitle||''}"${hasImg?` (${imgs.length} screenshot${imgs.length>1?'s':''} cleared)`:''}`,'job','red');
+    showToast(hasImg?'🗑️ Submission & screenshot(s) deleted':'🗑️ Submission deleted','warn');
+  }catch(e){ console.error(e); showToast('❌ Delete failed — check Firestore/Storage permissions','error'); }
+}
+
+// ===== RENDER: DEPOSITS =====
+function filterDeposits(val) { S.depFilter=val; renderDeposits(); }
+function renderDeposits() {
+  const list=S.depFilter==='all'?S.deposits:S.deposits.filter(d=>d.status===S.depFilter);
+  $('depositTbody').innerHTML=list.map(d=>`
+    <tr>
+      <td><div class="td-primary">${d.userName||'Unknown'}</div><div class="td-sub">${d.userEmail||'—'}</div></td>
+      <td><span style="font-size:13px;font-weight:700">${d.method||'—'}</span></td>
+      <td style="color:var(--teal);font-weight:800;font-size:15px">${fmtAmt(d.amount)}</td>
+      <td><div style="font-size:11.5px;font-family:monospace;color:var(--text2)">${d.txnId||d.txId||'—'}</div><div class="td-sub">${d.senderNumber||'—'}</div></td>
+      <td style="font-size:12px;color:var(--text2)">${d.date||'—'}</td>
+      <td><span class="badge ${d.status==='confirmed'?'green':d.status==='rejected'?'red':'amber'}">${d.status||'pending'}</span>${d.status==='rejected'&&d.rejectReason?`<div style="font-size:10.5px;color:var(--red);margin-top:4px;max-width:160px;line-height:1.4"><i class="ti ti-message-circle-2" style="font-size:12px;vertical-align:-1px"></i> ${d.rejectReason}</div>`:''}</td>
+      <td>${d.status==='pending'?`<div style="display:flex;gap:5px">
+        <button class="btn btn-approve btn-xs" onclick="confirmDeposit('${d.id}')"><i class="ti ti-check"></i> Confirm</button>
+        <button class="btn btn-message btn-xs" title="Reject with reason" onclick="openReject('deposit','${d.id}','${d.method} ${fmtAmt(d.amount)}')"><i class="ti ti-message-circle-2"></i></button>
+      </div>`:d.status==='confirmed'?`<span style="color:var(--teal);font-size:12px;font-weight:700"><i class="ti ti-circle-check" style="vertical-align:-2px"></i> Credited</span>`:`<span style="color:var(--red);font-size:11.5px">Rejected</span>`}</td>
+    </tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:24px">No deposits found</td></tr>';
+}
+
+async function confirmDeposit(id) {
+  const d=S.deposits.find(x=>x.id===id); if(!d)return;
+  const fb=window._fb; if(!fb)return;
+  try{
+    await fb.updateDoc(fb.doc(fb.db,'deposits',id),{status:'confirmed'});
+    if(d.userId) {
+      await fb.updateDoc(fb.doc(fb.db,'users',d.userId),{balance:fb.increment(d.amount||0),totalEarned:fb.increment(d.amount||0),pendingAmount:fb.increment(-(d.amount||0))}).catch(()=>{});
+    }
+    addLog(`💰 Deposit confirmed: ${d.userName} — ${fmtAmt(d.amount)} via ${d.method}`,'deposit','green');
+    sendTgEvent('e2',{user:d.userName,amount:d.amount,method:d.method,txnId:d.txnId||d.txId||'—'});
+    notifyUser(d.userId,'✅ Deposit Confirmed!',`${fmtAmt(d.amount)} via ${d.method} has been added to your wallet.`);
+    addAdminNotif('💰 Deposit Confirmed',`${d.userName} — ${fmtAmt(d.amount)} via ${d.method}`,'success');
+    showToast(`✅ ${fmtAmt(d.amount)} credited to ${d.userName}`,'success');
+  }catch(e){ console.error(e); showToast('❌ Confirm failed — check Firestore permissions','error'); }
+}
+
+// ===== RENDER: WITHDRAWALS =====
+function renderWithdrawals() {
+  const list=S.wdFilter==='all'?S.withdrawals:S.withdrawals.filter(w=>w.status===S.wdFilter);
+  $('withdrawTbody').innerHTML=list.map(w=>`
+    <tr>
+      <td><div class="td-primary">${w.userName||'Unknown'}</div><div class="td-sub">${w.userEmail||'—'}</div></td>
+      <td><span style="font-size:13px;font-weight:700">${w.method||'—'}</span></td>
+      <td style="color:var(--amber);font-weight:800">${fmtAmt(w.amount)}</td>
+      <td style="color:var(--teal);font-weight:800;font-size:15px">${fmtAmt(w.net)}</td>
+      <td style="font-size:11.5px;font-family:monospace;color:var(--text2);max-width:130px;overflow:hidden;text-overflow:ellipsis">${w.account||'—'}</td>
+      <td style="font-size:12px;color:var(--text2)">${w.date||'—'}</td>
+      <td><span class="badge ${w.status==='completed'?'green':w.status==='rejected'?'red':w.status==='processing'?'blue':'amber'}">${w.status||'pending'}</span>${w.status==='rejected'&&w.rejectReason?`<div style="font-size:10.5px;color:var(--red);margin-top:4px;max-width:150px;line-height:1.4"><i class="ti ti-message-circle-2" style="font-size:12px;vertical-align:-1px"></i> ${w.rejectReason}</div>`:''}</td>
+      <td>${w.status==='pending'?`<div style="display:flex;gap:5px;flex-wrap:wrap">
+        <button class="btn btn-info btn-xs" onclick="markProcessing('${w.id}')"><i class="ti ti-loader"></i> Processing</button>
+        <button class="btn btn-approve btn-xs" onclick="completeWithdraw('${w.id}')"><i class="ti ti-send"></i> Send</button>
+        <button class="btn btn-message btn-xs" title="Reject with reason" onclick="openReject('withdrawal','${w.id}','${w.method} ${fmtAmt(w.amount)}')"><i class="ti ti-message-circle-2"></i></button>
+      </div>`:w.status==='processing'?`<div style="display:flex;gap:5px;flex-wrap:wrap">
+        <button class="btn btn-approve btn-xs" onclick="completeWithdraw('${w.id}')"><i class="ti ti-send"></i> Send</button>
+        <button class="btn btn-message btn-xs" title="Reject with reason" onclick="openReject('withdrawal','${w.id}','${w.method} ${fmtAmt(w.amount)}')"><i class="ti ti-message-circle-2"></i></button>
+      </div>`:w.status==='completed'?`<span style="color:var(--teal);font-size:12px;font-weight:700"><i class="ti ti-circle-check" style="vertical-align:-2px"></i> Sent</span>`:`<span style="color:var(--red);font-size:11.5px">Rejected</span>`}</td>
+    </tr>`).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:24px">No withdrawals found</td></tr>';
+}
+
+async function markProcessing(id) {
+  const w=S.withdrawals.find(x=>x.id===id); if(!w)return;
+  const fb=window._fb; if(!fb)return;
+  try{
+    await fb.updateDoc(fb.doc(fb.db,'withdrawals',id),{status:'processing'});
+    addLog(`⏳ Withdrawal marked processing: ${w.userName} — ${fmtAmt(w.amount)} via ${w.method}`,'withdrawal','blue');
+    notifyUser(w.userId,'⏳ Withdrawal Processing',`Your withdrawal of ${fmtAmt(w.amount)} via ${w.method} is now being processed.`);
+    showToast('⏳ Marked as processing','info');
+  }catch(e){ console.error(e); showToast('❌ Update failed — check Firestore permissions','error'); }
+}
+
+async function completeWithdraw(id) {
+  const w=S.withdrawals.find(x=>x.id===id); if(!w)return;
+  const fb=window._fb; if(!fb)return;
+  try{
+    await fb.updateDoc(fb.doc(fb.db,'withdrawals',id),{status:'completed'});
+    if(w.userId) await fb.updateDoc(fb.doc(fb.db,'users',w.userId),{totalWithdrawn:fb.increment(w.net||0),pendingAmount:fb.increment(-(w.net||0))}).catch(()=>{});
+    addLog(`📤 Withdrawal sent: ${w.userName} — ${fmtAmt(w.net)} via ${w.method} to ${w.account}`,'withdrawal','green');
+    sendTgEvent('e3',{user:w.userName,amount:w.amount,method:w.method,account:w.account});
+    notifyUser(w.userId,'✅ Withdrawal Sent!',`${fmtAmt(w.net)} has been sent to your ${w.method} account (${w.account}).`);
+    addAdminNotif('📤 Withdrawal Sent',`${w.userName} — ${fmtAmt(w.net)} via ${w.method}`,'success');
+    showToast(`✅ ${fmtAmt(w.net)} sent to ${w.userName}`,'success');
+  }catch(e){ console.error(e); showToast('❌ Send failed — check Firestore permissions','error'); }
+}
+
+// ===== UNIFIED REJECT (message-icon powered, shows reason to the member) =====
+function openReject(type, id, label) {
+  S._rejectCtx={type,id};
+  const titles={job:'Reject Job',deposit:'Reject Deposit',withdrawal:'Reject Withdrawal',task:'Reject Task Submission'};
+  $('rejectTitle').innerHTML=`<i class="ti ti-message-circle-2" style="vertical-align:-3px;color:var(--purple)"></i> ${titles[type]||'Reject'}`;
+  $('rejectSub').textContent=(label||'')+' — কারণ লিখুন (user দেখবে)';
+  $('rejectReason').value='';
+  openModal('rejectModal');
+}
+
+async function confirmReject() {
+  const reason=v('rejectReason'); if(!reason){showToast('কারণ লিখুন','error');return;}
+  const {type,id}=S._rejectCtx||{}; if(!type||!id)return;
+  closeModal('rejectModal');
+  const fb=window._fb; if(!fb)return;
+  try{
+    if(type==='job'){
+      const j=S.jobs.find(x=>x.id===id);
+      await fb.updateDoc(fb.doc(fb.db,'jobs',id),{status:'rejected',rejectReason:reason});
+      addLog(`❌ Job rejected: "${j?.title}" — ${reason}`,'job','red');
+      notifyUser(j?.postedBy,'❌ Job Rejected',`Your job "${j?.title}" was not approved. Reason: ${reason}`);
+      showToast('❌ Job rejected','error');
+    } else if(type==='deposit'){
+      const d=S.deposits.find(x=>x.id===id);
+      await fb.updateDoc(fb.doc(fb.db,'deposits',id),{status:'rejected',rejectReason:reason});
+      if(d?.userId) await fb.updateDoc(fb.doc(fb.db,'users',d.userId),{pendingAmount:fb.increment(-(d.amount||0))}).catch(()=>{});
+      addLog(`❌ Deposit rejected: ${d?.userName} ${fmtAmt(d?.amount)} — ${reason}`,'deposit','red');
+      notifyUser(d?.userId,'❌ Deposit Rejected',`Your ${d?.method} deposit of ${fmtAmt(d?.amount)} was rejected. Reason: ${reason}`);
+      showToast('❌ Deposit rejected','error');
+    } else if(type==='withdrawal'){
+      const w=S.withdrawals.find(x=>x.id===id);
+      await fb.updateDoc(fb.doc(fb.db,'withdrawals',id),{status:'rejected',rejectReason:reason});
+      if(w?.userId) await fb.updateDoc(fb.doc(fb.db,'users',w.userId),{balance:fb.increment(w.amount||0),pendingAmount:fb.increment(-(w.net||0))}).catch(()=>{});
+      addLog(`❌ Withdrawal rejected & refunded: ${w?.userName} ${fmtAmt(w?.amount)} — ${reason}`,'withdrawal','red');
+      notifyUser(w?.userId,'❌ Withdrawal Rejected (Refunded)',`Your withdrawal of ${fmtAmt(w?.amount)} was rejected and refunded. Reason: ${reason}`);
+      showToast('❌ Withdrawal rejected & balance refunded','error');
+    } else if(type==='task'){
+      const t=S.tasks.find(x=>x.id===id);
+      await fb.updateDoc(fb.doc(fb.db,'taskSubmissions',id),{status:'rejected',rejectReason:reason});
+      notifyUser(t?.workerId,'❌ Task Rejected',`"${t?.jobTitle}" was rejected. Reason: ${reason}`);
+      addLog(`❌ Task rejected: ${t?.workerName} — "${t?.jobTitle}" — ${reason}`,'job','red');
+      showToast('❌ Task rejected','error');
+    }
+  }catch(e){ console.error(e); showToast('❌ Reject failed — check Firestore permissions','error'); }
+}
+
+// ===== BALANCE ADJUST =====
+function openBalAdj(uid) {
+  const u=findUser(uid); if(!u)return;
+  S._balUid=uid;
+  $('balSub').textContent=`${u.name} — Current balance: ${fmtAmt(u.balance)}`;
+  $('balAmt').value=''; $('balReason').value='';
+  openModal('balModal');
+}
+async function confirmBalAdj() {
+  const uid=S._balUid; if(!uid)return;
+  const amt=parseFloat($('balAmt').value);
+  const reason=v('balReason')||'Admin adjustment';
+  if(isNaN(amt)||amt===0){showToast('Valid amount দিন','error');return;}
+  const u=findUser(uid); if(!u)return;
+  closeModal('balModal');
+  const fb=window._fb; if(!fb)return;
+  try{
+    await fb.updateDoc(fb.doc(fb.db,'users',uid),{balance:fb.increment(amt)});
+    addLog(`💰 Balance adjusted: ${u.name} ${amt>=0?'+':''}${fmtAmt(amt)} — ${reason}`,'deposit',amt>=0?'green':'amber');
+    notifyUser(uid,'💰 Balance Adjusted',`Admin adjusted your balance by ${amt>=0?'+':''}${fmtAmt(amt)}. Reason: ${reason}`);
+    showToast(`💰 Balance ${amt>=0?'+':''}${fmtAmt(amt)}`,'success');
+    loadUsers();
+  }catch(e){ console.error(e); showToast('❌ Adjustment failed — check Firestore permissions','error'); }
+}
+
+// ===== PAYMENT METHODS =====
+let _nmLogoData = '';
+function previewMethodLogo(input) {
+  if (input.files && input.files[0]) {
+    resizeImageFile(input.files[0], 96, dataUrl => {
+      _nmLogoData = dataUrl;
+      const p = $('nmLogoPreview');
+      if (p) p.innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:cover">`;
+    });
+  }
+}
+function updateMethodLogo(id, input) {
+  if (input.files && input.files[0]) {
+    resizeImageFile(input.files[0], 96, async dataUrl => {
+      await updateMethod(id, 'logo', dataUrl);
+    });
+  }
+}
+function renderMethods() {
+  $('methodsGrid').innerHTML=S.methods.map(m=>`
+    <div class="method-card">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:9px">
+          <div style="width:32px;height:32px;border-radius:9px;background:var(--bg3);border:1px solid var(--border2);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0">${m.logo?`<img src="${m.logo}" style="width:100%;height:100%;object-fit:cover">`:(m.emoji||'💳')}</div>
+          <div style="font-size:16px;font-weight:800">${m.name}</div>
+        </div>
+        <label class="toggle"><input type="checkbox" ${m.enabled?'checked':''} onchange="toggleMethod('${m.id}',this.checked)"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+      </div>
+      <div style="font-size:11px;color:var(--text3)">${m.enabled?'🟢 Enabled':'🔴 Disabled'} · Min deposit: ${fmtAmt(m.minDeposit)}</div>
+      <div>
+        <div style="font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Account / Wallet (Users will see this)</div>
+        <input type="text" value="${m.number||''}" style="width:100%;padding:9px 12px;background:rgba(255,255,255,.04);border:1px solid var(--border2);border-radius:var(--radius);color:var(--text);font-family:monospace;font-size:13px;font-weight:700;outline:none" onchange="updateMethod('${m.id}','number',this.value)">
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Update Logo Image</div>
+        <input type="file" accept="image/*" style="width:100%;font-size:11px" onchange="updateMethodLogo('${m.id}',this)">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <div style="font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;margin-bottom:4px">Deposit Fee %</div>
+          <input type="number" value="${m.depositFee??0}" min="0" max="30" step="0.1" style="width:100%;padding:8px 10px;background:rgba(255,255,255,.04);border:1px solid var(--border2);border-radius:var(--radius);color:var(--text);font-size:13px;font-weight:700;outline:none" onchange="updateMethod('${m.id}','depositFee',parseFloat(this.value)||0)">
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;margin-bottom:4px">Withdraw Fee %</div>
+          <input type="number" value="${m.withdrawFee??5}" min="0" max="30" step="0.1" style="width:100%;padding:8px 10px;background:rgba(255,255,255,.04);border:1px solid var(--border2);border-radius:var(--radius);color:var(--text);font-size:13px;font-weight:700;outline:none" onchange="updateMethod('${m.id}','withdrawFee',parseFloat(this.value)||0)">
+        </div>
+      </div>
+      <button class="btn btn-danger btn-sm" style="width:100%" onclick="deleteMethod('${m.id}')"><i class="ti ti-trash"></i> Remove Method</button>
+    </div>`).join('')||'<div class="card" style="text-align:center;color:var(--text3);padding:24px">No payment methods. Add one above.</div>';
+}
+async function toggleMethod(id,val){const fb=window._fb;if(!fb)return;await fb.updateDoc(fb.doc(fb.db,'paymentMethods',id),{enabled:val}).catch((e)=>{console.error(e);showToast('❌ Update failed','error');});const m=S.methods.find(x=>x.id===id);showToast(`${m?.name||'Method'} ${val?'enabled':'disabled'}`,val?'success':'warn');}
+async function updateMethod(id,field,val){const fb=window._fb;if(!fb)return;await fb.updateDoc(fb.doc(fb.db,'paymentMethods',id),{[field]:val}).catch((e)=>{console.error(e);showToast('❌ Save failed — check Firestore permissions','error');return;});showToast('Saved','success');}
+async function deleteMethod(id){if(!confirm('Remove this payment method?'))return;const fb=window._fb;if(!fb)return;await fb.deleteDoc(fb.doc(fb.db,'paymentMethods',id)).catch((e)=>{console.error(e);showToast('❌ Delete failed','error');});showToast('Method removed','warn');}
+async function addMethod(){
+  const name=v('nmName'),emoji=v('nmEmoji')||'💳',number=v('nmNumber');
+  if(!name||!number){showToast('Fill in all fields','error');return;}
+  const fb=window._fb; if(!fb)return;
+  const min=parseFloat($('nmMin').value)||1,depFee=parseFloat($('nmDepFee').value)||0,wdFee=parseFloat($('nmWdFee').value)||0;
+  try{
+    await fb.addDoc(fb.collection(fb.db,'paymentMethods'),{name,emoji,logo:_nmLogoData||'',number,minDeposit:min,depositFee:depFee,withdrawFee:wdFee,enabled:true});
+    closeModal('addMethodModal');
+    _nmLogoData='';
+    const p=$('nmLogoPreview'); if(p) p.innerHTML='📷';
+    ['nmName','nmEmoji','nmNumber'].forEach(id=>{ if($(id)) $(id).value=''; });
+    showToast('✅ Payment method added!','success');
+  }catch(e){ console.error(e); showToast('❌ Add failed — check Firestore permissions','error'); }
+}
+
+// ===== TELEGRAM =====
+function renderTgEvents() {
+  $('tgEvents').innerHTML=TG_EVENTS.map(e=>`
+    <div style="display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)">
+      <i class="ti ${e.icon}" style="font-size:18px;color:var(--text2);margin-top:1px;flex-shrink:0"></i>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:700;margin-bottom:2px">${e.label}</div>
+        <div style="font-size:11px;color:var(--text3);line-height:1.5">${e.msg}</div>
+      </div>
+      <label class="toggle" style="margin-top:2px"><input type="checkbox" ${e.enabled?'checked':''} onchange="TG_EVENTS.find(x=>x.id==='${e.id}').enabled=this.checked"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+    </div>`).join('');
+}
+function connectTelegram() {
+  const token=v('tgToken'),chatId=v('tgChatId');
+  if(!token){showToast('Bot token দিন','error');return;}
+  if(!chatId){showToast('Chat ID দিন','error');return;}
+  S.tg={token,chatId,connected:true};
+  ls('wha_tg_token',token); ls('wha_tg_chat',chatId);
+  setTgConnected(true);
+  addLog('✈️ Telegram bot connected','telegram','green');
+  showToast('✅ Telegram connected!','success');
+}
+function setTgConnected(ok) {
+  const dot=$('tgDot'); const st=$('tgStatusText'); const bi=$('tgBotInfo');
+  const sd=$('tgSysDot'); const ss=$('tgSysStatus');
+  if(dot){dot.className='tg-dot '+(ok?'ok':'off');}
+  if(st)st.textContent=ok?'Bot Connected':'Not Connected';
+  if(bi)bi.textContent=ok?'Active & sending notifications':'Configure above to connect';
+  if(sd){sd.style.background=ok?'var(--green)':'var(--red)';}
+  if(ss)ss.textContent=ok?'Active':'Not connected';
+}
+function testTelegram() {
+  const token=S.tg.token||ls('wha_tg_token'),chatId=S.tg.chatId||ls('wha_tg_chat');
+  if(!token||!chatId){showToast('Connect the bot first','error');return;}
+  const msg=encodeURIComponent('🐝 WorkHive Admin Test\n\n✅ Your Telegram bot is connected!\n\n⏰ '+new Date().toLocaleString());
+  fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${msg}`)
+    .then(r=>r.json()).then(d=>showToast(d.ok?'✅ Test message sent!':'❌ '+(d.description||'Failed'),d.ok?'success':'error')).catch(()=>showToast('❌ Network error','error'));
+}
+function sendTgEvent(eid,vars={}) {
+  const ev=TG_EVENTS.find(e=>e.id===eid); if(!ev||!ev.enabled)return;
+  const token=S.tg.token||ls('wha_tg_token'),chatId=S.tg.chatId||ls('wha_tg_chat');
+  if(!token||!chatId)return;
+  let msg=ev.msg;
+  Object.entries(vars).forEach(([k,vv])=>{msg=msg.replace('{'+k+'}',vv);});
+  fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(msg+'\n⏰ '+new Date().toLocaleString())}`).catch(()=>{});
+}
+
+// ===== BROADCAST =====
+function sendBroadcast() {
+  const target=v('bcTarget')||document.getElementById('bcTarget').value;
+  const channel=v('bcChannel')||document.getElementById('bcChannel').value;
+  const title=$('bcTitle').value.trim(), body=$('bcBody').value.trim();
+  if(!title||!body){showToast('All fields required','error');return;}
+  const targets=S.users.filter(u=>{if(target==='all')return true;if(target==='kyc_verified')return u.kyc==='Verified';if(target==='kyc_pending')return u.kyc==='Pending';return true;});
+  if(channel==='telegram'||channel==='both'){targets.filter(u=>u.telegramChatId).forEach(u=>{const token=S.tg.token||ls('wha_tg_token');if(token&&u.telegramChatId)fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${u.telegramChatId}&text=${encodeURIComponent('📢 '+title+'\n\n'+body)}`).catch(()=>{});});}
+  targets.forEach(u=>notifyUser(u.id,'📢 '+title,body,'📢'));
+  S.bcHistory.unshift({title,body,target,channel,sent:targets.length,date:new Date().toLocaleString()});
+  $('bcTitle').value=''; $('bcBody').value='';
+  $('bcHistory').innerHTML=S.bcHistory.map(b=>`
+    <div style="padding:11px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:13px;font-weight:700;margin-bottom:3px">${b.title}</div>
+      <div style="font-size:11px;color:var(--text3)"><i class="ti ti-users" style="font-size:12px;vertical-align:-1px"></i> ${b.target} · ${b.channel} · ${b.sent} users · ${b.date}</div>
+    </div>`).join('');
+  addLog(`📢 Broadcast: "${title}" → ${targets.length} users`,'broadcast','green');
+  showToast(`📢 Sent to ${targets.length} users!`,'success');
+}
+
+// ===== ADMIN NOTIFS =====
+function addAdminNotif(title,msg,type='info') { S.adminNotifs.unshift({id:'n'+Date.now(),title,msg,type,read:false,time:new Date().toLocaleString()}); updateBadges(); renderNotifs(); }
+function renderNotifs() {
+  $('notifList').innerHTML=S.adminNotifs.map(n=>`
+    <div class="notif-card ${n.read?'':'unread'}" onclick="readNotif('${n.id}')">
+      <div class="notif-icon" style="background:var(--${n.type==='success'?'green':'blue'}-bg)">${n.type==='success'?'✅':'ℹ️'}</div>
+      <div style="flex:1">
+        <div style="font-size:13.5px;font-weight:${n.read?'600':'800'};margin-bottom:3px">${n.title}${!n.read?'<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-left:8px;vertical-align:middle"></span>':''}</div>
+        <div style="font-size:12.5px;color:var(--text2);line-height:1.5">${n.msg}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">${n.time}</div>
+      </div>
+    </div>`).join('')||'<div class="card" style="text-align:center;color:var(--text3);padding:28px">No notifications yet.</div>';
+}
+function readNotif(id){const n=S.adminNotifs.find(x=>x.id===id);if(n){n.read=true;updateBadges();renderNotifs();}}
+function markAllRead(){S.adminNotifs.forEach(n=>n.read=true);updateBadges();renderNotifs();showToast('All marked as read','info');}
+
+// ===== SETTINGS (writes to siteSettings/global — same path the User App reads) =====
+async function saveSettings() {
+  Object.assign(S.settings,{
+    name:v('setName')||'WorkHive',
+    minWd:parseFloat($('setMinWd').value)||5,
+    minDep:parseFloat($('setMinDep').value)||1,
+    fee:parseFloat($('setFee').value)||5,
+    refGen1:parseFloat($('setRefGen1')?.value)||0,
+    refGen2:parseFloat($('setRefGen2')?.value)||0,
+    refGen3:parseFloat($('setRefGen3')?.value)||0,
+    supportEmail:v('setSupportEmail')||'support@workhive.app',
+    supportHours:v('setSupportHours')||'9 AM – 11 PM',
+    supportResponse:v('setSupportResponse')||'Within 12 hours',
+    banner:v('setBannerMsg'),
+    bannerType:$('setBannerType')?.value||'info',
+    spinEnabled: $('toggleSpin')?.checked!==false,
+  });
+  const fb=window._fb; if(!fb){showToast('Firebase not ready','error');return;}
+  try{
+    await fb.setDoc(fb.doc(fb.db,'siteSettings','global'),{
+      name:S.settings.name,
+      minWithdraw:S.settings.minWd,
+      minDeposit:S.settings.minDep,
+      withdrawFee:S.settings.fee,
+      refGen1:S.settings.refGen1,
+      refGen2:S.settings.refGen2,
+      refGen3:S.settings.refGen3,
+      supportEmail:S.settings.supportEmail,
+      supportHours:S.settings.supportHours,
+      supportResponse:S.settings.supportResponse,
+      banner:S.settings.banner,
+      bannerType:S.settings.bannerType,
+      spinEnabled:S.settings.spinEnabled,
+    }, {merge:true});
+    addLog('⚙️ Settings updated (live on User App)','settings','green');
+    showToast('💾 Settings saved! User App-এ লাইভ আপডেট হয়েছে।','success');
+  }catch(e){ console.error(e); showToast('❌ Save failed — check Firestore permissions','error'); }
+}
+function saveSecurity() {
+  const np=v('newPass'),nc=v('newCode');
+  if(np) ls('wha_pass',np);
+  if(nc){if(nc.length!==6||!/^\d+$/.test(nc)){showToast('Code must be exactly 6 digits','error');return;} ls('wha_code',nc);}
+  addLog('🔐 Security settings updated','login','amber');
+  showToast('🔐 Security updated!','success');
+  $('newPass').value=''; $('newCode').value='';
+}
+
+// ===== LOGS =====
+function addLog(action,type='view',level='green') { S.logs.unshift({action,type,level,time:new Date().toLocaleString()}); if(S.logs.length>200)S.logs.pop(); if($('screen-logs')?.classList.contains('active')) renderLogs(); renderDashActivity(); }
+function filterLogs(val){S.logFilter=val;renderLogs();}
+function renderLogs() {
+  const list=S.logFilter==='all'?S.logs:S.logs.filter(l=>l.type===S.logFilter);
+  $('logsContainer').innerHTML=list.map(l=>`
+    <div class="log-item">
+      <div class="log-dot ${l.level}"></div>
+      <div class="log-text">${l.action}</div>
+      <div class="log-time">${l.time}</div>
+    </div>`).join('')||'<div style="color:var(--text3);text-align:center;padding:24px">No logs.</div>';
+}
+function clearLogs(){if(!confirm('Clear all logs?'))return;S.logs=[];renderLogs();showToast('Logs cleared','warn');}
+
+// ===== DASHBOARD PANELS =====
+function renderSignupChart() {
+  const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],data=[3,7,2,9,5,12,8],mx=Math.max(...data);
+  $('signupChart').innerHTML=data.map((v,i)=>`
+    <div class="cbar-col">
+      <div class="cbar" style="height:${(v/mx*86)}px;opacity:${0.4+v/mx*0.6}"></div>
+      <div class="cbar-lbl">${days[i]}</div>
+    </div>`).join('');
+}
+function renderDashPendingJobs() {
+  const pending=S.jobs.filter(j=>j.status==='pending').slice(0,5);
+  const el=$('dashPendingJobs'); if(!el)return;
+  if(!pending.length){el.innerHTML='<div style="color:var(--text3);font-size:13px;text-align:center;padding:24px"><i class="ti ti-circle-check" style="font-size:20px;display:block;margin-bottom:6px"></i>No pending jobs</div>';return;}
+  el.innerHTML=pending.map(j=>`
+    <div class="pj-row">
+      <div style="width:30px;height:30px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--text2);flex-shrink:0">${initials(j.postedByName||'?')}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${j.title||'Untitled'}</div>
+        <div style="font-size:11px;color:var(--text3)">${j.postedByName||'—'} · +${fmtAmt(j.reward)}/task</div>
+      </div>
+      <div style="display:flex;gap:5px;flex-shrink:0">
+        <button class="btn btn-approve btn-xs" onclick="approveJob('${j.id}')"><i class="ti ti-check"></i></button>
+        <button class="btn btn-message btn-xs" onclick="openReject('job','${j.id}','${(j.title||'').replace(/'/g,"\\'")}')"><i class="ti ti-message-circle-2"></i></button>
+      </div>
+    </div>`).join('');
+}
+function renderDashDeposits() {
+  const list=S.deposits.slice(0,5); const el=$('dashDeposits'); if(!el)return;
+  if(!list.length){el.innerHTML='<div style="color:var(--text3);font-size:13px;text-align:center;padding:16px">No deposits yet</div>';return;}
+  el.innerHTML=list.map(d=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.userName||'Unknown'}</div>
+        <div style="font-size:11px;color:var(--text3)">${d.method||'—'} · ${d.date||'—'}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:13px;font-weight:800;color:var(--teal)">${fmtAmt(d.amount)}</div>
+        <span class="badge ${d.status==='confirmed'?'green':d.status==='rejected'?'red':'amber'}" style="font-size:9px;padding:1px 6px">${d.status||'pending'}</span>
+      </div>
+    </div>`).join('')+'<div style="padding-top:10px;text-align:right"><a onclick="goScreen(\'deposits\')" style="font-size:12px;color:var(--blue);cursor:pointer;font-weight:700">View all →</a></div>';
+}
+function renderDashWithdrawals() {
+  const list=S.withdrawals.slice(0,5); const el=$('dashWithdrawals'); if(!el)return;
+  if(!list.length){el.innerHTML='<div style="color:var(--text3);font-size:13px;text-align:center;padding:16px">No withdrawals yet</div>';return;}
+  el.innerHTML=list.map(w=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${w.userName||'Unknown'}</div>
+        <div style="font-size:11px;color:var(--text3)">${w.method||'—'} · ${w.date||'—'}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:13px;font-weight:800;color:var(--amber)">${fmtAmt(w.amount)}</div>
+        <span class="badge ${w.status==='completed'?'green':w.status==='rejected'?'red':'amber'}" style="font-size:9px;padding:1px 6px">${w.status||'pending'}</span>
+      </div>
+    </div>`).join('')+'<div style="padding-top:10px;text-align:right"><a onclick="goScreen(\'withdrawals\')" style="font-size:12px;color:var(--blue);cursor:pointer;font-weight:700">View all →</a></div>';
+}
+function renderDashCountry() {
+  const el=$('dashCountry'); if(!el)return;
+  const counts={};
+  S.users.forEach(u=>{const c=u.country||'Unknown';counts[c]=(counts[c]||0)+1;});
+  const sorted=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const mx=sorted[0]?.[1]||1;
+  el.innerHTML=sorted.map(([c,n])=>`
+    <div class="map-bar-row">
+      <div class="map-country">${c}</div>
+      <div class="map-track"><div class="map-fill" style="width:${Math.round(n/mx*100)}%"></div></div>
+      <div class="map-num">${n}</div>
+    </div>`).join('')||'<div style="color:var(--text3);font-size:13px;text-align:center;padding:16px">No data yet</div>';
+}
+function renderDashActivity() {
+  const el=$('dashActivity'); if(!el)return;
+  el.innerHTML=S.logs.slice(0,8).map(l=>`
+    <div class="log-item">
+      <div class="log-dot ${l.level}"></div>
+      <div class="log-text">${l.action}</div>
+      <div class="log-time">${l.time}</div>
+    </div>`).join('')||'<div style="color:var(--text3);font-size:13px;text-align:center;padding:16px">No activity yet</div>';
+}
+function renderSysStatus() {
+  const tgOk=S.tg.connected||(ls('wha_tg_token')&&ls('wha_tg_chat'));
+  setTgConnected(!!tgOk);
+  const osOk=S.os.connected||(ls('wha_os_appid')&&ls('wha_os_restkey'));
+  setOsConnected(!!osOk);
+}
+
+// ===== MODAL HELPERS =====
+function openModal(id){$(id).classList.add('show');}
+function closeModal(id){$(id).classList.remove('show');}
+document.addEventListener('click',e=>{if(e.target.classList.contains('modal-overlay'))e.target.classList.remove('show');});
+
+// ===== EXPORT =====
+function exportUsers(){
+  const rows=['Name,Email,Username,Joined,Balance,Tasks,KYC,Status,Country'];
+  S.users.forEach(u=>rows.push([u.name,u.email,u.username,u.joined,u.balance,u.tasks,u.kyc,u.status,u.country].join(',')));
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([rows.join('\n')],{type:'text/csv'}));a.download='workhive_users_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+  showToast('📥 CSV exported!','success');
+}
+
+// ===== TOAST =====
+let _tt;
+function showToast(msg,type='success'){const el=$('toast');el.className='toast '+type;el.innerHTML=`<i class="ti ti-${type==='success'?'circle-check':type==='error'?'circle-x':type==='warn'?'alert-triangle':'info-circle'}" style="font-size:16px"></i>${msg}`;el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),3400);}
+
+// ===== INIT TG EVENTS =====
+setTimeout(renderTgEvents, 100);
+</script>
+</body>
+</html>
