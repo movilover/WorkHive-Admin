@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -31,7 +32,7 @@ a{color:inherit;text-decoration:none}
 
 /* ===== LOGIN ===== */
 #loginScreen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;
-  background-image:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(34,197,94,0.06),transparent)}
+  background-image:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(34,197,94,0.06),transparent);overflow-y:auto;padding:24px 0}
 .login-card{width:100%;max-width:400px;padding:40px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-xl);box-shadow:0 32px 64px rgba(0,0,0,0.6)}
 .login-brand{display:flex;align-items:center;gap:12px;margin-bottom:32px;justify-content:center}
 .brand-icon{width:48px;height:48px;border-radius:14px;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 8px 20px rgba(34,197,94,0.3)}
@@ -52,6 +53,8 @@ a{color:inherit;text-decoration:none}
 .login-err{color:var(--red);font-size:12px;font-weight:600;text-align:center;min-height:16px;margin-bottom:10px}
 .lockout-msg{background:var(--red-bg);border:1px solid var(--red-border);border-radius:var(--radius);padding:10px 14px;font-size:12px;color:var(--red);font-weight:600;margin-bottom:12px;display:none}
 .sec-note{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:18px;font-size:11px;color:var(--text3)}
+.login-divider{display:flex;align-items:center;gap:10px;margin:22px 0 16px;color:var(--text3);font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.6px}
+.login-divider::before,.login-divider::after{content:'';flex:1;height:1px;background:var(--border2)}
 
 /* ===== SHELL ===== */
 #adminShell{display:none;height:100vh;flex-direction:row;overflow:hidden}
@@ -425,6 +428,21 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
       <div class="lf-hint">Default code: <strong>272727</strong></div>
     </div>
     <div class="login-err" id="loginErr2"></div>
+
+    <div class="login-divider">Firebase Data Access</div>
+    <div class="lf">
+      <label>Firebase Admin Email</label>
+      <input type="text" id="loginFbEmail" placeholder="admin@yourproject.com" autocomplete="email">
+      <div class="lf-hint">এই ইমেইলটি অবশ্যই Firebase Console → Authentication-এ (Email/Password enabled) তৈরি করা থাকতে হবে, এবং firestore.rules-এর <code>isChatAdmin()</code> লিস্টে থাকতে হবে ও email_verified হতে হবে। এটা ছাড়া ডাটা লোড/সেভ কিছুই হবে না (permission-denied)।</div>
+    </div>
+    <div class="lf">
+      <label>Firebase Admin Password</label>
+      <div class="pw-wrap">
+        <input type="password" id="loginFbPass" placeholder="••••••••" autocomplete="current-password">
+        <span class="pw-eye" onclick="toggleFbPass()"><i class="ti ti-eye"></i></span>
+      </div>
+    </div>
+
     <button class="btn-login" onclick="doLogin()">
       <i class="ti ti-lock" style="font-size:15px;vertical-align:-2px"></i> Secure Login
     </button>
@@ -479,7 +497,7 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
           <div class="qm-section-lbl">Users</div>
           <div class="qm-row" onclick="goScreen('users')">
             <div class="qm-icon blue-bg" style="background:var(--blue-bg);color:var(--blue)"><i class="ti ti-users"></i></div>
-            <div class="qm-text"><div class="qm-label">User Management</div><div class="qm-sub">সকল ইউজার দেখুন, ব্যান/আনব্যান, KYC ভেরিফাই</div></div>
+            <div class="qm-text"><div class="qm-label">User Management</div><div class="qm-sub">সকল ইউজার দেখুন, ব্যান/আনব্যান, KYC ভেরিফাই, মেসেজ পাঠান</div></div>
             <span class="qm-badge blue" id="nb-users">0</span>
             <i class="ti ti-chevron-right qm-chev"></i>
           </div>
@@ -888,6 +906,20 @@ if (window.Capacitor?.Plugins?.OneSignal) {
               <button class="btn btn-warning" style="width:100%" onclick="saveSecurity()"><i class="ti ti-lock"></i> Update Security</button>
             </div>
             <div class="card">
+              <div class="card-title"><i class="ti ti-cloud-lock"></i> Firebase Admin Account</div>
+              <div class="lf-hint" style="margin-bottom:10px">এই account দিয়েই admin panel Firestore-এ read/write করে (permission-এর জন্য প্রয়োজন)। এই email অবশ্যই Firebase Console → Authentication-এ email/password দিয়ে তৈরি করা এবং verified থাকতে হবে, এবং firestore.rules-এর <code>isChatAdmin()</code>-এ যোগ করা থাকতে হবে।</div>
+              <div class="field"><label>Firebase Admin Email</label><input type="text" id="setFbEmail" placeholder="admin@yourproject.com"></div>
+              <div class="field"><label>Firebase Admin Password</label><input type="password" id="setFbPass" placeholder="••••••••"></div>
+              <button class="btn btn-info" style="width:100%" onclick="updateFirebaseAdminAccount()"><i class="ti ti-plug"></i> Save & Reconnect</button>
+              <div class="tg-status" style="margin-top:12px">
+                <div class="tg-dot off" id="fbAcctDot"></div>
+                <div>
+                  <div style="font-size:13px;font-weight:700" id="fbAcctStatusText">Not signed in</div>
+                  <div style="font-size:11px;color:var(--text3)" id="fbAcctInfo">Enter Firebase admin email/password above</div>
+                </div>
+              </div>
+            </div>
+            <div class="card">
               <div class="card-title"><i class="ti ti-speakerphone"></i> Site-Wide Banner (User App)</div>
               <div class="field"><label>Banner Message (ফাঁকা রাখলে banner hide হবে)</label><textarea id="setBannerMsg" placeholder="e.g. 🎉 নতুন টাস্ক যুক্ত হয়েছে!" rows="2"></textarea></div>
               <div class="field"><label>Banner Type</label>
@@ -976,6 +1008,22 @@ if (window.Capacitor?.Plugins?.OneSignal) {
     <div style="display:flex;gap:10px;margin-top:8px">
       <button class="btn btn-ghost" style="flex:1" onclick="closeModal('rejectModal')">Cancel</button>
       <button class="btn btn-danger" style="flex:1" onclick="confirmReject()"><i class="ti ti-x"></i> Confirm Reject</button>
+    </div>
+  </div>
+</div>
+
+<!-- Message User -->
+<div class="modal-overlay" id="msgUserModal">
+  <div class="modal-box">
+    <div class="modal-hd">
+      <div><div class="modal-title"><i class="ti ti-message-circle-2" style="vertical-align:-3px;color:var(--purple)"></i> Message User</div><div class="modal-sub" id="msgUserSub"></div></div>
+      <div class="modal-close" onclick="closeModal('msgUserModal')"><i class="ti ti-x"></i></div>
+    </div>
+    <div class="field"><label>Title</label><input type="text" id="msgTitle" placeholder="e.g. অ্যাকাউন্ট সংক্রান্ত তথ্য"></div>
+    <div class="field"><label>Message (এটা User-এর Notification আইকনে যাবে)</label><textarea id="msgBody" rows="4" placeholder="যেমন: আপনার সাবমিট করা তথ্যে সমস্যা আছে, দয়া করে সাপোর্টে যোগাযোগ করুন…"></textarea></div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('msgUserModal')">Cancel</button>
+      <button class="btn btn-message" style="flex:1" onclick="confirmSendMsg()"><i class="ti ti-send"></i> Send Message</button>
     </div>
   </div>
 </div>
@@ -1082,7 +1130,7 @@ import {
   query, where, orderBy, serverTimestamp, increment, setDoc, deleteDoc, getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import {
-  getAuth, signInAnonymously, onAuthStateChanged
+  getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
   getStorage, ref as fbStorageRef, deleteObject
@@ -1102,32 +1150,67 @@ const auth = getAuth(app);
 const storage = getStorage(app);
 window._fb = { db, auth, storage, collection, getDocs, doc, updateDoc, addDoc, onSnapshot, query, where, orderBy, serverTimestamp, increment, setDoc, deleteDoc, getDoc, fbStorageRef, deleteObject };
 
-// IMPORTANT: The admin panel has no separate Firebase Authentication account of its own —
-// it only checks a local username/password/code stored in localStorage. Firestore Security
-// Rules normally require `request.auth != null` to read/write data, so WITHOUT signing the
-// admin browser into Firebase Auth, every admin read/write (deposits, withdrawals, jobs,
-// payment methods, settings, etc.) would silently fail with "permission-denied" and never
-// reach the user app — this was the main reason data wasn't syncing between the two panels.
-// Signing in anonymously gives the admin panel a valid `request.auth`, so make sure
-// "Anonymous" sign-in is enabled in Firebase Console > Authentication > Sign-in method,
-// and that your Firestore Rules (and Storage Rules — needed to delete proof screenshots)
-// allow access when `request.auth != null`.
+// ============================================================================
+// IMPORTANT — WHY THIS CHANGED FROM signInAnonymously() TO A REAL EMAIL/PASSWORD LOGIN
+// ----------------------------------------------------------------------------
+// The admin panel used to call signInAnonymously(auth). That gives Firebase a
+// valid request.auth, BUT anonymous sign-in creates a brand-new RANDOM uid
+// every time — it will never match the fixed uid your firestore.rules checks
+// for in isAdmin() ('Bj2qIMA62tYZ8skwsztpCrCqfW93'), and it has no email, so
+// it never matches isChatAdmin() either. Every read/write from the panel was
+// therefore silently getting "permission-denied": jobs wouldn't post, and
+// deposits/withdrawals/tasks lists rendered empty even though the data was
+// still safely sitting in Firestore.
+//
+// Fix: sign in with a REAL Firebase Authentication email/password account
+// that is explicitly allowed in firestore.rules (see isChatAdmin() there).
+// The email/password are entered on the login screen (or Settings → Firebase
+// Admin Account) and are stored in localStorage so you don't have to retype
+// them every visit — this is the same trust model the old REST/OneSignal
+// keys already used in this file.
+// ============================================================================
 function fbSetStatus(text, ok) {
   const el = document.getElementById('fbStatus');
-  if (!el) return;
-  el.textContent = text;
-  el.style.color = ok ? 'var(--green)' : 'var(--amber)';
+  if (el) { el.textContent = text; el.style.color = ok ? 'var(--green)' : 'var(--amber)'; }
+  const dot = document.getElementById('fbAcctDot');
+  const st = document.getElementById('fbAcctStatusText');
+  const info = document.getElementById('fbAcctInfo');
+  if (dot) dot.className = 'tg-dot ' + (ok ? 'ok' : 'off');
+  if (st) st.textContent = ok ? 'Signed in' : 'Not signed in';
+  if (info) info.textContent = text;
 }
-signInAnonymously(auth).catch(err => {
-  console.warn('Admin anonymous sign-in failed:', err);
-  fbSetStatus('Auth Failed — check Firebase Console', false);
-});
+
+window.fbAdminSignIn = function (email, pass) {
+  return signInWithEmailAndPassword(auth, email, pass);
+};
+window.fbAdminSignOut = function () {
+  return signOut(auth);
+};
+
 onAuthStateChanged(auth, user => {
   window._fbReady = true;
   if (window._fbResolve) window._fbResolve();
-  if (user) fbSetStatus('Connected (Admin Authenticated)', true);
-  else fbSetStatus('Connected (Not Authenticated)', false);
+  if (user) {
+    fbSetStatus('Connected — signed in as ' + (user.email || user.uid), true);
+  } else {
+    fbSetStatus('Not signed in — set Firebase Admin Email/Password to load data', false);
+  }
 });
+
+// Auto sign-in on page load using previously saved credentials, so a reload
+// doesn't require re-entering the Firebase email/password every time.
+(function autoFbSignIn() {
+  const savedEmail = localStorage.getItem('wha_fb_email');
+  const savedPass = localStorage.getItem('wha_fb_pass');
+  if (savedEmail && savedPass) {
+    signInWithEmailAndPassword(auth, savedEmail, savedPass).catch(err => {
+      console.warn('Firebase admin auto sign-in failed:', err);
+      fbSetStatus('Auth failed (' + (err.code || 'error') + ') — check email/password in Settings', false);
+    });
+  } else {
+    fbSetStatus('Not signed in — set Firebase Admin Email/Password to load data', false);
+  }
+})();
 </script>
 
 <script>
@@ -1138,7 +1221,7 @@ const S = {
   jobFilter: 'all', depFilter: 'pending', taskFilter: 'pending',
   wdFilter: 'pending',
   logFilter: 'all', userFilter: 'all',
-  _rejectCtx: null, _balUid: null,
+  _rejectCtx: null, _balUid: null, _msgUid: null,
   tg: { token: '', chatId: '', connected: false },
   os: { appId: '', restKey: '', connected: false },
   bcHistory: [],
@@ -1165,11 +1248,22 @@ async function waitFb() { if (!window._fb || !window._fbReady) await Promise.rac
 let attempts = 0, lockUntil = null;
 function doLogin() {
   const u = v('loginUser'), p = v('loginPass'), c = v('loginCode'), err = $('loginErr');
+  const fbEmail = v('loginFbEmail'), fbPass = v('loginFbPass');
   if (lockUntil && Date.now() < lockUntil) { err.textContent = `🔒 Locked. Wait ${Math.ceil((lockUntil-Date.now())/1000)}s`; return; }
   if (!u || !p || !c) { err.textContent = 'All fields are required'; return; }
+  if (!fbEmail || !fbPass) { err.textContent = 'Firebase Admin Email ও Password দিন (ডাটা লোড করতে প্রয়োজন)'; return; }
   const cu = ls('wha_user') || 'admin', cp = ls('wha_pass') || 'WorkHive@2024!', cc = ls('wha_code') || '272727';
   if (u === cu && p === cp && c === cc) {
     attempts = 0; sessionStorage.setItem('wh_tok', '1');
+    // Save + trigger the real Firebase Authentication sign-in (fixes permission-denied issues)
+    ls('wha_fb_email', fbEmail); ls('wha_fb_pass', fbPass);
+    if (window.fbAdminSignIn) {
+      window.fbAdminSignIn(fbEmail, fbPass).then(() => {
+        showToast('✅ Firebase-এ signed in!', 'success');
+      }).catch(e => {
+        showToast('⚠️ Firebase auth failed: ' + (e.code || e.message) + ' — ডাটা লোড হবে না যতক্ষণ না এটা ঠিক হয়', 'error');
+      });
+    }
     $('loginScreen').style.display = 'none';
     $('adminShell').style.display = 'flex';
     initAdmin(); showToast('Welcome, Admin!', 'success');
@@ -1183,9 +1277,19 @@ function doLogin() {
     if (!$('shakeStyle')) { const s=document.createElement('style');s.id='shakeStyle';s.textContent='@keyframes shake{0%,100%{transform:none}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}';document.head.appendChild(s); }
   }
 }
-function doLogout() { if (!confirm('Logout?')) return; sessionStorage.removeItem('wh_tok'); location.reload(); }
+function doLogout() { if (!confirm('Logout?')) return; sessionStorage.removeItem('wh_tok'); if (window.fbAdminSignOut) window.fbAdminSignOut().catch(()=>{}); location.reload(); }
 function togglePass() { const i=$('loginPass'); i.type=i.type==='password'?'text':'password'; }
+function toggleFbPass() { const i=$('loginFbPass'); if(i) i.type=i.type==='password'?'text':'password'; }
 document.addEventListener('keydown', e => { if (e.key==='Enter') { if ($('loginScreen').style.display!=='none') doLogin(); } if (e.key==='Escape') document.querySelectorAll('.modal-overlay.show').forEach(m=>m.classList.remove('show')); });
+
+// Prefill saved Firebase admin email/password on the login screen for convenience
+(function prefillLogin() {
+  const e = ls('wha_fb_email'), p = ls('wha_fb_pass');
+  document.addEventListener('DOMContentLoaded', () => {
+    if (e && $('loginFbEmail')) $('loginFbEmail').value = e;
+    if (p && $('loginFbPass')) $('loginFbPass').value = p;
+  });
+})();
 
 // ===== INIT =====
 function initAdmin() {
@@ -1203,8 +1307,27 @@ function initAdmin() {
   const oa = ls('wha_os_appid'), ok = ls('wha_os_restkey');
   if (oa && ok) { S.os = {appId:oa, restKey:ok, connected:true}; setTimeout(() => { setOsConnected(true); const ai=$('osAppId');if(ai)ai.value=oa; const ri=$('osRestKey');if(ri)ri.value=ok; }, 200); }
   else { setOsConnected(false); }
+  // prefill Firebase admin account fields in Settings
+  const fe = ls('wha_fb_email');
+  if (fe && $('setFbEmail')) $('setFbEmail').value = fe;
 }
 function updateClock() { $('adminClock').textContent = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
+
+// ===== FIREBASE ADMIN ACCOUNT (Settings screen) =====
+function updateFirebaseAdminAccount() {
+  const email = v('setFbEmail'), pass = v('setFbPass');
+  if (!email || !pass) { showToast('Email ও Password দিন', 'error'); return; }
+  if (!window.fbAdminSignIn) { showToast('Firebase not ready yet, try again in a moment', 'error'); return; }
+  window.fbAdminSignIn(email, pass).then(() => {
+    ls('wha_fb_email', email); ls('wha_fb_pass', pass);
+    $('setFbPass').value = '';
+    addLog('🔑 Firebase admin account updated: ' + email, 'login', 'green');
+    showToast('✅ Firebase account connected — reloading data…', 'success');
+    loadUsers(); listenJobs(); listenDeposits(); listenWithdrawals(); listenTasks(); listenMethods(); listenSettings();
+  }).catch(e => {
+    showToast('❌ Firebase sign-in failed: ' + (e.code || e.message), 'error');
+  });
+}
 
 // ===== HELPERS =====
 function $(id) { return document.getElementById(id); }
@@ -1389,14 +1512,38 @@ async function testOneSignalBroadcastPush() {
 async function notifyUser(uid, title, msg, icon='🔔') {
   if (!uid || !window._fb) return;
   const fb = window._fb;
-  try { await fb.addDoc(fb.collection(fb.db,'users',uid,'notifications'),{title,msg,icon,unread:true,createdAt:fb.serverTimestamp()}); } catch(e){}
+  await fb.addDoc(fb.collection(fb.db,'users',uid,'notifications'),{title,msg,icon,unread:true,createdAt:fb.serverTimestamp()});
   sendPushNotification(uid, title, msg); // fire-and-forget real device push, in addition to the in-app one above
+}
+
+// ===== MESSAGE A SPECIFIC USER (new — shows up in that user's notification icon) =====
+function openMsgUser(uid) {
+  const u = findUser(uid); if (!u) { showToast('User not found', 'error'); return; }
+  S._msgUid = uid;
+  $('msgUserSub').textContent = u.name + ' — ' + u.email;
+  $('msgTitle').value = '';
+  $('msgBody').value = '';
+  openModal('msgUserModal');
+}
+async function confirmSendMsg() {
+  const uid = S._msgUid; if (!uid) return;
+  const title = v('msgTitle') || '📩 Message from Admin';
+  const body = v('msgBody');
+  if (!body) { showToast('মেসেজ লিখুন', 'error'); return; }
+  const u = findUser(uid);
+  closeModal('msgUserModal');
+  try {
+    await notifyUser(uid, title, body, '📩');
+    addLog(`📩 Message sent to ${u?.name||'user'}: "${title}"`, 'user', 'blue');
+    addAdminNotif('📩 Message Sent', `To ${u?.name||'user'}: "${title}"`, 'success');
+    showToast(`📩 Message sent to ${u?.name||'user'}!`, 'success');
+  } catch (e) { console.error(e); showToast('❌ Send failed — check Firestore permissions', 'error'); }
 }
 
 // ===== FIRESTORE: USERS =====
 async function loadUsers() {
   const fb = window._fb; if (!fb) return;
-  const snap = await fb.getDocs(fb.collection(fb.db,'users')).catch((e)=>{console.warn('loadUsers failed (check Firestore Rules / Auth):',e);return null;});
+  const snap = await fb.getDocs(fb.collection(fb.db,'users')).catch((e)=>{console.warn('loadUsers failed (check Firestore Rules / Auth):',e);showToast('❌ Users load failed — check Firebase Admin login','error');return null;});
   if (!snap) return;
   S.users = [];
   snap.forEach(d => {
@@ -1423,7 +1570,7 @@ function listenJobs() {
     snap.forEach(d => S.jobs.push({id:d.id,...d.data()}));
     S.jobs.sort((a,b)=>(b._ts||0)-(a._ts||0));
     renderJobs(); renderDashPendingJobs(); updateStats(); updateBadges();
-  }, (e)=>{console.warn('listenJobs error (check Firestore Rules / Auth):',e);});
+  }, (e)=>{console.warn('listenJobs error (check Firestore Rules / Auth):',e);showToast('❌ Jobs load failed — check Firebase Admin login','error');});
 }
 
 // ===== FIRESTORE: DEPOSITS =====
@@ -1434,7 +1581,7 @@ function listenDeposits() {
     snap.forEach(d => S.deposits.push({id:d.id,...d.data()}));
     S.deposits.sort((a,b)=>(b._ts||0)-(a._ts||0));
     renderDeposits(); renderDashDeposits(); updateStats(); updateBadges(); renderStatusTabs('depositTabs','dep');
-  }, (e)=>{console.warn('listenDeposits error (check Firestore Rules / Auth):',e);});
+  }, (e)=>{console.warn('listenDeposits error (check Firestore Rules / Auth):',e);showToast('❌ Deposits load failed — check Firebase Admin login','error');});
 }
 
 // ===== FIRESTORE: WITHDRAWALS =====
@@ -1445,7 +1592,7 @@ function listenWithdrawals() {
     snap.forEach(d => S.withdrawals.push({id:d.id,...d.data()}));
     S.withdrawals.sort((a,b)=>(b._ts||0)-(a._ts||0));
     renderWithdrawals(); renderDashWithdrawals(); updateStats(); updateBadges(); renderStatusTabs('withdrawTabs','wd');
-  }, (e)=>{console.warn('listenWithdrawals error (check Firestore Rules / Auth):',e);});
+  }, (e)=>{console.warn('listenWithdrawals error (check Firestore Rules / Auth):',e);showToast('❌ Withdrawals load failed — check Firebase Admin login','error');});
 }
 
 // ===== FIRESTORE: TASKS =====
@@ -1456,7 +1603,7 @@ function listenTasks() {
     snap.forEach(d => S.tasks.push({id:d.id,...d.data()}));
     S.tasks.sort((a,b)=>(b._ts||0)-(a._ts||0));
     renderTasks(); updateStats(); updateBadges(); renderStatusTabs('taskTabs','task');
-  }, (e)=>{console.warn('listenTasks error (check Firestore Rules / Auth):',e);});
+  }, (e)=>{console.warn('listenTasks error (check Firestore Rules / Auth):',e);showToast('❌ Task submissions load failed — check Firebase Admin login','error');});
 }
 
 // ===== FIRESTORE: METHODS =====
@@ -1581,6 +1728,7 @@ function renderUsers(list) {
       <td>
         <div style="display:flex;gap:5px;flex-wrap:wrap">
           <button class="btn btn-info btn-xs" onclick="viewUser('${u.id}')"><i class="ti ti-eye"></i> View</button>
+          <button class="btn btn-message btn-xs" title="Send this user a message (shows in their notification icon)" onclick="openMsgUser('${u.id}')"><i class="ti ti-message-circle-2"></i></button>
           <button class="btn btn-xs ${u.status==='active'?'btn-danger':'btn-approve'}" onclick="toggleBan('${u.id}')">${u.status==='active'?'<i class="ti ti-ban"></i>':'<i class="ti ti-check"></i>'}</button>
           ${u.kyc==='Pending'?`<button class="btn btn-warning btn-xs" onclick="verifyKyc('${u.id}')"><i class="ti ti-id-badge"></i></button>`:''}
         </div>
@@ -1618,9 +1766,10 @@ function viewUser(id) {
       <div style="font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Joined</div>
       <div style="font-size:14px;font-weight:700">${u.joined}</div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-      <button class="btn btn-warning" onclick="closeModal('userDetailModal');openBalAdj('${u.id}')"><i class="ti ti-currency-dollar"></i> Adjust Balance</button>
-      <button class="btn btn-approve" onclick="verifyKyc('${u.id}');closeModal('userDetailModal')"><i class="ti ti-id-badge"></i> Verify KYC</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px">
+      <button class="btn btn-warning" onclick="closeModal('userDetailModal');openBalAdj('${u.id}')"><i class="ti ti-currency-dollar"></i> Balance</button>
+      <button class="btn btn-approve" onclick="verifyKyc('${u.id}');closeModal('userDetailModal')"><i class="ti ti-id-badge"></i> KYC</button>
+      <button class="btn btn-message" onclick="closeModal('userDetailModal');openMsgUser('${u.id}')"><i class="ti ti-message-circle-2"></i> Message</button>
       <button class="btn ${u.status==='active'?'btn-danger':'btn-approve'}" onclick="toggleBan('${u.id}');closeModal('userDetailModal')">${u.status==='active'?'<i class="ti ti-ban"></i> Ban':'<i class="ti ti-check"></i> Unban'}</button>
     </div>`;
   openModal('userDetailModal');
@@ -1831,7 +1980,7 @@ async function postJob() {
     addLog(`🆕 Admin posted new job: "${title}"${typeLabel} (+${fmtAmt(reward)}${type==='dailylink'?'/visit':'/task'}${type==='dailylink'?'':', '+limit+' slots'})${extraLabel}`,'job','green');
     addAdminNotif('🆕 New Job Posted', `"${title}" is now live${type==='dailylink'?' as a daily-repeat link task':' for '+limit+' workers'}.`, 'success');
     showToast('✅ Job posted and is now live for workers!','success');
-  }catch(e){ console.error(e); showToast('❌ Post failed — check Firestore permissions','error'); }
+  }catch(e){ console.error(e); showToast('❌ Post failed — check Firebase Admin login / Firestore permissions','error'); }
 }
 
 // ===== RENDER: TASKS =====
@@ -2418,4 +2567,4 @@ function showToast(msg,type='success'){const el=$('toast');el.className='toast '
 setTimeout(renderTgEvents, 100);
 </script>
 </body>
-</html>
+</html></div>
