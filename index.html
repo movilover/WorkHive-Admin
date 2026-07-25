@@ -882,18 +882,7 @@ if (window.Capacitor?.Plugins?.OneSignal) {
           <div>
             <div class="card">
               <div class="card-title"><i class="ti ti-lock"></i> Security Settings</div>
-
-              <!-- ===== NEW: Firebase Admin Email/Password Login =====
-                   Anonymous sign-in was replaced with real Firebase Auth login,
-                   because Firestore Rules now require request.auth.token.email to
-                   match an approved admin address (see isAdmin() in the rules).
-                   This is the ONLY place this credential is entered. -->
-              <div class="alert danger"><i class="ti ti-alert-triangle"></i> এই Email/Password টা আপনার Firebase Authentication-এর আসল account হতে হবে (উপরের Username/Password/Code থেকে আলাদা — ওটা শুধু এই পেজে ঢোকার lock)। নিচের দুটো email-এর যেকোনো একটা ব্যবহার করুন যেগুলো Firestore Rules-এ আগে থেকেই admin হিসেবে অনুমোদিত: <strong>ashikur01621166143@gmail.com</strong> অথবা <strong>omor.faruk.sojol.2@gmail.com</strong></div>
-              <div class="field"><label>Firebase Admin Email</label><input type="text" id="fbEmail" placeholder="ashikur01621166143@gmail.com"></div>
-              <div class="field"><label>Firebase Admin Password</label><input type="password" id="fbPass" placeholder="সেই account-এর Firebase password"></div>
-              <button class="btn btn-info" style="width:100%;margin-bottom:18px" onclick="saveFbLogin()"><i class="ti ti-plug"></i> Save & Connect Firebase</button>
-
-              <div class="field"><label>New Admin Password (Panel Login)</label><input type="password" id="newPass" placeholder="Leave blank to keep current"></div>
+              <div class="field"><label>New Admin Password</label><input type="password" id="newPass" placeholder="Leave blank to keep current"></div>
               <div class="field"><label>New Security Code (6 digits)</label><input type="text" id="newCode" placeholder="6-digit code" maxlength="6"></div>
               <div class="alert warn"><i class="ti ti-alert-triangle"></i> Security code পরিবর্তন করলে সঙ্গে সঙ্গে effective হবে।</div>
               <button class="btn btn-warning" style="width:100%" onclick="saveSecurity()"><i class="ti ti-lock"></i> Update Security</button>
@@ -1093,7 +1082,7 @@ import {
   query, where, orderBy, serverTimestamp, increment, setDoc, deleteDoc, getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import {
-  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
+  getAuth, signInAnonymously, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
   getStorage, ref as fbStorageRef, deleteObject
@@ -1113,27 +1102,32 @@ const auth = getAuth(app);
 const storage = getStorage(app);
 window._fb = { db, auth, storage, collection, getDocs, doc, updateDoc, addDoc, onSnapshot, query, where, orderBy, serverTimestamp, increment, setDoc, deleteDoc, getDoc, fbStorageRef, deleteObject };
 
-// IMPORTANT — CHANGED: Firestore Security Rules now require the admin panel's
-// request.auth.token.email to be one of the approved admin addresses
-// (isAdmin() in the rules). A random Anonymous Auth UID can NEVER satisfy
-// that check, so anonymous sign-in was removed entirely. The admin panel now
-// signs in with a real Firebase Email/Password account instead — configured
-// once from the Settings screen ("Firebase Admin Email/Password"), and this
-// module simply exposes login/logout helpers for that flow to call.
+// IMPORTANT: The admin panel has no separate Firebase Authentication account of its own —
+// it only checks a local username/password/code stored in localStorage. Firestore Security
+// Rules normally require `request.auth != null` to read/write data, so WITHOUT signing the
+// admin browser into Firebase Auth, every admin read/write (deposits, withdrawals, jobs,
+// payment methods, settings, etc.) would silently fail with "permission-denied" and never
+// reach the user app — this was the main reason data wasn't syncing between the two panels.
+// Signing in anonymously gives the admin panel a valid `request.auth`, so make sure
+// "Anonymous" sign-in is enabled in Firebase Console > Authentication > Sign-in method,
+// and that your Firestore Rules (and Storage Rules — needed to delete proof screenshots)
+// allow access when `request.auth != null`.
 function fbSetStatus(text, ok) {
   const el = document.getElementById('fbStatus');
   if (!el) return;
   el.textContent = text;
   el.style.color = ok ? 'var(--green)' : 'var(--amber)';
 }
+signInAnonymously(auth).catch(err => {
+  console.warn('Admin anonymous sign-in failed:', err);
+  fbSetStatus('Auth Failed — check Firebase Console', false);
+});
 onAuthStateChanged(auth, user => {
   window._fbReady = true;
   if (window._fbResolve) window._fbResolve();
-  if (user) fbSetStatus('Connected — ' + user.email, true);
-  else fbSetStatus('Not signed in — Settings-এ Firebase Login দিন', false);
+  if (user) fbSetStatus('Connected (Admin Authenticated)', true);
+  else fbSetStatus('Connected (Not Authenticated)', false);
 });
-window.fbAdminLogin = (email, pass) => signInWithEmailAndPassword(auth, email, pass);
-window.fbAdminLogout = () => signOut(auth).catch(()=>{});
 </script>
 
 <script>
@@ -1189,7 +1183,7 @@ function doLogin() {
     if (!$('shakeStyle')) { const s=document.createElement('style');s.id='shakeStyle';s.textContent='@keyframes shake{0%,100%{transform:none}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}';document.head.appendChild(s); }
   }
 }
-function doLogout() { if (!confirm('Logout?')) return; sessionStorage.removeItem('wh_tok'); if(window.fbAdminLogout) window.fbAdminLogout(); location.reload(); }
+function doLogout() { if (!confirm('Logout?')) return; sessionStorage.removeItem('wh_tok'); location.reload(); }
 function togglePass() { const i=$('loginPass'); i.type=i.type==='password'?'text':'password'; }
 document.addEventListener('keydown', e => { if (e.key==='Enter') { if ($('loginScreen').style.display!=='none') doLogin(); } if (e.key==='Escape') document.querySelectorAll('.modal-overlay.show').forEach(m=>m.classList.remove('show')); });
 
@@ -1201,7 +1195,7 @@ function initAdmin() {
   addLinkField(); // seed the first link input row
   updatePjTypeUI();
   renderStatusTabs('withdrawTabs','wd'); renderStatusTabs('depositTabs','dep'); renderStatusTabs('taskTabs','task');
-  connectFirebaseAdmin();
+  waitFb().then(() => { loadUsers(); listenJobs(); listenDeposits(); listenWithdrawals(); listenTasks(); listenMethods(); listenSettings(); });
   // load saved TG
   const t = ls('wha_tg_token'), ch = ls('wha_tg_chat');
   if (t && ch) { S.tg = {token:t,chatId:ch,connected:true}; setTimeout(() => { setTgConnected(true); const ti=$('tgToken');if(ti)ti.value=t; const ci=$('tgChatId');if(ci)ci.value=ch; }, 200); }
@@ -1209,44 +1203,6 @@ function initAdmin() {
   const oa = ls('wha_os_appid'), ok = ls('wha_os_restkey');
   if (oa && ok) { S.os = {appId:oa, restKey:ok, connected:true}; setTimeout(() => { setOsConnected(true); const ai=$('osAppId');if(ai)ai.value=oa; const ri=$('osRestKey');if(ri)ri.value=ok; }, 200); }
   else { setOsConnected(false); }
-}
-// ===== NEW: Real Firebase Admin login (replaces broken anonymous sign-in) =====
-// Firestore Rules now require request.auth.token.email to be an approved
-// admin address, so the admin panel must sign in with a real Firebase
-// Email/Password account instead of signInAnonymously(). If credentials were
-// saved before (Settings screen), auto sign-in silently on every load;
-// otherwise prompt the admin to configure it once.
-function connectFirebaseAdmin() {
-  const email = ls('wha_fb_email'), pass = ls('wha_fb_pass');
-  if ($('fbEmail')) $('fbEmail').value = email || '';
-  if (!email || !pass) {
-    showToast('⚠️ প্রথমবার — Settings-এ গিয়ে Firebase Admin Email/Password সেট করুন', 'warn');
-    return;
-  }
-  waitFb().then(() => {
-    window.fbAdminLogin(email, pass).then(() => {
-      loadUsers(); listenJobs(); listenDeposits(); listenWithdrawals(); listenTasks(); listenMethods(); listenSettings();
-    }).catch(err => {
-      console.error('Firebase admin login failed:', err);
-      showToast('❌ Firebase লগইন ব্যর্থ (' + (err.code||'') + ') — Settings-এ Email/Password যাচাই করুন', 'error');
-    });
-  });
-}
-function saveFbLogin() {
-  const email = v('fbEmail'), pass = v('fbPass');
-  if (!email || !pass) { showToast('Firebase Email ও Password দিন', 'error'); return; }
-  waitFb().then(() => {
-    window.fbAdminLogin(email, pass).then(() => {
-      ls('wha_fb_email', email); ls('wha_fb_pass', pass);
-      showToast('✅ Firebase-এ সফলভাবে লগইন হয়েছে!', 'success');
-      addLog('🔥 Firebase admin authentication connected: '+email, 'login', 'green');
-      loadUsers(); listenJobs(); listenDeposits(); listenWithdrawals(); listenTasks(); listenMethods(); listenSettings();
-      if ($('fbPass')) $('fbPass').value = '';
-    }).catch(err => {
-      console.error(err);
-      showToast('❌ লগইন ব্যর্থ: ' + (err.code || err.message), 'error');
-    });
-  });
 }
 function updateClock() { $('adminClock').textContent = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
 
