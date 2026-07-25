@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -388,6 +387,10 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
 .reject-reason-box{display:flex;gap:8px;align-items:flex-start;background:var(--red-bg);border:1px solid var(--red-border);border-radius:8px;padding:8px 10px;margin-top:6px;font-size:11.5px;color:var(--red);line-height:1.5}
 .reject-reason-box i{font-size:14px;margin-top:1px;flex-shrink:0}
 
+/* ===== DUPLICATE ACCOUNT FLAG (Third Generation screen) ===== */
+.dup-flag{color:var(--red);font-size:12px;margin-left:5px}
+tr.dup-row td{background:rgba(239,68,68,0.03)}
+
 @media(max-width:1100px){.stats-grid{grid-template-columns:repeat(2,1fr)}.quick-actions{grid-template-columns:1fr 1fr}}
 @media(max-width:800px){.two-col,.three-col{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.content-area{padding:16px}.topbar{padding:0 14px}}
 </style>
@@ -499,6 +502,12 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
             <div class="qm-icon blue-bg" style="background:var(--blue-bg);color:var(--blue)"><i class="ti ti-users"></i></div>
             <div class="qm-text"><div class="qm-label">User Management</div><div class="qm-sub">সকল ইউজার দেখুন, ব্যান/আনব্যান, KYC ভেরিফাই, মেসেজ পাঠান</div></div>
             <span class="qm-badge blue" id="nb-users">0</span>
+            <i class="ti ti-chevron-right qm-chev"></i>
+          </div>
+          <div class="qm-row" onclick="goScreen('thirdgen')">
+            <div class="qm-icon" style="background:var(--red-bg);color:var(--red)"><i class="ti ti-sitemap"></i></div>
+            <div class="qm-text"><div class="qm-label">Third Generation</div><div class="qm-sub">রেফারেল নেটওয়ার্ক ও ডুপ্লিকেট অ্যাকাউন্ট শনাক্তকরণ</div></div>
+            <span class="qm-badge" id="nb-thirdgen">0</span>
             <i class="ti ti-chevron-right qm-chev"></i>
           </div>
 
@@ -617,6 +626,12 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
             <div class="sc-label">KYC Pending</div>
             <span class="sc-badge down">Need review</span>
           </div>
+          <div class="stat-card red" onclick="goScreen('thirdgen')">
+            <div class="sc-icon red"><i class="ti ti-fingerprint"></i></div>
+            <div class="sc-val" id="stat-dupes">0</div>
+            <div class="sc-label">Duplicate Accounts</div>
+            <span class="sc-badge down" id="stat-dupes-badge">Need review</span>
+          </div>
         </div>
 
         <div class="two-col" style="margin-bottom:16px">
@@ -681,6 +696,55 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
             <table>
               <thead><tr><th>#</th><th>User</th><th>Joined</th><th>Balance</th><th>Tasks</th><th>KYC</th><th>Status</th><th>Actions</th></tr></thead>
               <tbody id="userTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== THIRD GENERATION (Referral Network + Duplicate Account Detection) ===== -->
+      <div class="screen" id="screen-thirdgen">
+        <div class="sec-hd">
+          <h2><button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')" style="margin-right:6px"><i class="ti ti-arrow-left"></i></button><i class="ti ti-sitemap"></i> Third Generation — Referral Network</h2>
+          <div class="sec-actions">
+            <div class="search-wrap"><i class="ti ti-search"></i><input class="field" style="margin:0" type="text" placeholder="Search users…" oninput="filterThirdGen(this.value)"></div>
+          </div>
+        </div>
+
+        <div id="tgDupSummary"></div>
+
+        <div class="alert warn" id="tgDeviceNote" style="display:none">
+          <i class="ti ti-alert-triangle"></i>
+          <div>
+            <strong>Device/IP ডেটা এখনো সংগ্রহ হচ্ছে না।</strong> এই মুহূর্তে ডুপ্লিকেট শনাক্তকরণ শুধু ফোন নম্বরের উপর ভিত্তি করে কাজ করছে (যেসব ইউজারের একই ফোন নম্বর সেভ করা আছে)। ডিভাইস ও IP ভিত্তিক শনাক্তকরণ চালু করতে — অর্থাৎ কেউ ভিন্ন ফোন নম্বর দিয়েও একই ফোন/ব্রাউজার থেকে একাধিক অ্যাকাউন্ট খুললে তা ধরতে — আপনার লাইভ সাইটের (User App) রেজিস্ট্রেশন কোডে নিচের অংশটুকু যোগ করতে হবে, যাতে প্রতিটি ইউজারের Firestore ডকুমেন্টে <code>deviceId</code> ও <code>ipAddress</code> ফিল্ড সেভ হয়:
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:12px;font-family:monospace;font-size:11px;color:var(--teal);white-space:pre-wrap;line-height:1.6;margin-top:8px">// রেজিস্ট্রেশন সফল হওয়ার পরে (Firestore-এ user doc তৈরি করার সময়):
+import FingerprintJS from 'https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@4/dist/fp.esm.min.js';
+const fp = await FingerprintJS.load();
+const { visitorId } = await fp.get();   // এই ডিভাইসের জন্য স্থায়ী একটি আইডি
+
+let ipAddress = '';
+try {
+  const r = await fetch('https://api.ipify.org?format=json');
+  ipAddress = (await r.json()).ip;
+} catch (e) {}
+
+await setDoc(doc(db, 'users', newUser.uid), {
+  ...otherUserFields,
+  deviceId: visitorId,
+  ipAddress,
+}, { merge: true });</div>
+            <div class="lf-hint" style="margin-top:8px">এটা যোগ করার পর নতুন সাইন-আপ করা ইউজারদের ক্ষেত্রে ডিভাইস/IP ম্যাচিং স্বয়ংক্রিয়ভাবে এই প্যানেলে কাজ শুরু করবে। প্রয়োজনে লগইনের সময়ও একই কল চালিয়ে বিদ্যমান ইউজারদের ডকুমেন্ট আপডেট করা যায়।</div>
+          </div>
+        </div>
+
+        <div class="sec-label">Duplicate Account Groups</div>
+        <div id="dupGroupsList"></div>
+
+        <div class="sec-label">All Users — Referral Counts</div>
+        <div class="card">
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>User</th><th>Gen 1</th><th>Gen 2</th><th>Gen 3</th><th>Total Refs</th><th>Status</th><th></th></tr></thead>
+              <tbody id="thirdGenTbody"></tbody>
             </table>
           </div>
         </div>
@@ -986,6 +1050,17 @@ if (window.Capacitor?.Plugins?.OneSignal) {
   </div>
 </div>
 
+<!-- Referral Network (Third Generation) -->
+<div class="modal-overlay" id="refNetworkModal">
+  <div class="modal-box" style="max-width:560px">
+    <div class="modal-hd">
+      <div><div class="modal-title" id="rnTitle">Referral Network</div><div class="modal-sub" id="rnSub"></div></div>
+      <div class="modal-close" onclick="closeModal('refNetworkModal')"><i class="ti ti-x"></i></div>
+    </div>
+    <div id="rnContent"></div>
+  </div>
+</div>
+
 <!-- Task Proof -->
 <div class="modal-overlay" id="proofModal">
   <div class="modal-box">
@@ -1225,6 +1300,7 @@ const S = {
   tg: { token: '', chatId: '', connected: false },
   os: { appId: '', restKey: '', connected: false },
   bcHistory: [],
+  dupGroups: [], dupUserIds: new Set(),
   settings: { name: 'WorkHive', minWd: 5, minDep: 1, fee: 5, refGen1: 0.5, refGen2: 0.25, refGen3: 0.10,
     supportEmail: 'support@workhive.app', supportHours: '9 AM – 11 PM', supportResponse: 'Within 12 hours',
     banner: '', bannerType: 'info', spinEnabled: true },
@@ -1358,11 +1434,12 @@ function openLightbox(url) { const lb=$('imgLightbox'); $('lightboxImg').src=url
 function closeLightbox() { $('imgLightbox').classList.remove('show'); }
 
 // ===== NAVIGATION =====
-const pageNames = { dashboard:'Dashboard', users:'User Management', jobs:'Job Approvals', tasks:'Task Submissions', deposits:'Deposits', withdrawals:'Withdrawals', 'payment-methods':'Payment Methods', telegram:'Telegram Bot', broadcast:'Broadcast', notifications:'Notifications', settings:'Site Settings', logs:'Activity Logs' };
+const pageNames = { dashboard:'Dashboard', users:'User Management', thirdgen:'Third Generation', jobs:'Job Approvals', tasks:'Task Submissions', deposits:'Deposits', withdrawals:'Withdrawals', 'payment-methods':'Payment Methods', telegram:'Telegram Bot', broadcast:'Broadcast', notifications:'Notifications', settings:'Site Settings', logs:'Activity Logs' };
 function goScreen(name) {
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   const sc = $('screen-'+name); if(sc) sc.classList.add('active');
   window.scrollTo(0,0);
+  if (name==='thirdgen') renderThirdGen();
 }
 // Dedicated shortcut: jumps to the Telegram/Push screen AND scrolls straight
 // down to the OneSignal card, so "Push Notification" in the Quick Menu takes
@@ -1555,10 +1632,11 @@ async function loadUsers() {
       totalWithdrawn:u.totalWithdrawn||0, phone:u.phone||'—', referralCode:u.referralCode||'—',
       pendingAmount:u.pendingAmount||0, workerLevel:u.workerLevel||1,
       telegramChatId:u.telegramChatId||'',
+      referredBy:u.referredBy||u.referrerId||'', deviceId:u.deviceId||'', ipAddress:u.ipAddress||'',
       joined:u.createdAt?(u.createdAt.toDate?u.createdAt.toDate().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—'):'—',
     });
   });
-  renderUsers(); updateStats(); updateBadges(); renderDashCountry();
+  renderUsers(); updateStats(); updateBadges(); renderDashCountry(); renderThirdGen();
 }
 function findUser(id) { return S.users.find(u=>u.id===id); }
 
@@ -1662,6 +1740,7 @@ function listenSettings() {
       if ($('setBannerMsg')) $('setBannerMsg').value = s.banner||'';
       if ($('setBannerType')) $('setBannerType').value = s.bannerType||'info';
       if ($('toggleSpin')) $('toggleSpin').checked = s.spinEnabled!==false;
+      renderThirdGen();
     }
   }, (e)=>{console.warn('listenSettings error (check Firestore Rules / Auth):',e);});
 }
@@ -1676,6 +1755,8 @@ function updateStats() {
   const confDep = S.deposits.filter(d=>d.status==='confirmed').reduce((a,d)=>a+(d.amount||0),0);
   const pendDep = S.deposits.filter(d=>d.status==='pending').length;
   const pendTask = S.tasks.filter(t=>t.status==='pending').length;
+  computeDuplicateGroups();
+  const dupCount = S.dupUserIds.size;
   set('stat-users', S.users.length);
   set('stat-dep', fmtAmt(confDep));
   set('stat-dep-pending', pendDep+' pending');
@@ -1687,6 +1768,8 @@ function updateStats() {
   set('stat-tasks-pending', pendTask+' pending');
   set('stat-kyc', kycPend);
   set('stat-kyc-badge', kycPend+' KYC pending');
+  set('stat-dupes', dupCount);
+  set('stat-dupes-badge', dupCount ? '⚠️ Review needed' : 'All clear');
   set('hs-users', S.users.length);
   set('hs-deposits', fmtAmt(confDep));
   set('hs-jobs', activeJobs);
@@ -1698,7 +1781,10 @@ function updateBadges() {
   const pd=S.deposits.filter(d=>d.status==='pending').length;
   const pt=S.tasks.filter(t=>t.status==='pending').length;
   const pn=S.adminNotifs.filter(n=>!n.read).length;
+  computeDuplicateGroups();
+  const dupCount = S.dupUserIds.size;
   setBadge('nb-users',S.users.length,'blue');
+  setBadge('nb-thirdgen',dupCount,'red');
   setBadge('nb-jobs',pj,'red');
   setBadge('nb-tasks',pt,'red');
   setBadge('nb-deposits',pd,'red');
@@ -1712,12 +1798,12 @@ function updateBadges() {
 function renderUsers(list) {
   list = list || (S.userFilter==='all' ? S.users : S.users.filter(u=>u.status===S.userFilter));
   $('userTbody').innerHTML = list.map((u,i) => `
-    <tr>
+    <tr class="${S.dupUserIds&&S.dupUserIds.has(u.id)?'dup-row':''}">
       <td style="color:var(--text3);font-size:12px">${i+1}</td>
       <td>
         <div style="display:flex;align-items:center;gap:10px">
           <div class="user-av" style="background:var(--${avColor(u.name)}-bg);color:var(--${avColor(u.name)});border-color:var(--${avColor(u.name)}-border)">${initials(u.name)}</div>
-          <div><div class="td-primary">${u.name}</div><div class="td-sub">${u.email}${u.username?' · @'+u.username:''}</div></div>
+          <div><div class="td-primary">${u.name}${S.dupUserIds&&S.dupUserIds.has(u.id)?' <i class="ti ti-alert-triangle dup-flag" title="Possible duplicate account — check Third Generation screen"></i>':''}</div><div class="td-sub">${u.email}${u.username?' · @'+u.username:''}</div></div>
         </div>
       </td>
       <td style="font-size:12px;color:var(--text2)">${u.joined}</td>
@@ -1786,6 +1872,7 @@ async function toggleBan(id) {
     if(newStatus==='banned') sendTgEvent('e6',{name:u.name});
     notifyUser(id, newStatus==='banned'?'⛔ Account Banned':'✅ Account Restored', newStatus==='banned'?'Your account was suspended by admin.':'Your account has been restored.');
     showToast(newStatus==='banned'?`⛔ ${u.name} banned`:`✅ ${u.name} unbanned`, newStatus==='banned'?'error':'success');
+    renderThirdGen();
   }catch(e){ console.error(e); showToast('❌ Update failed — check Firestore permissions','error'); }
 }
 
@@ -1799,6 +1886,144 @@ async function verifyKyc(id) {
     notifyUser(id,'🪪 KYC Verified!','Your identity has been verified. You can now withdraw.');
     showToast(`🪪 KYC verified: ${u.name}`,'success');
   }catch(e){ console.error(e); showToast('❌ Update failed — check Firestore permissions','error'); }
+}
+
+// ===== THIRD GENERATION (referral network) & DUPLICATE ACCOUNT DETECTION =====
+function getReferralNetwork(uid) {
+  const gen1 = S.users.filter(u => u.referredBy === uid);
+  const gen1Ids = new Set(gen1.map(u=>u.id));
+  const gen2 = S.users.filter(u => u.referredBy && gen1Ids.has(u.referredBy));
+  const gen2Ids = new Set(gen2.map(u=>u.id));
+  const gen3 = S.users.filter(u => u.referredBy && gen2Ids.has(u.referredBy));
+  return { gen1, gen2, gen3 };
+}
+
+function computeDuplicateGroups() {
+  const groups = {};
+  S.users.forEach(u => {
+    const keys = [];
+    if (u.phone && u.phone !== '—') keys.push('📞 Phone Number: ' + u.phone.trim());
+    if (u.deviceId) keys.push('📱 Device: ' + u.deviceId.trim());
+    if (u.ipAddress) keys.push('🌐 IP Address: ' + u.ipAddress.trim());
+    keys.forEach(k => { (groups[k] = groups[k] || []).push(u.id); });
+  });
+  const dupGroups = [];
+  const dupUserIds = new Set();
+  Object.entries(groups).forEach(([key, uids]) => {
+    const uniqueUids = [...new Set(uids)];
+    if (uniqueUids.length > 1) {
+      dupGroups.push({ key, uids: uniqueUids });
+      uniqueUids.forEach(id => dupUserIds.add(id));
+    }
+  });
+  S.dupGroups = dupGroups;
+  S.dupUserIds = dupUserIds;
+}
+
+function renderThirdGen() {
+  if (!$('screen-thirdgen') || !S.users.length) { computeDuplicateGroups(); return; }
+  computeDuplicateGroups();
+  const dupCount = S.dupUserIds.size;
+  const hasDeviceData = S.users.some(u => u.deviceId || u.ipAddress);
+
+  const summaryEl = $('tgDupSummary');
+  if (summaryEl) {
+    summaryEl.innerHTML = dupCount
+      ? `<div class="alert danger"><i class="ti ti-alert-triangle"></i> <div><strong>⚠️ ${dupCount} টি অ্যাকাউন্টে সন্দেহজনক ডুপ্লিকেট পাওয়া গেছে।</strong> একই ফোন নম্বর${hasDeviceData?', ডিভাইস অথবা IP':''} ব্যবহার করে একাধিক অ্যাকাউন্ট খোলা হয়েছে বলে মনে হচ্ছে — নিচে বিস্তারিত গ্রুপ দেখুন এবং প্রয়োজনে ব্যান করুন।</div></div>`
+      : `<div class="alert success"><i class="ti ti-shield-check"></i> এখন পর্যন্ত কোনো ডুপ্লিকেট অ্যাকাউন্ট পাওয়া যায়নি (উপলব্ধ ডেটার ভিত্তিতে)।</div>`;
+  }
+
+  const note = $('tgDeviceNote');
+  if (note) note.style.display = hasDeviceData ? 'none' : '';
+
+  renderDupGroups();
+
+  const tbody = $('thirdGenTbody'); if (!tbody) return;
+  tbody.innerHTML = S.users.map(u => {
+    const net = getReferralNetwork(u.id);
+    const total = net.gen1.length + net.gen2.length + net.gen3.length;
+    const isDup = S.dupUserIds.has(u.id);
+    return `<tr class="${isDup?'dup-row':''}" onclick="openRefNetwork('${u.id}')" style="cursor:pointer">
+      <td>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="user-av" style="background:var(--${avColor(u.name)}-bg);color:var(--${avColor(u.name)});border-color:var(--${avColor(u.name)}-border)">${initials(u.name)}</div>
+          <div>
+            <div class="td-primary">${u.name}${isDup?' <i class="ti ti-alert-triangle dup-flag" title="Possible duplicate account"></i>':''}</div>
+            <div class="td-sub">${u.email}</div>
+          </div>
+        </div>
+      </td>
+      <td style="font-weight:800;color:var(--blue)">${net.gen1.length}</td>
+      <td style="font-weight:800;color:var(--purple)">${net.gen2.length}</td>
+      <td style="font-weight:800;color:var(--teal)">${net.gen3.length}</td>
+      <td style="font-weight:900;font-size:15px">${total}</td>
+      <td>${isDup?'<span class="badge red"><i class="ti ti-alert-triangle" style="font-size:11px;vertical-align:-1px"></i> Duplicate</span>':'<span class="badge green">Clean</span>'}</td>
+      <td><button class="btn btn-info btn-xs" onclick="event.stopPropagation();openRefNetwork('${u.id}')"><i class="ti ti-sitemap"></i> View</button></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:24px">No users found</td></tr>';
+}
+
+function renderDupGroups() {
+  const el = $('dupGroupsList'); if (!el) return;
+  if (!S.dupGroups || !S.dupGroups.length) {
+    el.innerHTML = '<div class="card" style="text-align:center;color:var(--text3);padding:20px">কোনো ডুপ্লিকেট গ্রুপ পাওয়া যায়নি</div>';
+    return;
+  }
+  el.innerHTML = S.dupGroups.map(g => {
+    const users = g.uids.map(id => findUser(id)).filter(Boolean);
+    return `<div class="job-card" style="border-color:rgba(239,68,68,.3);margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <i class="ti ti-alert-triangle" style="color:var(--red);font-size:18px"></i>
+        <div style="font-size:13px;font-weight:800;color:var(--red)">Shared ${g.key}</div>
+        <span class="badge red" style="margin-left:auto">${users.length} accounts</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${users.map(u => `<div class="user-chip">
+          <div class="user-av" style="width:30px;height:30px;font-size:12px">${initials(u.name)}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12.5px;font-weight:700">${u.name}</div>
+            <div style="font-size:11px;color:var(--text3)">${u.email} · ${u.phone||'—'}</div>
+          </div>
+          <span class="badge ${u.status==='active'?'green':'red'}" style="font-size:9.5px">${u.status}</span>
+          <button class="btn btn-danger btn-xs" onclick="toggleBan('${u.id}')" title="Ban this account"><i class="ti ti-ban"></i></button>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openRefNetwork(uid) {
+  const u = findUser(uid); if (!u) return;
+  const net = getReferralNetwork(uid);
+  const s = S.settings;
+  const estEarnings = (net.gen1.length*(s.refGen1||0)) + (net.gen2.length*(s.refGen2||0)) + (net.gen3.length*(s.refGen3||0));
+  $('rnTitle').textContent = u.name + ' — Referral Network';
+  $('rnSub').textContent = u.email + ' · Code: ' + (u.referralCode||'—');
+  const genBlock = (label, list, color) => `
+    <div class="sec-label" style="margin:14px 0 8px">${label} (${list.length})</div>
+    ${list.length ? list.map(x => `<div class="user-chip" style="margin-bottom:6px">
+        <div class="user-av" style="width:28px;height:28px;font-size:11px">${initials(x.name)}</div>
+        <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:700">${x.name}${S.dupUserIds&&S.dupUserIds.has(x.id)?' <i class="ti ti-alert-triangle" style="color:var(--red);font-size:11px"></i>':''}</div><div style="font-size:10.5px;color:var(--text3)">${x.email}</div></div>
+        <span style="font-size:11px;color:${color};font-weight:700">${fmtAmt(x.balance)}</span>
+      </div>`).join('') : `<div style="color:var(--text3);font-size:12px;padding:8px 0">কেউ নেই</div>`}`;
+  $('rnContent').innerHTML = `
+    <div class="detail-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="detail-box"><div class="dl">Gen 1</div><div class="dv" style="color:var(--blue)">${net.gen1.length}</div></div>
+      <div class="detail-box"><div class="dl">Gen 2</div><div class="dv" style="color:var(--purple)">${net.gen2.length}</div></div>
+      <div class="detail-box"><div class="dl">Gen 3</div><div class="dv" style="color:var(--teal)">${net.gen3.length}</div></div>
+      <div class="detail-box"><div class="dl">Est. Earned</div><div class="dv" style="color:var(--green)">${fmtAmt(estEarnings)}</div></div>
+    </div>
+    ${genBlock('Generation 1 — Direct Referrals', net.gen1, 'var(--blue)')}
+    ${genBlock('Generation 2', net.gen2, 'var(--purple)')}
+    ${genBlock('Generation 3', net.gen3, 'var(--teal)')}
+  `;
+  openModal('refNetworkModal');
+}
+
+function filterThirdGen(q) {
+  const ql = (q||'').toLowerCase();
+  const rows = document.querySelectorAll('#thirdGenTbody tr');
+  rows.forEach(r => { r.style.display = r.textContent.toLowerCase().includes(ql) ? '' : 'none'; });
 }
 
 // ===== RENDER: JOBS =====
@@ -2567,4 +2792,4 @@ function showToast(msg,type='success'){const el=$('toast');el.className='toast '
 setTimeout(renderTgEvents, 100);
 </script>
 </body>
-</html></div>
+</html>
