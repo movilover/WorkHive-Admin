@@ -29,7 +29,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 ::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:4px}
 a{color:inherit;text-decoration:none}
 
-/* ===== LOGIN ===== */
 #loginScreen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;
   background-image:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(34,197,94,0.06),transparent);overflow-y:auto;padding:24px 0}
 .login-card{width:100%;max-width:400px;padding:40px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-xl);box-shadow:0 32px 64px rgba(0,0,0,0.6)}
@@ -55,16 +54,10 @@ a{color:inherit;text-decoration:none}
 .login-divider{display:flex;align-items:center;gap:10px;margin:22px 0 16px;color:var(--text3);font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.6px}
 .login-divider::before,.login-divider::after{content:'';flex:1;height:1px;background:var(--border2)}
 
-/* ===== SHELL ===== */
 #adminShell{display:none;height:100vh;flex-direction:row;overflow:hidden}
-
-/* ===== SIDEBAR (retired — replaced by in-page Quick Menu, kept for legacy id targeting only) ===== */
 .sidebar{display:none !important}
-
-/* ===== MAIN ===== */
 .main-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;width:100%}
 
-/* ===== TOPBAR ===== */
 .topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:60px;flex-shrink:0}
 .tb-left{display:flex;align-items:center;gap:10px}
 .tb-brand{display:flex;align-items:center;gap:9px;cursor:pointer}
@@ -82,13 +75,11 @@ a{color:inherit;text-decoration:none}
 .chip-av{width:26px;height:26px;border-radius:7px;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#000}
 .chip-name{font-size:12px;font-weight:800;color:var(--green)}
 
-/* ===== CONTENT ===== */
 .content-area{flex:1;overflow-y:auto;padding:22px 24px}
 .screen{display:none}
 .screen.active{display:block;animation:fadeUp .2s ease}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
-/* ===== QUICK MENU (mobile-app style vertical nav list, shown on Dashboard) ===== */
 .qm-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;margin-bottom:20px}
 .qm-section-lbl{font-size:9.5px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;padding:12px 16px 6px}
 .qm-row{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;transition:.15s;border-bottom:1px solid var(--border)}
@@ -107,7 +98,6 @@ a{color:inherit;text-decoration:none}
 .qm-status-pill.ok{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
 .qm-status-pill.off{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
 
-/* ===== DASHBOARD HERO ===== */
 .dash-hero{background:linear-gradient(135deg,rgba(34,197,94,0.06),rgba(59,130,246,0.04));border:1px solid var(--border2);border-radius:var(--r-xl);padding:24px 28px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
 .hero-greeting{font-size:11.5px;color:var(--teal);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
 .hero-title{font-size:26px;font-weight:900;letter-spacing:-0.5px}
@@ -118,7 +108,6 @@ a{color:inherit;text-decoration:none}
 .hs-val{font-size:20px;font-weight:900;color:var(--green)}
 .hs-lbl{font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
 
-/* ===== STATS GRID ===== */
 .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
 .stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;cursor:pointer;transition:.2s;position:relative;overflow:hidden}
 .stat-card:hover{border-color:var(--border3);transform:translateY(-1px)}
@@ -143,7 +132,6 @@ a{color:inherit;text-decoration:none}
 .sc-badge.warn{background:var(--amber-bg);color:var(--amber)}
 .sc-badge.down{background:var(--red-bg);color:var(--red)}
 
-/* ===== SECTION HEADER ===== */
 .sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px}
 .sec-hd h2{font-size:17px;font-weight:800;display:flex;align-items:center;gap:8px}
 .sec-hd h2 i{font-size:19px;color:var(--text2)}
@@ -151,7 +139,6 @@ a{color:inherit;text-decoration:none}
 .sec-label{font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin:20px 0 10px;display:flex;align-items:center;gap:10px}
 .sec-label::after{content:'';flex:1;height:1px;background:var(--border)}
 
-/* ===== STATUS TABS (Withdrawals etc.) ===== */
 .status-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
 .status-tab{display:flex;align-items:center;gap:7px;padding:9px 14px;border-radius:var(--radius);background:var(--bg2);border:1px solid var(--border);cursor:pointer;font-size:12.5px;font-weight:700;color:var(--text2);transition:.15s}
 .status-tab:hover{border-color:var(--border3);color:var(--text)}
@@ -165,12 +152,10 @@ a{color:inherit;text-decoration:none}
 .status-tab[data-tab="rejected"].active{background:var(--red-bg);border-color:var(--red-border);color:var(--red)}
 .status-tab[data-tab="rejected"].active .stab-count{background:var(--red);color:#fff}
 
-/* ===== CARD ===== */
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;margin-bottom:16px}
 .card-title{font-size:13.5px;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:8px;color:var(--text)}
 .card-title i{font-size:16px;color:var(--text2)}
 
-/* ===== TABLE ===== */
 .tbl-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse}
 table th{font-size:10.5px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;padding:10px 14px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
@@ -180,7 +165,6 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
 .td-primary{font-weight:700;color:var(--text)}
 .td-sub{font-size:11px;color:var(--text3);margin-top:2px}
 
-/* ===== BADGE ===== */
 .badge{display:inline-block;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
 .badge.green{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
 .badge.amber{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border)}
@@ -189,7 +173,6 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
 .badge.purple{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-border)}
 .badge.teal{background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal-border)}
 
-/* ===== BUTTONS ===== */
 .btn{padding:8px 15px;border-radius:var(--radius);border:none;font-weight:700;font-size:12.5px;cursor:pointer;font-family:inherit;transition:.15s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .btn:active{transform:scale(.96)}
 .btn-sm{padding:6px 12px;font-size:11.5px;border-radius:8px}
@@ -209,7 +192,6 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
 .btn-message{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-border)}
 .btn-message:hover{background:var(--purple);color:#fff}
 
-/* ===== FORM ===== */
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .field{margin-bottom:14px}
 .field label{display:block;font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
@@ -222,7 +204,6 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
 .search-wrap i{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--text3);pointer-events:none}
 .search-wrap input{padding-left:36px;padding-right:14px;min-width:220px}
 
-/* ===== ALERT ===== */
 .alert{display:flex;gap:10px;padding:11px 14px;border-radius:var(--radius);margin-bottom:14px;font-size:12.5px;font-weight:600;align-items:flex-start;line-height:1.5}
 .alert i{font-size:16px;margin-top:1px;flex-shrink:0}
 .alert.info{background:var(--blue-bg);border:1px solid var(--blue-border);color:var(--blue)}
@@ -230,7 +211,6 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
 .alert.success{background:var(--green-bg);border:1px solid var(--green-border);color:var(--green)}
 .alert.danger{background:var(--red-bg);border:1px solid var(--red-border);color:var(--red)}
 
-/* ===== MODAL ===== */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
 .modal-overlay.show{display:flex}
 .modal-box{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-xl);padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,0.8);animation:popIn .25s cubic-bezier(.34,1.56,.64,1)}
@@ -241,7 +221,6 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
 .modal-close{width:30px;height:30px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:16px;transition:.15s;flex-shrink:0}
 .modal-close:hover{border-color:var(--border3);color:var(--text)}
 
-/* ===== TOAST ===== */
 .toast{position:fixed;top:20px;right:20px;padding:12px 18px;border-radius:var(--r-lg);font-size:13px;font-weight:700;z-index:9999;min-width:260px;transform:translateX(120%);transition:transform .3s cubic-bezier(.34,1.56,.64,1);display:flex;align-items:center;gap:9px;backdrop-filter:blur(12px)}
 .toast.show{transform:none}
 .toast.success{background:rgba(34,197,94,0.1);border:1px solid var(--green-border);color:var(--green)}
@@ -249,7 +228,6 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
 .toast.info{background:rgba(59,130,246,0.1);border:1px solid var(--blue-border);color:var(--blue)}
 .toast.warn{background:rgba(245,158,11,0.1);border:1px solid var(--amber-border);color:var(--amber)}
 
-/* ===== TOGGLE ===== */
 .toggle{position:relative;width:42px;height:22px;cursor:pointer;flex-shrink:0}
 .toggle input{opacity:0;width:0;height:0;position:absolute}
 .toggle-track{position:absolute;inset:0;border-radius:22px;background:var(--bg4);border:1px solid var(--border2);transition:.2s}
@@ -257,17 +235,14 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
 .toggle-thumb{position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 4px rgba(0,0,0,.4)}
 .toggle input:checked ~ .toggle-thumb{transform:translateX(20px)}
 
-/* ===== USER AVATAR ===== */
 .user-av{width:36px;height:36px;border-radius:10px;background:var(--blue-bg);border:1px solid var(--blue-border);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--blue);flex-shrink:0}
 
-/* ===== CHART ===== */
 .chart-bars{display:flex;align-items:flex-end;gap:6px;height:100px}
 .cbar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px}
 .cbar{width:100%;border-radius:5px 5px 0 0;min-height:4px;background:var(--green);opacity:.6;transition:.6s cubic-bezier(.34,1.2,.64,1)}
 .cbar:hover{opacity:1}
 .cbar-lbl{font-size:9.5px;color:var(--text3);text-align:center}
 
-/* ===== JOB CARD ===== */
 .job-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;margin-bottom:12px;transition:.15s}
 .job-card:hover{border-color:var(--border2)}
 .job-card.pending{border-color:rgba(245,158,11,.2)}
@@ -280,13 +255,11 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
 .psm-val{font-size:14px;font-weight:800;color:var(--teal)}
 .psm-lbl{font-size:9px;color:var(--text3);font-weight:700;text-transform:uppercase;margin-top:1px}
 
-/* ===== DETAIL BOX ===== */
 .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
 .detail-box{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:12px}
 .detail-box .dl{font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
 .detail-box .dv{font-size:15px;font-weight:800}
 
-/* ===== LOG ITEM ===== */
 .log-item{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)}
 .log-item:last-child{border-bottom:none}
 .log-dot{width:7px;height:7px;border-radius:50%;margin-top:5px;flex-shrink:0}
@@ -295,7 +268,6 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
 .log-text strong{color:var(--text);font-weight:700}
 .log-time{font-size:10.5px;color:var(--text3);white-space:nowrap;margin-left:6px}
 
-/* ===== TELEGRAM ===== */
 .tg-step{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
 .tg-step:last-child{border-bottom:none}
 .tg-num{width:26px;height:26px;border-radius:50%;background:var(--blue-bg);border:1px solid var(--blue-border);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0;margin-top:1px}
@@ -306,17 +278,14 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
 .tg-dot.ok{background:var(--green);box-shadow:0 0 6px rgba(34,197,94,.4)}
 .tg-dot.off{background:var(--red)}
 
-/* ===== METHOD CARD ===== */
 .method-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;display:flex;flex-direction:column;gap:12px;transition:.15s}
 .method-card:hover{border-color:var(--border2)}
 
-/* ===== NOTIF CARD ===== */
 .notif-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;display:flex;gap:14px;margin-bottom:10px;cursor:pointer;transition:.15s}
 .notif-card.unread{border-color:rgba(34,197,94,.2);background:rgba(34,197,94,.02)}
 .notif-card:hover{border-color:var(--border2)}
 .notif-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
 
-/* ===== QUICK ACTION BTNS ===== */
 .quick-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
 .qa-btn{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px 16px;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:12px;text-align:left}
 .qa-btn:hover{border-color:var(--border3);transform:translateY(-1px)}
@@ -325,22 +294,18 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
 .qa-sub{font-size:11px;color:var(--text3);margin-top:2px}
 .qa-badge{margin-left:auto;font-size:11px;font-weight:800;padding:3px 9px;border-radius:20px;flex-shrink:0}
 
-/* ===== TWO-COL GRID ===== */
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 
-/* ===== PROOF BOX ===== */
 .proof-box{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:13px;margin-bottom:12px;font-size:13px;color:var(--text2);line-height:1.6}
 .proof-lbl{font-size:10px;color:var(--text3);font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
 
-/* ===== MAP BAR ===== */
 .map-bar-row{display:flex;align-items:center;gap:10px;padding:5px 0}
 .map-country{font-size:12px;color:var(--text2);width:80px;flex-shrink:0}
 .map-track{flex:1;height:6px;background:var(--bg4);border-radius:4px;overflow:hidden}
 .map-fill{height:100%;border-radius:4px;background:var(--green);opacity:.7}
 .map-num{font-size:12px;color:var(--text2);font-weight:700;width:38px;text-align:right;flex-shrink:0}
 
-/* ===== SYS STATUS ===== */
 .sys-item{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;display:flex;align-items:center;gap:10px}
 .sys-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;animation:pulse 2s infinite}
 .sys-dot.online{background:var(--green)}
@@ -350,18 +315,14 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
 .sys-label{font-size:13px;font-weight:700}
 .sys-status{font-size:11px;color:var(--text3);margin-top:1px}
 
-/* ===== PENDING JOB ROW ===== */
 .pj-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
 .pj-row:last-child{border-bottom:none}
 
-/* ===== USER CHIP ===== */
 .user-chip{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);transition:.15s}
 .user-chip:hover{border-color:var(--border2)}
 
-/* ===== BALANCE CHIP ===== */
 .bal-chip{display:inline-flex;align-items:center;gap:5px;font-size:14px;font-weight:800;color:var(--teal)}
 
-/* ===== PROOF THUMB (admin task table) ===== */
 .proof-thumb-btn{display:inline-flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:4px 8px 4px 4px;cursor:pointer;transition:.15s}
 .proof-thumb-btn:hover{border-color:var(--green-border)}
 .proof-thumb-btn img{width:30px;height:30px;object-fit:cover;border-radius:6px;flex-shrink:0}
@@ -370,35 +331,29 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
 .img-lightbox.show{display:flex}
 .img-lightbox img{max-width:100%;max-height:100%;border-radius:8px}
 
-/* ===== MULTI-LINK INPUT ROWS (job posting) ===== */
 .link-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
 .link-row input{flex:1}
 .link-row .link-num{width:22px;height:22px;border-radius:6px;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;color:var(--text3);flex-shrink:0}
 .link-row-remove{width:34px;height:34px;border-radius:var(--radius);background:var(--red-bg);border:1px solid var(--red-border);color:var(--red);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:.15s}
 .link-row-remove:hover{background:var(--red);color:#fff}
 
-/* ===== MULTI-SCREENSHOT PROOF DISPLAY (admin task review) ===== */
 .proof-shots-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:10px}
 .proof-shot-item{position:relative}
 .proof-shot-item img{width:100%;height:120px;object-fit:cover;border-radius:var(--radius);background:#000;cursor:zoom-in;border:1px solid var(--border)}
 .proof-shot-label{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.7);color:#fff;font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:6px}
 
-/* ===== REJECT REASON DISPLAY (visible next to rejected items) ===== */
 .reject-reason-box{display:flex;gap:8px;align-items:flex-start;background:var(--red-bg);border:1px solid var(--red-border);border-radius:8px;padding:8px 10px;margin-top:6px;font-size:11.5px;color:var(--red);line-height:1.5}
 .reject-reason-box i{font-size:14px;margin-top:1px;flex-shrink:0}
 
-/* ===== DUPLICATE ACCOUNT FLAG (Third Generation screen) ===== */
 .dup-flag{color:var(--red);font-size:12px;margin-left:5px}
 tr.dup-row td{background:rgba(239,68,68,0.03)}
 
-/* ===== CODE BLOCK (used in Third Generation + Push Notification setup notes) ===== */
 .code-block-wrap{margin-top:10px}
 .code-block-lbl{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
 .code-block{background:#0B0E14;border:1px solid var(--border2);border-radius:var(--radius);padding:14px 16px;overflow-x:auto}
 .code-block code{font-family:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;font-size:11.5px;line-height:1.7;color:var(--teal);white-space:pre}
 .code-block .cm{color:var(--text3)}
 
-/* ===== JOB SOURCE TABS (Admin vs User posted jobs) ===== */
 .job-src-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
 .job-src-tab{display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:var(--r-lg);background:var(--bg2);border:1px solid var(--border);cursor:pointer;font-size:13px;font-weight:800;color:var(--text2);transition:.15s}
 .job-src-tab:hover{border-color:var(--border3);color:var(--text)}
@@ -515,7 +470,6 @@ tr.dup-row td{background:rgba(239,68,68,0.03)}
           </div>
         </div>
 
-        <!-- ===== QUICK MENU — vertical, line-by-line, mobile-app style nav ===== -->
         <div class="qm-wrap">
           <div class="qm-section-lbl">Users</div>
           <div class="qm-row" onclick="goScreen('users')">
@@ -721,7 +675,7 @@ tr.dup-row td{background:rgba(239,68,68,0.03)}
         </div>
       </div>
 
-      <!-- ===== THIRD GENERATION (Referral Network + Duplicate Account Detection) ===== -->
+      <!-- ===== THIRD GENERATION ===== -->
       <div class="screen" id="screen-thirdgen">
         <div class="sec-hd">
           <h2><button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')" style="margin-right:6px"><i class="ti ti-arrow-left"></i></button><i class="ti ti-sitemap"></i> Third Generation — Referral Network</h2>
@@ -790,14 +744,10 @@ await setDoc(doc(db, 'users', newUser.uid), {
             <button class="btn btn-primary btn-sm" onclick="openPostJobModal()"><i class="ti ti-plus"></i> Post New Job</button>
           </div>
         </div>
-        <div class="alert info"><i class="ti ti-info-circle"></i> ইউজারদের পোস্ট করা জব শুধুমাত্র আপনার অনুমোদনের পরেই Worker দের কাছে দৃশ্যমান হবে। Admin নিজে জব পোস্ট করলে তা সাথে সাথেই Live হয়ে যাবে এবং প্রয়োজনে পরে Edit বা Delete করা যাবে।</div>
+        <div class="alert info"><i class="ti ti-info-circle"></i> ইউজারদের পোস্ট করা জব শুধুমাত্র আপনার অনুমোদনের পরেই Worker দের কাছে দৃশ্যমান হবে। Admin নিজে জব পোস্ট করলে তা সাথে সাথেই Live হয়ে যাবে এবং প্রয়োজনে পরে Edit বা Delete করা যাবে। <strong>জব Reject বা Delete করলে ইউজারের হোল্ড করা বাজেট (যদি থাকে) স্বয়ংক্রিয়ভাবে তার ওয়ালেটে ফেরত যাবে।</strong></div>
 
-        <!-- Source tabs: All / Admin posted / User posted -->
         <div class="job-src-tabs" id="jobSrcTabs"></div>
-
-        <!-- User-submitted job stats: pending / approved / rejected -->
         <div class="user-job-stats" id="userJobStats" style="display:none"></div>
-
         <div id="jobList"></div>
       </div>
 
@@ -806,7 +756,7 @@ await setDoc(doc(db, 'users', newUser.uid), {
         <div class="sec-hd">
           <h2><button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')" style="margin-right:6px"><i class="ti ti-arrow-left"></i></button><i class="ti ti-checks"></i> Task Submissions</h2>
         </div>
-        <div class="alert warn"><i class="ti ti-alert-triangle"></i> Task approve করলেই Worker এর balance credit হবে। Reject করলে কোনো balance change হবে না — 💬 আইকনে ক্লিক করে reason লিখলে সেটা Worker-এর নোটিফিকেশনে ও টাস্ক হিস্টোরিতে দেখাবে। Submission মুছে ফেললে (Delete) সংশ্লিষ্ট স্ক্রিনশটও Firebase Storage থেকে স্থায়ীভাবে মুছে যাবে।</div>
+        <div class="alert warn"><i class="ti ti-alert-triangle"></i> Task approve করলেই Worker এর balance credit হবে। Reject করলে কোনো balance change হবে না — 💬 আইকনে ক্লিক করে reason লিখলে সেটা Worker-এর নোটিফিকেশনে ও টাস্ক হিস্টোরিতে দেখাবে। <strong>User-পোস্ট করা জবের সাবমিশন এখন সেই জব-পোস্টার নিজেও তার User App থেকে Approve/Reject করতে পারে</strong> — সেক্ষেত্রে এখানে স্ট্যাটাস ইতিমধ্যে আপডেট দেখাবে। Submission মুছে ফেললে (Delete) সংশ্লিষ্ট স্ক্রিনশটও Firebase Storage থেকে স্থায়ীভাবে মুছে যাবে।</div>
         <div class="status-tabs" id="taskTabs"></div>
         <div class="card">
           <div class="tbl-wrap">
@@ -893,7 +843,6 @@ await setDoc(doc(db, 'users', newUser.uid), {
           </div>
         </div>
 
-        <!-- ===== ONESIGNAL PUSH NOTIFICATIONS ===== -->
         <div class="two-col" style="margin-top:16px" id="oneSignalCard">
           <div class="card">
             <div class="card-title"><i class="ti ti-bell-ringing"></i> OneSignal Push Notifications</div>
@@ -928,7 +877,7 @@ if (window.Capacitor?.Plugins?.OneSignal) {
   window.Capacitor.Plugins.OneSignal.logout();
 }</code></pre>
             </div>
-            <div class="lf-hint" style="margin-top:10px">এই লাইনটা যোগ না করলে, এই admin panel থেকে push পাঠানো হলেও OneSignal জানবে না কোন ফোনে পাঠাতে হবে — তাই কিছুই পৌঁছাবে না। লাইভ সাইটের JS ফাইলটা শেয়ার করলে আমি সঠিক জায়গায় বসিয়ে দিতে পারি।</div>
+            <div class="lf-hint" style="margin-top:10px">এই লাইনটা যোগ না করলে, এই admin panel থেকে push পাঠানো হলেও OneSignal জানবে না কোন ফোনে পাঠাতে হবে — তাই কিছুই পৌঁছাবে না। <strong>✅ WorkHive User App-এর সর্বশেষ ফিক্সড কোডে এই লাইনগুলো ইতিমধ্যে যোগ করা আছে</strong> (login/logout handler-এ onesignalLogin/onesignalLogout কল)।</div>
           </div>
         </div>
       </div>
@@ -989,6 +938,24 @@ if (window.Capacitor?.Plugins?.OneSignal) {
               <div class="field"><label>Gen 2 Reward ($)</label><input type="number" id="setRefGen2" value="0.25" step="0.01" min="0"></div>
               <div class="field"><label>Gen 3 Reward ($)</label><input type="number" id="setRefGen3" value="0.10" step="0.01" min="0"></div>
               <button class="btn btn-primary" style="width:100%" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> Save Referral Settings</button>
+            </div>
+            <div class="card">
+              <div class="card-title"><i class="ti ti-briefcase"></i> User Job Posting</div>
+              <div class="field"><label>Enable User Job Posting</label></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;margin-bottom:12px">
+                <div style="font-size:12px;color:var(--text3)">Off হলে User App-এর Post স্ক্রিন বন্ধ দেখাবে</div>
+                <label class="toggle"><input type="checkbox" id="setPostEnabled" checked onchange="saveSettings()"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+              </div>
+              <div class="form-grid">
+                <div class="field"><label>Min Reward/Worker ($)</label><input type="number" id="setPostMinReward" value="0.02" step="0.01" min="0"></div>
+                <div class="field"><label>Max Reward/Worker ($)</label><input type="number" id="setPostMaxReward" value="5.00" step="0.01" min="0"></div>
+              </div>
+              <div class="form-grid">
+                <div class="field"><label>Min Slots</label><input type="number" id="setPostMinSlots" value="5" min="1"></div>
+                <div class="field"><label>Max Slots</label><input type="number" id="setPostMaxSlots" value="500" min="1"></div>
+              </div>
+              <div class="field"><label>Platform Fee on Job Posts (%)</label><input type="number" id="setPostFeePct" value="10" min="0" max="50" step="0.5"></div>
+              <button class="btn btn-primary" style="width:100%" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> Save Job Posting Settings</button>
             </div>
             <div class="card">
               <div class="card-title"><i class="ti ti-headset"></i> Support Info</div>
@@ -1076,7 +1043,6 @@ if (window.Capacitor?.Plugins?.OneSignal) {
 
 <!-- ===== MODALS ===== -->
 
-<!-- User Detail -->
 <div class="modal-overlay" id="userDetailModal">
   <div class="modal-box" style="max-width:580px">
     <div class="modal-hd">
@@ -1087,7 +1053,6 @@ if (window.Capacitor?.Plugins?.OneSignal) {
   </div>
 </div>
 
-<!-- Referral Network (Third Generation) -->
 <div class="modal-overlay" id="refNetworkModal">
   <div class="modal-box" style="max-width:560px">
     <div class="modal-hd">
@@ -1098,7 +1063,6 @@ if (window.Capacitor?.Plugins?.OneSignal) {
   </div>
 </div>
 
-<!-- Task Proof -->
 <div class="modal-overlay" id="proofModal">
   <div class="modal-box">
     <div class="modal-hd">
@@ -1109,7 +1073,6 @@ if (window.Capacitor?.Plugins?.OneSignal) {
   </div>
 </div>
 
-<!-- Reject Reason -->
 <div class="modal-overlay" id="rejectModal">
   <div class="modal-box">
     <div class="modal-hd">
@@ -1117,6 +1080,7 @@ if (window.Capacitor?.Plugins?.OneSignal) {
       <div class="modal-close" onclick="closeModal('rejectModal')"><i class="ti ti-x"></i></div>
     </div>
     <div class="field"><label>Rejection Reason (User এটা দেখতে পাবে)</label><textarea id="rejectReason" rows="3" placeholder="যেমন: স্ক্রিনশট স্পষ্ট নয় / ভুল তথ্য / সময়সীমা পার হয়ে গেছে…"></textarea></div>
+    <div id="rejectRefundNote" class="alert info" style="display:none"><i class="ti ti-cash"></i> এই জবে হোল্ড করা বাজেট Reject করার সাথে সাথেই পোস্টকারীর ব্যালেন্সে ফেরত যাবে।</div>
     <div style="display:flex;gap:10px;margin-top:8px">
       <button class="btn btn-ghost" style="flex:1" onclick="closeModal('rejectModal')">Cancel</button>
       <button class="btn btn-danger" style="flex:1" onclick="confirmReject()"><i class="ti ti-x"></i> Confirm Reject</button>
@@ -1124,7 +1088,6 @@ if (window.Capacitor?.Plugins?.OneSignal) {
   </div>
 </div>
 
-<!-- Message User -->
 <div class="modal-overlay" id="msgUserModal">
   <div class="modal-box">
     <div class="modal-hd">
@@ -1140,7 +1103,6 @@ if (window.Capacitor?.Plugins?.OneSignal) {
   </div>
 </div>
 
-<!-- Add Payment Method -->
 <div class="modal-overlay" id="addMethodModal">
   <div class="modal-box">
     <div class="modal-hd">
@@ -1170,7 +1132,6 @@ if (window.Capacitor?.Plugins?.OneSignal) {
   </div>
 </div>
 
-<!-- Post / Edit Job (Admin posts directly, instantly live) -->
 <div class="modal-overlay" id="postJobModal">
   <div class="modal-box" style="max-width:560px">
     <div class="modal-hd">
@@ -1207,7 +1168,7 @@ if (window.Capacitor?.Plugins?.OneSignal) {
     <div class="field" id="pjShotsField" style="display:none">
       <label>Number of Screenshots Required</label>
       <input type="number" id="pjShots" value="1" min="1" max="6">
-      <div class="lf-hint">Worker App-এ এই সংখ্যক আলাদা "Screenshot 1, Screenshot 2…" আপলোড বক্স দেখাবে — সবগুলো না দিলে Submit করা যাবে না। <strong>⚠️ User App-এ এখনো এই মাল্টি-স্ক্রিনশট আপলোড ফিচারটি যোগ করা প্রয়োজন — নিচের "ইউজার সাইট নোট" দেখুন।</strong></div>
+      <div class="lf-hint">Worker App-এ এই সংখ্যক আলাদা "Screenshot 1, Screenshot 2…" আপলোড বক্স দেখাবে — সবগুলো না দিলে Submit করা যাবে না।</div>
     </div>
     <div class="alert info" id="pjDailyHint" style="display:none"><i class="ti ti-info-circle"></i> এই টাইপে কোনো Worker Limit নেই — সব ইউজার প্রতি ২৪ ঘণ্টায় একবার এই লিংক(গুলো) ভিজিট করে reward পাবে, এবং লিংকে ভিজিট করে ফিরে এলে balance অটোমেটিক যোগ হয়ে যাবে (কোনো proof review লাগবে না)।</div>
     <div class="field"><label>Target Country</label><input type="text" id="pjCountry" placeholder="Global / Bangladesh / ..." value="Global"></div>
@@ -1218,7 +1179,6 @@ if (window.Capacitor?.Plugins?.OneSignal) {
   </div>
 </div>
 
-<!-- Balance Adjust -->
 <div class="modal-overlay" id="balModal">
   <div class="modal-box">
     <div class="modal-hd">
@@ -1239,7 +1199,7 @@ if (window.Capacitor?.Plugins?.OneSignal) {
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
   getFirestore, collection, getDocs, doc, updateDoc, addDoc, onSnapshot,
-  query, where, orderBy, serverTimestamp, increment, setDoc, deleteDoc, getDoc
+  query, where, orderBy, serverTimestamp, increment, setDoc, deleteDoc, getDoc, runTransaction
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import {
   getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut
@@ -1260,27 +1220,8 @@ const app = initializeApp(cfg);
 const db = getFirestore(app);
 const auth = getAuth(app);
 const storage = getStorage(app);
-window._fb = { db, auth, storage, collection, getDocs, doc, updateDoc, addDoc, onSnapshot, query, where, orderBy, serverTimestamp, increment, setDoc, deleteDoc, getDoc, fbStorageRef, deleteObject };
+window._fb = { db, auth, storage, collection, getDocs, doc, updateDoc, addDoc, onSnapshot, query, where, orderBy, serverTimestamp, increment, setDoc, deleteDoc, getDoc, runTransaction, fbStorageRef, deleteObject };
 
-// ============================================================================
-// IMPORTANT — WHY THIS CHANGED FROM signInAnonymously() TO A REAL EMAIL/PASSWORD LOGIN
-// ----------------------------------------------------------------------------
-// The admin panel used to call signInAnonymously(auth). That gives Firebase a
-// valid request.auth, BUT anonymous sign-in creates a brand-new RANDOM uid
-// every time — it will never match the fixed uid your firestore.rules checks
-// for in isAdmin() ('Bj2qIMA62tYZ8skwsztpCrCqfW93'), and it has no email, so
-// it never matches isChatAdmin() either. Every read/write from the panel was
-// therefore silently getting "permission-denied": jobs wouldn't post, and
-// deposits/withdrawals/tasks lists rendered empty even though the data was
-// still safely sitting in Firestore.
-//
-// Fix: sign in with a REAL Firebase Authentication email/password account
-// that is explicitly allowed in firestore.rules (see isChatAdmin() there).
-// The email/password are entered on the login screen (or Settings → Firebase
-// Admin Account) and are stored in localStorage so you don't have to retype
-// them every visit — this is the same trust model the old REST/OneSignal
-// keys already used in this file.
-// ============================================================================
 function fbSetStatus(text, ok) {
   const el = document.getElementById('fbStatus');
   if (el) { el.textContent = text; el.style.color = ok ? 'var(--green)' : 'var(--amber)'; }
@@ -1309,8 +1250,6 @@ onAuthStateChanged(auth, user => {
   }
 });
 
-// Auto sign-in on page load using previously saved credentials, so a reload
-// doesn't require re-entering the Firebase email/password every time.
 (function autoFbSignIn() {
   const savedEmail = localStorage.getItem('wha_fb_email');
   const savedPass = localStorage.getItem('wha_fb_pass');
@@ -1340,7 +1279,8 @@ const S = {
   dupGroups: [], dupUserIds: new Set(),
   settings: { name: 'WorkHive', minWd: 5, minDep: 1, fee: 5, refGen1: 0.5, refGen2: 0.25, refGen3: 0.10,
     supportEmail: 'support@workhive.app', supportHours: '9 AM – 11 PM', supportResponse: 'Within 12 hours',
-    banner: '', bannerType: 'info', spinEnabled: true },
+    banner: '', bannerType: 'info', spinEnabled: true,
+    postFeatureEnabled: true, postMinReward: 0.02, postMaxReward: 5.00, postMinSlots: 5, postMaxSlots: 500, postPlatformFeePct: 10 },
 };
 
 const TG_EVENTS = [
@@ -1368,7 +1308,6 @@ function doLogin() {
   const cu = ls('wha_user') || 'admin', cp = ls('wha_pass') || 'WorkHive@2024!', cc = ls('wha_code') || '272727';
   if (u === cu && p === cp && c === cc) {
     attempts = 0; sessionStorage.setItem('wh_tok', '1');
-    // Save + trigger the real Firebase Authentication sign-in (fixes permission-denied issues)
     ls('wha_fb_email', fbEmail); ls('wha_fb_pass', fbPass);
     if (window.fbAdminSignIn) {
       window.fbAdminSignIn(fbEmail, fbPass).then(() => {
@@ -1395,7 +1334,6 @@ function togglePass() { const i=$('loginPass'); i.type=i.type==='password'?'text
 function toggleFbPass() { const i=$('loginFbPass'); if(i) i.type=i.type==='password'?'text':'password'; }
 document.addEventListener('keydown', e => { if (e.key==='Enter') { if ($('loginScreen').style.display!=='none') doLogin(); } if (e.key==='Escape') document.querySelectorAll('.modal-overlay.show').forEach(m=>m.classList.remove('show')); });
 
-// Prefill saved Firebase admin email/password on the login screen for convenience
 (function prefillLogin() {
   const e = ls('wha_fb_email'), p = ls('wha_fb_pass');
   document.addEventListener('DOMContentLoaded', () => {
@@ -1409,19 +1347,16 @@ function initAdmin() {
   updateClock(); setInterval(updateClock, 1000);
   addLog('🔐 Admin logged in', 'login', 'success');
   renderSignupChart(); renderSysStatus();
-  addLinkField(); // seed the first link input row
+  addLinkField();
   updatePjTypeUI();
   renderStatusTabs('withdrawTabs','wd'); renderStatusTabs('depositTabs','dep'); renderStatusTabs('taskTabs','task');
   renderJobSrcTabs();
   waitFb().then(() => { loadUsers(); listenJobs(); listenDeposits(); listenWithdrawals(); listenTasks(); listenMethods(); listenSettings(); });
-  // load saved TG
   const t = ls('wha_tg_token'), ch = ls('wha_tg_chat');
   if (t && ch) { S.tg = {token:t,chatId:ch,connected:true}; setTimeout(() => { setTgConnected(true); const ti=$('tgToken');if(ti)ti.value=t; const ci=$('tgChatId');if(ci)ci.value=ch; }, 200); }
-  // load saved OneSignal config
   const oa = ls('wha_os_appid'), ok = ls('wha_os_restkey');
   if (oa && ok) { S.os = {appId:oa, restKey:ok, connected:true}; setTimeout(() => { setOsConnected(true); const ai=$('osAppId');if(ai)ai.value=oa; const ri=$('osRestKey');if(ri)ri.value=ok; }, 200); }
   else { setOsConnected(false); }
-  // prefill Firebase admin account fields in Settings
   const fe = ls('wha_fb_email');
   if (fe && $('setFbEmail')) $('setFbEmail').value = fe;
 }
@@ -1479,10 +1414,6 @@ function goScreen(name) {
   window.scrollTo(0,0);
   if (name==='thirdgen') renderThirdGen();
 }
-// Dedicated shortcut: jumps to the Telegram/Push screen AND scrolls straight
-// down to the OneSignal card, so "Push Notification" in the Quick Menu takes
-// the admin directly to the input fields instead of leaving them to hunt for
-// it inside a screen labeled "Telegram Bot".
 function goPushSettings() {
   goScreen('telegram');
   setTimeout(() => {
@@ -1491,8 +1422,7 @@ function goPushSettings() {
   }, 60);
 }
 
-// ===== STATUS TABS (reusable for withdrawals / deposits / tasks) =====
-// kind: 'wd' -> S.withdrawals + S.wdFilter, 'dep' -> S.deposits + S.depFilter, 'task' -> S.tasks + S.taskFilter
+// ===== STATUS TABS =====
 const TAB_DEFS = {
   wd:   { list:'withdrawals', filterKey:'wdFilter',   render:'renderWithdrawals', tabs:[
             {key:'pending',label:'Pending',icon:'ti-clock'},
@@ -1528,7 +1458,7 @@ function setStatusFilter(kind, val) {
   window[def.render]();
 }
 
-// ===== ONESIGNAL PUSH (real device notification: heads-up popup + sound) =====
+// ===== ONESIGNAL PUSH =====
 function saveOneSignalConfig() {
   const appId = v('osAppId'), restKey = v('osRestKey');
   if (!appId) { showToast('OneSignal App ID দিন', 'error'); return; }
@@ -1544,61 +1474,34 @@ function setOsConnected(ok) {
   if (dot) dot.className = 'tg-dot ' + (ok ? 'ok' : 'off');
   if (st) st.textContent = ok ? 'Configured' : 'Not Configured';
   if (bi) bi.textContent = ok ? 'Ready to send real push notifications' : 'Configure above to enable real push notifications';
-  // Keep the Dashboard Quick Menu row + System Status panel in sync too, so
-  // connection state is visible without opening the Telegram/Push screen.
   const pill = $('qmPushStatus');
   if (pill) { pill.textContent = ok ? '🟢 Connected' : 'Not Configured'; pill.className = 'qm-status-pill ' + (ok ? 'ok' : 'off'); }
   const sd = $('osSysDot'); const ss = $('osSysStatus');
   if (sd) sd.style.background = ok ? 'var(--green)' : 'var(--red)';
   if (ss) ss.textContent = ok ? 'Configured' : 'Not configured';
 }
-// Low-level call to OneSignal's REST API. Targets a specific user by their
-// Firebase UID, which must have been linked on-device via
-// Capacitor.Plugins.OneSignal.login({ externalId: uid }) on the live site —
-// see the "জরুরি" card in the Telegram screen for that missing piece.
-//
-// Uses the current https://api.onesignal.com endpoint with "Key" auth (the
-// old https://onesignal.com/api/v1/ + "Basic" auth pair is OneSignal's
-// legacy scheme, tied to Legacy API Keys that OneSignal has been retiring
-// since Nov 2024 — Legacy App API Keys stop working entirely in Q1 2026).
-// Make sure the REST API Key configured above is a "Rich" API Key from
-// OneSignal Dashboard → Settings → Keys & IDs, not an old Legacy key.
 async function sendPushNotification(uid, title, message) {
   const appId = S.os.appId || ls('wha_os_appid');
   const restKey = S.os.restKey || ls('wha_os_restkey');
-  if (!appId || !restKey || !uid) return; // OneSignal not configured, or no target uid — silently skip
+  if (!appId || !restKey || !uid) return;
   try {
     const res = await fetch('https://api.onesignal.com/notifications', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Authorization': 'Key ' + restKey,
-      },
+      headers: { 'Content-Type': 'application/json; charset=utf-8', 'Authorization': 'Key ' + restKey },
       body: JSON.stringify({
         app_id: appId,
         target_channel: 'push',
         include_aliases: { external_id: [uid] },
         headings: { en: title },
         contents: { en: message },
-        // "workhive_alerts" is the Android Notification Channel already created
-        // natively in MainActivity.java (createWorkHiveNotificationChannel), with
-        // the custom "টুংটুং" chime + heads-up importance wired to it. Because that
-        // channel is created on-device (not in the OneSignal dashboard), the
-        // correct field to reuse it is `existing_android_channel_id` — the plain
-        // `android_channel_id` field expects a channel UUID created *inside*
-        // OneSignal's own dashboard instead, and would fail/ignore this string id.
         existing_android_channel_id: 'workhive_alerts',
         priority: 10,
         android_visibility: 1,
       }),
     });
     const d = await res.json().catch(()=>({}));
-    if (!res.ok || (d && d.errors)) {
-      console.warn('OneSignal push not delivered:', d.errors || d);
-    }
-  } catch (e) {
-    console.warn('OneSignal push failed:', e);
-  }
+    if (!res.ok || (d && d.errors)) console.warn('OneSignal push not delivered:', d.errors || d);
+  } catch (e) { console.warn('OneSignal push failed:', e); }
 }
 async function testOneSignalBroadcastPush() {
   const appId = S.os.appId || ls('wha_os_appid');
@@ -1623,15 +1526,14 @@ async function testOneSignalBroadcastPush() {
   } catch (e) { showToast('❌ Network error sending test push', 'error'); }
 }
 
-// ===== NOTIFY USER (in-app Firestore notification + real OneSignal push together) =====
+// ===== NOTIFY USER =====
 async function notifyUser(uid, title, msg, icon='🔔') {
   if (!uid || !window._fb) return;
   const fb = window._fb;
   await fb.addDoc(fb.collection(fb.db,'users',uid,'notifications'),{title,msg,icon,unread:true,createdAt:fb.serverTimestamp()});
-  sendPushNotification(uid, title, msg); // fire-and-forget real device push, in addition to the in-app one above
+  sendPushNotification(uid, title, msg);
 }
 
-// ===== MESSAGE A SPECIFIC USER (new — shows up in that user's notification icon) =====
 function openMsgUser(uid) {
   const u = findUser(uid); if (!u) { showToast('User not found', 'error'); return; }
   S._msgUid = uid;
@@ -1669,7 +1571,7 @@ async function loadUsers() {
       status:u.status||'active', country:u.country||'—', totalEarned:u.totalEarned||0,
       totalWithdrawn:u.totalWithdrawn||0, phone:u.phone||'—', referralCode:u.referralCode||'—',
       pendingAmount:u.pendingAmount||0, workerLevel:u.workerLevel||1,
-      telegramChatId:u.telegramChatId||'',
+      telegramChatId:u.telegramChatId||'', postingHold:u.postingHold||0,
       referredBy:u.referredBy||u.referrerId||'', deviceId:u.deviceId||'', ipAddress:u.ipAddress||'',
       joined:u.createdAt?(u.createdAt.toDate?u.createdAt.toDate().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—'):'—',
     });
@@ -1679,22 +1581,37 @@ async function loadUsers() {
 function findUser(id) { return S.users.find(u=>u.id===id); }
 
 // ===== FIRESTORE: JOBS =====
+// ── FIX (auto-reject bug): normalize every job doc's status + poster identity
+// right at ingestion, so the rest of the code (which already assumes
+// status is exactly 'pending' | 'approved' | 'rejected', and postedBy is
+// either 'admin' or a uid) keeps working unchanged everywhere it's used.
+//
+// Root cause this fixes: the User App writes user-submitted jobs with
+// status:'pending_review' and the poster's uid in postedById (not
+// postedBy). Every render/branch in this file only recognizes literal
+// 'pending' and 'approved' — anything else (including 'pending_review')
+// fell through to the "else" branch and displayed as Rejected, even though
+// nobody ever clicked Reject. Same story for postedBy: reading a field that
+// doesn't exist meant Profile/Message buttons and the poster stats panel
+// couldn't resolve the actual user.
+function normalizeJobDoc(id, data) {
+  const isAdmin = data.postedByAdmin !== false; // matches User App convention: undefined/true => admin, false => user job
+  const postedBy = isAdmin ? 'admin' : (data.postedBy || data.postedById || '');
+  const postedByEmail = data.postedByEmail || (findUser(postedBy)?.email) || '';
+  let status = data.status || 'pending';
+  if (status === 'pending_review') status = 'pending';
+  return {
+    id, ...data,
+    postedBy, postedByEmail, status,
+    budgetHeld: data.budgetHeld || 0,
+    holdSettled: !!data.holdSettled,
+  };
+}
 function listenJobs() {
   const fb = window._fb; if (!fb) return;
   fb.onSnapshot(fb.collection(fb.db,'jobs'), snap => {
     S.jobs = [];
-    snap.forEach(d => {
-      const data = d.data();
-      // IMPORTANT: default to 'pending' when a job document has no explicit
-      // status field. Previously S.jobs.push({id:d.id,...d.data()}) left
-      // j.status as undefined for such docs, and every place that renders a
-      // job (renderJobs, badges, dashboard) treated "not pending AND not
-      // approved" as REJECTED — so brand-new user-submitted jobs looked like
-      // they had been auto-rejected the instant they were created, even
-      // though nobody ever clicked reject and Firestore never got a
-      // status:'rejected' write. Defaulting here fixes that at the source.
-      S.jobs.push({ id: d.id, status: 'pending', ...data });
-    });
+    snap.forEach(d => S.jobs.push(normalizeJobDoc(d.id, d.data())));
     S.jobs.sort((a,b)=>(b._ts||0)-(a._ts||0));
     renderJobs(); renderDashPendingJobs(); updateStats(); updateBadges(); renderJobSrcTabs(); renderUserJobStats();
   }, (e)=>{console.warn('listenJobs error (check Firestore Rules / Auth):',e);showToast('❌ Jobs load failed — check Firebase Admin login','error');});
@@ -1754,7 +1671,7 @@ async function seedMethods() {
   for (const m of defaults) await fb.addDoc(fb.collection(fb.db,'paymentMethods'),m).catch(()=>{});
 }
 
-// ===== FIRESTORE: SETTINGS (siteSettings/global — same doc the User App reads) =====
+// ===== FIRESTORE: SETTINGS =====
 function listenSettings() {
   const fb = window._fb; if (!fb) return;
   fb.onSnapshot(fb.doc(fb.db,'siteSettings','global'), snap => {
@@ -1774,6 +1691,12 @@ function listenSettings() {
         banner: d.banner ?? S.settings.banner,
         bannerType: d.bannerType ?? S.settings.bannerType,
         spinEnabled: d.spinEnabled !== undefined ? d.spinEnabled : S.settings.spinEnabled,
+        postFeatureEnabled: d.postFeatureEnabled !== undefined ? d.postFeatureEnabled : S.settings.postFeatureEnabled,
+        postMinReward: d.postMinReward ?? S.settings.postMinReward,
+        postMaxReward: d.postMaxReward ?? S.settings.postMaxReward,
+        postMinSlots: d.postMinSlots ?? S.settings.postMinSlots,
+        postMaxSlots: d.postMaxSlots ?? S.settings.postMaxSlots,
+        postPlatformFeePct: d.postPlatformFeePct ?? S.settings.postPlatformFeePct,
       });
       const s = S.settings;
       if ($('setName')) $('setName').value = s.name||'WorkHive';
@@ -1789,6 +1712,12 @@ function listenSettings() {
       if ($('setBannerMsg')) $('setBannerMsg').value = s.banner||'';
       if ($('setBannerType')) $('setBannerType').value = s.bannerType||'info';
       if ($('toggleSpin')) $('toggleSpin').checked = s.spinEnabled!==false;
+      if ($('setPostEnabled')) $('setPostEnabled').checked = s.postFeatureEnabled!==false;
+      if ($('setPostMinReward')) $('setPostMinReward').value = s.postMinReward??0.02;
+      if ($('setPostMaxReward')) $('setPostMaxReward').value = s.postMaxReward??5.00;
+      if ($('setPostMinSlots')) $('setPostMinSlots').value = s.postMinSlots??5;
+      if ($('setPostMaxSlots')) $('setPostMaxSlots').value = s.postMaxSlots??500;
+      if ($('setPostFeePct')) $('setPostFeePct').value = s.postPlatformFeePct??10;
       renderThirdGen();
     }
   }, (e)=>{console.warn('listenSettings error (check Firestore Rules / Auth):',e);});
@@ -1856,7 +1785,7 @@ function renderUsers(list) {
         </div>
       </td>
       <td style="font-size:12px;color:var(--text2)">${u.joined}</td>
-      <td class="bal-chip">${fmtAmt(u.balance)}</td>
+      <td class="bal-chip">${fmtAmt(u.balance)}${u.postingHold?`<div style="font-size:9.5px;color:var(--amber);font-weight:700">+${fmtAmt(u.postingHold)} held</div>`:''}</td>
       <td style="font-weight:700">${u.tasks}</td>
       <td><span class="badge ${u.kyc==='Verified'?'green':'amber'}">${u.kyc}</span></td>
       <td><span class="badge ${u.status==='active'?'green':'red'}">${u.status}</span></td>
@@ -1888,6 +1817,7 @@ function viewUser(id) {
       <div class="detail-box"><div class="dl">Withdrawn</div><div class="dv" style="color:var(--amber)">${fmtAmt(u.totalWithdrawn)}</div></div>
       <div class="detail-box"><div class="dl">Tasks Done</div><div class="dv">${u.tasks}</div></div>
       <div class="detail-box"><div class="dl">Worker Level</div><div class="dv">L${u.workerLevel||1}</div></div>
+      <div class="detail-box"><div class="dl">Held (Job Posts)</div><div class="dv" style="color:var(--amber)">${fmtAmt(u.postingHold||0)}</div></div>
       <div class="detail-box"><div class="dl">KYC</div><div class="dv"><span class="badge ${u.kyc==='Verified'?'green':'amber'}">${u.kyc}</span></div></div>
       <div class="detail-box"><div class="dl">Status</div><div class="dv"><span class="badge ${u.status==='active'?'green':'red'}">${u.status}</span></div></div>
       <div class="detail-box"><div class="dl">Country</div><div class="dv" style="font-size:14px">${u.country}</div></div>
@@ -1937,7 +1867,7 @@ async function verifyKyc(id) {
   }catch(e){ console.error(e); showToast('❌ Update failed — check Firestore permissions','error'); }
 }
 
-// ===== THIRD GENERATION (referral network) & DUPLICATE ACCOUNT DETECTION =====
+// ===== THIRD GENERATION =====
 function getReferralNetwork(uid) {
   const gen1 = S.users.filter(u => u.referredBy === uid);
   const gen1Ids = new Set(gen1.map(u=>u.id));
@@ -2078,8 +2008,6 @@ function filterThirdGen(q) {
 // ===== RENDER: JOBS =====
 function filterJobs(val) { S.jobFilter=val; renderJobs(); }
 
-// Source tabs: split "Job Approvals" screen into All / Admin-posted / User-posted,
-// each with a live count, so it's obvious at a glance how many of each exist.
 function setJobSource(val) {
   S.jobSourceFilter = val;
   renderJobSrcTabs();
@@ -2127,12 +2055,14 @@ function renderJobs() {
     const isDaily = j.type==='dailylink';
     const links = jobLinksOf(j);
     const shots = j.type==='proof' ? (j.screenshotCount||1) : 0;
+    const heldNote = j.budgetHeld ? `<div style="font-size:11px;color:var(--amber);margin-top:4px"><i class="ti ti-lock" style="font-size:12px;vertical-align:-1px"></i> এই জবে ${fmtAmt(j.budgetHeld)} হোল্ড করা আছে${j.holdSettled?' (নিষ্পত্তি হয়ে গেছে)':''}</div>` : '';
     return `<div class="job-card ${j.status||'pending'}">
       <div class="job-poster">
         <div class="poster-av" style="${isAdminJob?'background:var(--purple)':''}">${isAdminJob?'🐝':initials(j.postedByName||'?')}</div>
         <div style="flex:1">
           <div style="font-size:14px;font-weight:800">${j.postedByName||'Unknown'}${isAdminJob?' <span class="badge purple" style="margin-left:6px">Admin Posted</span>':''}${isDaily?' <span class="badge teal" style="margin-left:6px">🔁 Daily Repeat</span>':''}${shots>1?` <span class="badge blue" style="margin-left:6px">📸 ${shots} Screenshots</span>`:''}${links.length>1?` <span class="badge amber" style="margin-left:6px">🔗 ${links.length} Links</span>`:''}</div>
           <div style="font-size:11.5px;color:var(--text3)">${j.postedByEmail||'—'}</div>
+          ${heldNote}
         </div>
         ${!isAdminJob?`<button class="btn btn-info btn-sm" onclick="viewPoster('${j.postedBy||''}')"><i class="ti ti-user"></i> Profile</button>
         <button class="btn btn-message btn-sm" title="এই জব পোস্ট নিয়ে সমস্যা থাকলে পোস্টারকে মেসেজ করুন" onclick="openMsgUser('${j.postedBy||''}')"><i class="ti ti-message-circle-2"></i></button>`:''}
@@ -2185,7 +2115,12 @@ function viewPoster(uid) {
 async function approveJob(id) {
   const j=S.jobs.find(x=>x.id===id); if(!j)return;
   const fb=window._fb; if(!fb)return;
-  await fb.updateDoc(fb.doc(fb.db,'jobs',id),{status:'approved'}).catch((e)=>{console.error(e);showToast('❌ Approve failed','error');});
+  // FIX: mark the balance-hold as settled on approval too (money was already
+  // deducted from the poster when they submitted the job; this just closes
+  // the "hold" bookkeeping so it can't be mistakenly refunded again later).
+  const upd = { status:'approved' };
+  if (j.budgetHeld && !j.holdSettled) upd.holdSettled = true;
+  await fb.updateDoc(fb.doc(fb.db,'jobs',id),upd).catch((e)=>{console.error(e);showToast('❌ Approve failed','error');});
   addLog(`✅ Job approved: "${j.title}" by ${j.postedByName||'Unknown'}`,'job','green');
   sendTgEvent('e4',{user:j.postedByName||'',title:j.title||''});
   addAdminNotif('✅ Job Approved',`"${j.title}" is now live for workers.`,'success');
@@ -2193,17 +2128,30 @@ async function approveJob(id) {
   showToast('✅ Job approved and published!','success');
 }
 
+// FIX (money-disappears bug): deleting a job used to just delete the
+// Firestore doc with no refund at all. If the job still had budgetHeld
+// (money already deducted from the poster's balance when they submitted
+// it) and it was never settled (approved/rejected), that money vanished
+// permanently. Now: refund first (if applicable), THEN delete.
 async function deleteJob(id, title) {
-  if (!confirm(`"${title}" জবটি স্থায়ীভাবে মুছে ফেলতে চান?`)) return;
+  const j = S.jobs.find(x=>x.id===id);
+  const needsRefund = j && j.budgetHeld && !j.holdSettled;
+  const warnExtra = needsRefund ? `\n\n💰 এই জবে হোল্ড করা ${fmtAmt(j.budgetHeld)} পোস্টকারীর ব্যালেন্সে ফেরত যাবে।` : '';
+  if (!confirm(`"${title}" জবটি স্থায়ীভাবে মুছে ফেলতে চান?${warnExtra}`)) return;
   const fb=window._fb; if(!fb)return;
-  await fb.deleteDoc(fb.doc(fb.db,'jobs',id)).catch((e)=>{console.error(e);showToast('❌ Delete failed','error');});
-  addLog(`🗑️ Job removed: "${title}"`,'job','red');
-  showToast('🗑️ Job removed','warn');
+  try {
+    if (needsRefund && j.postedBy && j.postedBy !== 'admin') {
+      await fb.updateDoc(fb.doc(fb.db,'users',j.postedBy),{ balance: fb.increment(j.budgetHeld), postingHold: fb.increment(-j.budgetHeld) }).catch(()=>{});
+      notifyUser(j.postedBy, '↩️ Job Removed — Refunded', `"${title}" was removed by admin. ${fmtAmt(j.budgetHeld)} has been refunded to your balance.`);
+      addLog(`↩️ Refunded ${fmtAmt(j.budgetHeld)} to ${j.postedByName||'poster'} (job deleted: "${title}")`,'job','amber');
+    }
+    await fb.deleteDoc(fb.doc(fb.db,'jobs',id));
+    addLog(`🗑️ Job removed: "${title}"`,'job','red');
+    showToast(needsRefund ? `🗑️ Job removed & ${fmtAmt(j.budgetHeld)} refunded` : '🗑️ Job removed','warn');
+  } catch(e){ console.error(e); showToast('❌ Delete failed','error'); }
 }
 
 // ===== POST / EDIT JOB (Admin) =====
-
-// Dynamic multi-link input rows. Each row: [Link N] [input] [remove ✕ if >1 row]
 let _linkFieldCount = 0;
 function addLinkField(prefillValue) {
   _linkFieldCount++;
@@ -2259,7 +2207,6 @@ function updatePjTypeUI() {
   if (linkLabel) linkLabel.textContent = (isDaily || type==='link') ? 'Direct Link(s) (URL) — Required' : 'Direct Link(s) (URL) — Optional Reference';
 }
 
-// Reset the modal to "create new" mode and open it. Used by the "Post New Job" button.
 function openPostJobModal() {
   S._editJobId = null;
   $('pjModalTitle').textContent = 'Post New Micro Job';
@@ -2276,9 +2223,6 @@ function openPostJobModal() {
   openModal('postJobModal');
 }
 
-// Open the same modal pre-filled with an existing ADMIN-posted job's data, in
-// "edit" mode (postJob() will update the existing Firestore doc instead of
-// creating a new one).
 function editJob(id) {
   const j = S.jobs.find(x=>x.id===id); if(!j) return;
   if (j.postedBy !== 'admin') { showToast('শুধু Admin-এর পোস্ট করা জব এডিট করা যাবে', 'error'); return; }
@@ -2330,10 +2274,9 @@ async function postJob() {
     } else {
       await fb.addDoc(fb.collection(fb.db,'jobs'),{
         title, category, type,
-        links,                              // ← full array of links (new)
-        link: links[0] || '',               // ← kept for backward compatibility with older code paths
+        links, link: links[0] || '',
         instructions, reward, limit, filled:0, country,
-        screenshotCount,                    // ← how many screenshot slots the worker app must show
+        screenshotCount,
         postedBy:'admin', postedByName:'WorkHive Admin', postedByEmail:'admin@workhive.app',
         status:'approved',
         submittedAt:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),
@@ -2369,7 +2312,8 @@ function renderTasks() {
     } else {
       proofCell = '<span style="color:var(--text3);font-size:11px">Link task</span>';
     }
-    const statusCell = `<span class="badge ${t.status==='approved'?'green':t.status==='pending'?'amber':'red'}">${t.status||'pending'}</span>${t.status==='rejected'&&t.rejectReason?`<div style="font-size:10.5px;color:var(--red);margin-top:4px;max-width:160px;line-height:1.4"><i class="ti ti-message-circle-2" style="font-size:12px;vertical-align:-1px"></i> ${t.rejectReason}</div>`:''}`;
+    const reviewedByPoster = t.jobPosterId && t.jobPosterId !== 'admin' && t.status !== 'pending';
+    const statusCell = `<span class="badge ${t.status==='approved'?'green':t.status==='pending'?'amber':'red'}">${t.status||'pending'}</span>${reviewedByPoster?`<div style="font-size:9.5px;color:var(--purple);margin-top:3px"><i class="ti ti-user" style="font-size:11px;vertical-align:-1px"></i> Reviewed by job poster</div>`:''}${t.status==='rejected'&&t.rejectReason?`<div style="font-size:10.5px;color:var(--red);margin-top:4px;max-width:160px;line-height:1.4"><i class="ti ti-message-circle-2" style="font-size:12px;vertical-align:-1px"></i> ${t.rejectReason}</div>`:''}`;
     return `
     <tr>
       <td>
@@ -2434,10 +2378,6 @@ async function approveTask(id) {
   }catch(e){ console.error(e); showToast('❌ Approve failed — check Firestore permissions','error'); }
 }
 
-// Permanently delete a task submission doc AND its uploaded screenshot(s) from
-// Firebase Storage (if any), so Storage usage doesn't keep growing. This does
-// NOT touch the user's balance — if the task was already approved & credited,
-// approve/reject that already happened stays as-is; this only clears the record + file(s).
 async function deleteTaskSubmission(id) {
   const t=S.tasks.find(x=>x.id===id); if(!t)return;
   const imgs = proofImagesOf(t);
@@ -2448,9 +2388,6 @@ async function deleteTaskSubmission(id) {
   if (!confirm(warn)) return;
   const fb=window._fb; if(!fb)return;
   try{
-    // NOTE: proof images may now live on Cloudinary (external URLs) instead of
-    // Firebase Storage — deleteObject() only works for actual Firebase Storage
-    // refs, so any Cloudinary URL is simply skipped here (harmless no-op).
     for (const url of imgs) {
       try { await fb.deleteObject(fb.fbStorageRef(fb.storage, url)); }
       catch(e){ /* not a Firebase Storage URL (e.g. Cloudinary) or already removed — ignore */ }
@@ -2551,6 +2488,16 @@ function openReject(type, id, label) {
   $('rejectTitle').innerHTML=`<i class="ti ti-message-circle-2" style="vertical-align:-3px;color:var(--purple)"></i> ${titles[type]||'Reject'}`;
   $('rejectSub').textContent=(label||'')+' — কারণ লিখুন (user দেখবে)';
   $('rejectReason').value='';
+  // Show a heads-up if this specific job has money held that will get refunded
+  const refundNote = $('rejectRefundNote');
+  if (refundNote) {
+    let showNote = false;
+    if (type === 'job') {
+      const j = S.jobs.find(x=>x.id===id);
+      showNote = !!(j && j.budgetHeld && !j.holdSettled);
+    }
+    refundNote.style.display = showNote ? 'flex' : 'none';
+  }
   openModal('rejectModal');
 }
 
@@ -2562,10 +2509,21 @@ async function confirmReject() {
   try{
     if(type==='job'){
       const j=S.jobs.find(x=>x.id===id);
-      await fb.updateDoc(fb.doc(fb.db,'jobs',id),{status:'rejected',rejectReason:reason});
-      addLog(`❌ Job rejected: "${j?.title}" — ${reason}`,'job','red');
-      notifyUser(j?.postedBy,'❌ Job Rejected',`Your job "${j?.title}" was not approved. Reason: ${reason}`);
-      showToast('❌ Job rejected','error');
+      // FIX (money-disappears bug): rejecting a user-posted job used to only
+      // flip status + notify — the balance held for that job's budget was
+      // never refunded. Now: if there's an unsettled hold, refund it to the
+      // poster's balance in the SAME update that marks holdSettled, so a
+      // second reject/delete on the same job can never double-refund.
+      const needsRefund = j && j.budgetHeld && !j.holdSettled && j.postedBy && j.postedBy !== 'admin';
+      const jobUpd = {status:'rejected',rejectReason:reason};
+      if (j && j.budgetHeld && !j.holdSettled) jobUpd.holdSettled = true;
+      await fb.updateDoc(fb.doc(fb.db,'jobs',id),jobUpd);
+      if (needsRefund) {
+        await fb.updateDoc(fb.doc(fb.db,'users',j.postedBy),{ balance: fb.increment(j.budgetHeld), postingHold: fb.increment(-j.budgetHeld) }).catch(()=>{});
+      }
+      addLog(`❌ Job rejected: "${j?.title}" — ${reason}${needsRefund?` (${fmtAmt(j.budgetHeld)} refunded)`:''}`,'job','red');
+      notifyUser(j?.postedBy,'❌ Job Rejected'+(needsRefund?' (Refunded)':''),`Your job "${j?.title}" was not approved. Reason: ${reason}${needsRefund?` ${fmtAmt(j.budgetHeld)} has been refunded to your balance.`:''}`);
+      showToast(needsRefund ? `❌ Job rejected & ${fmtAmt(j.budgetHeld)} refunded` : '❌ Job rejected','error');
     } else if(type==='deposit'){
       const d=S.deposits.find(x=>x.id===id);
       await fb.updateDoc(fb.doc(fb.db,'deposits',id),{status:'rejected',rejectReason:reason});
@@ -2782,6 +2740,12 @@ async function saveSettings() {
     banner:v('setBannerMsg'),
     bannerType:$('setBannerType')?.value||'info',
     spinEnabled: $('toggleSpin')?.checked!==false,
+    postFeatureEnabled: $('setPostEnabled')?.checked!==false,
+    postMinReward: parseFloat($('setPostMinReward')?.value)||0.02,
+    postMaxReward: parseFloat($('setPostMaxReward')?.value)||5.00,
+    postMinSlots: parseInt($('setPostMinSlots')?.value)||5,
+    postMaxSlots: parseInt($('setPostMaxSlots')?.value)||500,
+    postPlatformFeePct: parseFloat($('setPostFeePct')?.value)||10,
   });
   const fb=window._fb; if(!fb){showToast('Firebase not ready','error');return;}
   try{
@@ -2799,6 +2763,12 @@ async function saveSettings() {
       banner:S.settings.banner,
       bannerType:S.settings.bannerType,
       spinEnabled:S.settings.spinEnabled,
+      postFeatureEnabled:S.settings.postFeatureEnabled,
+      postMinReward:S.settings.postMinReward,
+      postMaxReward:S.settings.postMaxReward,
+      postMinSlots:S.settings.postMinSlots,
+      postMaxSlots:S.settings.postMaxSlots,
+      postPlatformFeePct:S.settings.postPlatformFeePct,
     }, {merge:true});
     addLog('⚙️ Settings updated (live on User App)','settings','green');
     showToast('💾 Settings saved! User App-এ লাইভ আপডেট হয়েছে।','success');
