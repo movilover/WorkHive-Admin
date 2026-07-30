@@ -897,7 +897,7 @@ if (window.Capacitor?.Plugins?.OneSignal) {
               <select id="bcChannel"><option value="notification">In-App Notification</option><option value="telegram">Telegram</option><option value="both">Both</option></select>
             </div>
             <div class="field"><label>Title</label><input type="text" id="bcTitle" placeholder="e.g. New Tasks Available!"></div>
-            <div class="field"><label>Message</label><textarea id="bcBody" placeholder="Write your message…"></textarea></div>
+            <div class="field"><label>Message</label><textarea id="bcBody" placeholder="Write your message…"></textarea><button type="button" class="btn btn-ghost btn-xs" style="margin-top:6px" onclick="aiComposeInto('bcBody','Write a short, friendly broadcast announcement in Bangla for all users of a micro-task earning app, about: ' + (v('bcTitle')||'an update'), this)"><i class="ti ti-sparkles"></i> AI দিয়ে মেসেজ লিখুন</button></div>
             <button class="btn btn-primary" style="width:100%" onclick="sendBroadcast()"><i class="ti ti-speakerphone"></i> Send Broadcast</button>
           </div>
           <div class="card">
@@ -1079,7 +1079,7 @@ if (window.Capacitor?.Plugins?.OneSignal) {
       <div><div class="modal-title" id="rejectTitle"><i class="ti ti-message-circle-2" style="vertical-align:-3px;color:var(--purple)"></i> Reject</div><div class="modal-sub" id="rejectSub"></div></div>
       <div class="modal-close" onclick="closeModal('rejectModal')"><i class="ti ti-x"></i></div>
     </div>
-    <div class="field"><label>Rejection Reason (User এটা দেখতে পাবে)</label><textarea id="rejectReason" rows="3" placeholder="যেমন: স্ক্রিনশট স্পষ্ট নয় / ভুল তথ্য / সময়সীমা পার হয়ে গেছে…"></textarea></div>
+    <div class="field"><label>Rejection Reason (User এটা দেখতে পাবে)</label><textarea id="rejectReason" rows="3" placeholder="যেমন: স্ক্রিনশট স্পষ্ট নয় / ভুল তথ্য / সময়সীমা পার হয়ে গেছে…"></textarea><button type="button" class="btn btn-ghost btn-xs" style="margin-top:6px" onclick="aiComposeInto('rejectReason','Write a short, polite, clear rejection reason in Bangla for a rejected task/job/deposit/withdrawal submission on a micro-task app', this)"><i class="ti ti-sparkles"></i> AI দিয়ে কারণ লিখুন</button></div>
     <div id="rejectRefundNote" class="alert info" style="display:none"><i class="ti ti-cash"></i> এই জবে হোল্ড করা বাজেট Reject করার সাথে সাথেই পোস্টকারীর ব্যালেন্সে ফেরত যাবে।</div>
     <div style="display:flex;gap:10px;margin-top:8px">
       <button class="btn btn-ghost" style="flex:1" onclick="closeModal('rejectModal')">Cancel</button>
@@ -1095,7 +1095,7 @@ if (window.Capacitor?.Plugins?.OneSignal) {
       <div class="modal-close" onclick="closeModal('msgUserModal')"><i class="ti ti-x"></i></div>
     </div>
     <div class="field"><label>Title</label><input type="text" id="msgTitle" placeholder="e.g. অ্যাকাউন্ট সংক্রান্ত তথ্য"></div>
-    <div class="field"><label>Message (এটা User-এর Notification আইকনে যাবে)</label><textarea id="msgBody" rows="4" placeholder="যেমন: আপনার সাবমিট করা তথ্যে সমস্যা আছে, দয়া করে সাপোর্টে যোগাযোগ করুন…"></textarea></div>
+    <div class="field"><label>Message (এটা User-এর Notification আইকনে যাবে)</label><textarea id="msgBody" rows="4" placeholder="যেমন: আপনার সাবমিট করা তথ্যে সমস্যা আছে, দয়া করে সাপোর্টে যোগাযোগ করুন…"></textarea><button type="button" class="btn btn-ghost btn-xs" style="margin-top:6px" onclick="aiComposeInto('msgBody','Write a short, polite, professional message in Bangla from a micro-task platform admin to a user', this)"><i class="ti ti-sparkles"></i> AI দিয়ে মেসেজ লিখুন</button></div>
     <div style="display:flex;gap:10px;margin-top:8px">
       <button class="btn btn-ghost" style="flex:1" onclick="closeModal('msgUserModal')">Cancel</button>
       <button class="btn btn-message" style="flex:1" onclick="confirmSendMsg()"><i class="ti ti-send"></i> Send Message</button>
@@ -1160,7 +1160,7 @@ if (window.Capacitor?.Plugins?.OneSignal) {
       <button type="button" class="btn btn-ghost btn-sm" onclick="addLinkField()"><i class="ti ti-plus"></i> Add Another Link</button>
       <div class="lf-hint" id="pjLinkHint">একাধিক লিংক দিলে Worker-কে সবগুলো লিংকই ভিজিট করতে হবে।</div>
     </div>
-    <div class="field"><label>Instructions</label><textarea id="pjInstructions" rows="3" placeholder="Worker-দের জন্য ধাপে ধাপে নির্দেশনা লিখুন"></textarea></div>
+    <div class="field"><label>Instructions</label><textarea id="pjInstructions" rows="3" placeholder="Worker-দের জন্য ধাপে ধাপে নির্দেশনা লিখুন"></textarea><button type="button" class="btn btn-ghost btn-xs" style="margin-top:6px" onclick="aiComposeInto('pjInstructions','Write clear, numbered, step-by-step instructions in Bangla for a micro-task worker, based on the job title: ' + (v('pjTitle')||'this task'), this)"><i class="ti ti-sparkles"></i> AI দিয়ে নির্দেশনা লিখুন</button></div>
     <div class="form-grid">
       <div class="field"><label>Reward per Task ($)</label><input type="number" id="pjReward" placeholder="0.10" step="0.01" min="0.01"></div>
       <div class="field" id="pjLimitField"><label>Worker Limit (slots)</label><input type="number" id="pjLimit" placeholder="100" min="1"></div>
@@ -1383,6 +1383,37 @@ function $(id) { return document.getElementById(id); }
 function v(id) { return ($(id)||{}).value?.trim()||''; }
 function ls(k,val) { if(val!==undefined) { localStorage.setItem(k,val); return; } return localStorage.getItem(k)||''; }
 function fmtAmt(n) { return '$'+(parseFloat(n)||0).toFixed(2); }
+
+// ===== AI PROXY (Groq + Gemini via Cloudflare Worker) =====
+const AI_PROXY_URL = 'https://workhive-ai-proxy.omor-faruk-sojol-2.workers.dev';
+async function callAIProxy(prompt, systemPrompt = '', provider = 'groq') {
+  const res = await fetch(AI_PROXY_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ provider, prompt, systemPrompt }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.ok) throw new Error(data.error || 'AI request failed');
+  return data.text || '';
+}
+async function aiComposeInto(fieldId, instruction, btn) {
+  const el = $(fieldId); if (!el) return;
+  const current = (el.value || '').trim();
+  if (btn) { btn.disabled = true; btn.dataset.orig = btn.innerHTML; btn.innerHTML = '<i class="ti ti-loader"></i> লিখছে...'; }
+  try {
+    const text = await callAIProxy(
+      instruction + (current ? ('\n\nExisting draft to improve (keep the same language, Bangla/English as given): ' + current) : ''),
+      'You are helping a Bangladeshi micro-task platform admin write clear, professional Bangla/English text for the app. Keep it concise.'
+    );
+    if (text) { el.value = text; showToast('✅ AI text generated', 'success'); }
+  } catch (e) {
+    console.error(e);
+    showToast('❌ AI request failed — check AI_PROXY_URL / Worker secrets', 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = btn.dataset.orig; }
+  }
+}
+
 function fmtDate(ts) { if(!ts) return '—'; if(ts.toDate) return ts.toDate().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); return ts; }
 function initials(name) { return (name||'?').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase()||'?'; }
 function avColor(n) { const colors=['blue','purple','teal','amber','pink']; const i=(n||'').charCodeAt(0)%colors.length; return colors[i]||'blue'; }
@@ -1581,21 +1612,8 @@ async function loadUsers() {
 function findUser(id) { return S.users.find(u=>u.id===id); }
 
 // ===== FIRESTORE: JOBS =====
-// ── FIX (auto-reject bug): normalize every job doc's status + poster identity
-// right at ingestion, so the rest of the code (which already assumes
-// status is exactly 'pending' | 'approved' | 'rejected', and postedBy is
-// either 'admin' or a uid) keeps working unchanged everywhere it's used.
-//
-// Root cause this fixes: the User App writes user-submitted jobs with
-// status:'pending_review' and the poster's uid in postedById (not
-// postedBy). Every render/branch in this file only recognizes literal
-// 'pending' and 'approved' — anything else (including 'pending_review')
-// fell through to the "else" branch and displayed as Rejected, even though
-// nobody ever clicked Reject. Same story for postedBy: reading a field that
-// doesn't exist meant Profile/Message buttons and the poster stats panel
-// couldn't resolve the actual user.
 function normalizeJobDoc(id, data) {
-  const isAdmin = data.postedByAdmin !== false; // matches User App convention: undefined/true => admin, false => user job
+  const isAdmin = data.postedByAdmin !== false;
   const postedBy = isAdmin ? 'admin' : (data.postedBy || data.postedById || '');
   const postedByEmail = data.postedByEmail || (findUser(postedBy)?.email) || '';
   let status = data.status || 'pending';
@@ -2115,9 +2133,6 @@ function viewPoster(uid) {
 async function approveJob(id) {
   const j=S.jobs.find(x=>x.id===id); if(!j)return;
   const fb=window._fb; if(!fb)return;
-  // FIX: mark the balance-hold as settled on approval too (money was already
-  // deducted from the poster when they submitted the job; this just closes
-  // the "hold" bookkeeping so it can't be mistakenly refunded again later).
   const upd = { status:'approved' };
   if (j.budgetHeld && !j.holdSettled) upd.holdSettled = true;
   await fb.updateDoc(fb.doc(fb.db,'jobs',id),upd).catch((e)=>{console.error(e);showToast('❌ Approve failed','error');});
@@ -2128,11 +2143,6 @@ async function approveJob(id) {
   showToast('✅ Job approved and published!','success');
 }
 
-// FIX (money-disappears bug): deleting a job used to just delete the
-// Firestore doc with no refund at all. If the job still had budgetHeld
-// (money already deducted from the poster's balance when they submitted
-// it) and it was never settled (approved/rejected), that money vanished
-// permanently. Now: refund first (if applicable), THEN delete.
 async function deleteJob(id, title) {
   const j = S.jobs.find(x=>x.id===id);
   const needsRefund = j && j.budgetHeld && !j.holdSettled;
@@ -2488,7 +2498,6 @@ function openReject(type, id, label) {
   $('rejectTitle').innerHTML=`<i class="ti ti-message-circle-2" style="vertical-align:-3px;color:var(--purple)"></i> ${titles[type]||'Reject'}`;
   $('rejectSub').textContent=(label||'')+' — কারণ লিখুন (user দেখবে)';
   $('rejectReason').value='';
-  // Show a heads-up if this specific job has money held that will get refunded
   const refundNote = $('rejectRefundNote');
   if (refundNote) {
     let showNote = false;
@@ -2509,11 +2518,6 @@ async function confirmReject() {
   try{
     if(type==='job'){
       const j=S.jobs.find(x=>x.id===id);
-      // FIX (money-disappears bug): rejecting a user-posted job used to only
-      // flip status + notify — the balance held for that job's budget was
-      // never refunded. Now: if there's an unsettled hold, refund it to the
-      // poster's balance in the SAME update that marks holdSettled, so a
-      // second reject/delete on the same job can never double-refund.
       const needsRefund = j && j.budgetHeld && !j.holdSettled && j.postedBy && j.postedBy !== 'admin';
       const jobUpd = {status:'rejected',rejectReason:reason};
       if (j && j.budgetHeld && !j.holdSettled) jobUpd.holdSettled = true;
