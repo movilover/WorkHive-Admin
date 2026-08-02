@@ -264,6 +264,7 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
 .log-item:last-child{border-bottom:none}
 .log-dot{width:7px;height:7px;border-radius:50%;margin-top:5px;flex-shrink:0}
 .log-dot.green{background:var(--teal)}.log-dot.blue{background:var(--blue)}.log-dot.red{background:var(--red)}.log-dot.amber{background:var(--amber)}
+.log-dot.purple{background:var(--purple)}
 .log-text{font-size:12.5px;color:var(--text2);flex:1;line-height:1.5}
 .log-text strong{color:var(--text);font-weight:700}
 .log-time{font-size:10.5px;color:var(--text3);white-space:nowrap;margin-left:6px}
@@ -365,6 +366,74 @@ tr.dup-row td{background:rgba(239,68,68,0.03)}
 .ujs-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
 .ujs-val{font-size:19px;font-weight:900;line-height:1}
 .ujs-lbl{font-size:10.5px;color:var(--text3);font-weight:700;text-transform:uppercase;margin-top:2px}
+
+/* ===== AI Dev Studio (Precision Patch Engine) ===== */
+.dev-target-row{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.dev-target-pill{flex:1;min-width:200px;display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:var(--r-lg);background:var(--bg2);border:1.5px solid var(--border);cursor:pointer;transition:.15s}
+.dev-target-pill:hover{border-color:var(--border3)}
+.dev-target-pill.active{border-color:var(--purple-border);background:var(--purple-bg)}
+.dev-target-pill .dtp-ico{width:38px;height:38px;border-radius:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.dev-target-pill.active .dtp-ico{background:var(--purple);color:#fff}
+.dev-target-pill .dtp-label{font-size:13.5px;font-weight:800}
+.dev-target-pill .dtp-sub{font-size:10.5px;color:var(--text3);margin-top:1px}
+.provider-toggle{display:flex;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:3px;gap:3px}
+.provider-opt{flex:1;text-align:center;padding:9px;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;color:var(--text3);transition:.15s}
+.provider-opt.active{background:var(--purple);color:#fff}
+.upload-box{border:1.5px dashed var(--border2);border-radius:var(--radius);padding:16px;text-align:center;cursor:pointer;transition:.15s;background:rgba(255,255,255,.02)}
+.upload-box:hover{border-color:var(--purple-border);background:rgba(168,85,247,.03)}
+.upload-box.has-img{padding:10px}
+.upload-preview{max-width:100%;max-height:160px;border-radius:8px;display:block;margin:0 auto 8px}
+.patch-stats-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.pstat{flex:1;min-width:90px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;text-align:center}
+.pstat .n{font-size:18px;font-weight:900}
+.pstat .l{font-size:9.5px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-top:2px}
+.pstat.ok .n{color:var(--green)}
+.pstat.bad .n{color:var(--red)}
+.patch-item{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden}
+.patch-hd{display:flex;align-items:center;gap:8px;padding:11px 13px;cursor:pointer;flex-wrap:wrap}
+.patch-hd:hover{background:rgba(255,255,255,.02)}
+.patch-status{font-size:9.5px;font-weight:800;padding:2px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.3px;flex-shrink:0}
+.patch-status.applied{background:var(--green-bg);color:var(--green)}
+.patch-status.not_found,.patch-status.wrong_file,.patch-status.no_anchor,.patch-status.invalid_action{background:var(--red-bg);color:var(--red)}
+.patch-status.ambiguous{background:var(--amber-bg);color:var(--amber)}
+.action-badge{font-size:9.5px;font-weight:800;padding:2px 8px;border-radius:6px;flex-shrink:0;font-family:'SFMono-Regular',Consolas,Menlo,monospace}
+.action-badge.INSERT_AFTER{background:var(--blue-bg);color:var(--blue)}
+.action-badge.INSERT_BEFORE{background:var(--teal-bg);color:var(--teal)}
+.action-badge.REPLACE{background:var(--purple-bg);color:var(--purple)}
+.patch-desc{font-size:12.5px;color:var(--text);flex:1;font-weight:600;min-width:150px}
+.patch-toggle-ico{color:var(--text3);font-size:14px;transition:transform .15s;flex-shrink:0}
+.patch-toggle-ico.open{transform:rotate(180deg)}
+.patch-body{display:none;padding:0 13px 13px}
+.patch-body.open{display:block}
+.patch-file-path{font-size:10.5px;color:var(--text3);margin-bottom:8px;font-family:monospace}
+.diff-block{font-family:'SFMono-Regular',Consolas,Menlo,monospace;font-size:11px;line-height:1.65;background:#0B0E14;border:1px solid var(--border);border-radius:8px;padding:10px 12px;overflow-x:auto;white-space:pre-wrap;word-break:break-word;max-height:280px;overflow-y:auto}
+.diff-line{display:block;padding:1px 6px;border-radius:3px;white-space:pre-wrap}
+.diff-line.ctx{color:var(--text3);opacity:.65}
+.diff-line.anchor{color:#93a3c4;background:rgba(255,255,255,.03)}
+.diff-line.add{color:#86efac;background:rgba(34,197,94,.09)}
+.diff-line.del{color:#fca5a5;background:rgba(239,68,68,.09);text-decoration:line-through;text-decoration-color:rgba(252,165,165,.5)}
+.preview-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;margin-bottom:16px}
+.preview-hd{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg3);flex-wrap:wrap;gap:8px}
+.preview-hd-title{font-size:12px;font-weight:700;color:var(--text2);display:flex;align-items:center;gap:7px}
+.preview-target-tabs{display:flex;gap:4px}
+.preview-target-tab{padding:6px 13px;font-size:11.5px;font-weight:800;color:var(--text3);cursor:pointer;border-radius:20px;background:var(--bg4);border:1px solid var(--border)}
+.preview-target-tab.active{background:var(--purple);color:#fff;border-color:transparent}
+#devPreviewFrame{width:100%;height:520px;border:none;background:#fff}
+.preview-tabs{display:flex;gap:4px;padding:8px 14px 0;background:var(--bg3)}
+.preview-tab{padding:7px 14px;font-size:11.5px;font-weight:700;color:var(--text3);cursor:pointer;border-radius:8px 8px 0 0}
+.preview-tab.active{background:var(--bg2);color:var(--text)}
+#devPreviewCodeBox{width:100%;height:520px;border:none;background:#0B0E14;color:#E8EBF5;font-family:'SFMono-Regular',Consolas,Menlo,monospace;font-size:11.5px;line-height:1.6;padding:14px;resize:none;outline:none}
+.decision-bar{display:flex;gap:10px;padding:14px;border-top:1px solid var(--border);background:var(--bg3)}
+.decision-bar .btn{flex:1;justify-content:center;padding:12px;font-size:13px}
+.commit-item{display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid var(--border)}
+.commit-item:last-child{border-bottom:none}
+.commit-icon{width:34px;height:34px;border-radius:9px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;color:var(--text2)}
+.commit-body{flex:1;min-width:0}
+.commit-msg{font-size:12.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.commit-meta{font-size:10.5px;color:var(--text3);margin-top:2px}
+.commit-sha{font-family:monospace;font-size:10.5px;color:var(--text3);background:var(--bg3);padding:2px 7px;border-radius:6px}
+.spin-ico{animation:devspin 1s linear infinite;display:inline-block}
+@keyframes devspin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 
 @media(max-width:1100px){.stats-grid{grid-template-columns:repeat(2,1fr)}.quick-actions{grid-template-columns:1fr 1fr}}
 @media(max-width:800px){.two-col,.three-col{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.content-area{padding:16px}.topbar{padding:0 14px}.user-job-stats{grid-template-columns:1fr}}
@@ -543,6 +612,12 @@ tr.dup-row td{background:rgba(239,68,68,0.03)}
           </div>
 
           <div class="qm-section-lbl">System</div>
+          <div class="qm-row" onclick="goScreen('devstudio')">
+            <div class="qm-icon" style="background:var(--purple-bg);color:var(--purple)"><i class="ti ti-code"></i></div>
+            <div class="qm-text"><div class="qm-label">🧬 AI Dev Studio</div><div class="qm-sub">User Site ও Admin Panel — উভয়ের কোড AI দিয়ে Precision Patch করুন</div></div>
+            <span class="qm-status-pill off" id="qmDevGhStatus">Not Connected</span>
+            <i class="ti ti-chevron-right qm-chev"></i>
+          </div>
           <div class="qm-row" onclick="goScreen('settings')">
             <div class="qm-icon" style="background:var(--bg4);color:var(--text2)"><i class="ti ti-settings"></i></div>
             <div class="qm-text"><div class="qm-label">Site Settings</div><div class="qm-sub">User App-এ লাইভ কনফিগার করুন</div></div>
@@ -738,6 +813,7 @@ await setDoc(doc(db, 'users', newUser.uid), {
             <select class="styled-select" onchange="filterJobs(this.value)">
               <option value="all">All Status</option>
               <option value="pending">Pending</option>
+              <option value="pending_reapproval">🔄 Needs Re-Approval</option>
               <option value="approved">Approved</option>
               <option value="rejected">Rejected</option>
             </select>
@@ -745,6 +821,26 @@ await setDoc(doc(db, 'users', newUser.uid), {
           </div>
         </div>
         <div class="alert info"><i class="ti ti-info-circle"></i> ইউজারদের পোস্ট করা জব শুধুমাত্র আপনার অনুমোদনের পরেই Worker দের কাছে দৃশ্যমান হবে। Admin নিজে জব পোস্ট করলে তা সাথে সাথেই Live হয়ে যাবে এবং প্রয়োজনে পরে Edit বা Delete করা যাবে। <strong>জব Reject বা Delete করলে ইউজারের হোল্ড করা বাজেট (যদি থাকে) স্বয়ংক্রিয়ভাবে তার ওয়ালেটে ফেরত যাবে।</strong></div>
+
+        <div class="alert warn">
+          <i class="ti ti-refresh"></i>
+          <div style="flex:1">
+            <strong>🔄 Job Edit → Re-Approval Flow</strong>
+            <div style="margin-top:4px">ইউজার তার Approved থাকা কোনো জব Edit করলে, সেটা স্বয়ংক্রিয়ভাবে <b>"Needs Re-Approval"</b> স্ট্যাটাসে চলে আসবে এবং Worker-দের কাছ থেকে সাথে সাথে লুকিয়ে যাবে — যতক্ষণ না আপনি আবার Approve করছেন। এটা কাজ করার জন্য User Site-এর job-edit save ফাংশনে নিচের পরিবর্তনটুকু যোগ করতে হবে (এটা এখন <b>🧬 AI Dev Studio → User Site</b> টার্গেট দিয়ে এক ক্লিকেই Patch করা যাবে):</div>
+            <div class="code-block-wrap">
+              <div class="code-block-lbl"><i class="ti ti-code"></i> Job edit সেভ করার ফাংশনে (Firestore update-এর ঠিক আগে)</div>
+              <pre class="code-block"><code><span class="cm">// আগে থেকে Approved থাকা জব ইউজার এডিট করলে, স্ট্যাটাস reset করে re-approval-এ পাঠান</span>
+const jobSnap = await getDoc(doc(db, 'jobs', jobId));
+const wasApproved = jobSnap.exists() && jobSnap.data().status === 'approved';
+
+await updateDoc(doc(db, 'jobs', jobId), {
+  ...updatedFields,             <span class="cm">// title, instructions, reward ইত্যাদি নতুন মান</span>
+  status: wasApproved ? 'pending_reapproval' : (jobSnap.data()?.status || 'pending'),
+  editedAt: serverTimestamp(),
+});</code></pre>
+            </div>
+          </div>
+        </div>
 
         <div class="job-src-tabs" id="jobSrcTabs"></div>
         <div class="user-job-stats" id="userJobStats" style="display:none"></div>
@@ -1019,6 +1115,119 @@ if (window.Capacitor?.Plugins?.OneSignal) {
         </div>
       </div>
 
+      <!-- ===== AI DEV STUDIO ===== -->
+      <div class="screen" id="screen-devstudio">
+        <div class="sec-hd">
+          <h2><button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')" style="margin-right:6px"><i class="ti ti-arrow-left"></i></button><i class="ti ti-code"></i> AI Dev Studio — Precision Patch Engine</h2>
+        </div>
+        <div class="alert info"><i class="ti ti-shield-check"></i> <b>Precision মোড:</b> AI পুরো ফাইল কখনো রি-রাইট করবে না। সে শুধু নির্দিষ্ট <code>searchAnchor</code> খুঁজে সেই জায়গায় নতুন কোড <code>INSERT_AFTER</code> / <code>INSERT_BEFORE</code> করবে অথবা ঠিক ওই অংশটুকু <code>REPLACE</code> করবে। কোনো Patch anchor খুঁজে না পেলে বা একাধিকবার মিললে তা স্পষ্টভাবে ⚠️ সতর্কবার্তা দিয়ে দেখাবে — কখনো অনুমান করে বসাবে না।</div>
+
+        <div class="job-src-tabs" id="devSubNav"></div>
+
+        <!-- STUDIO PANE -->
+        <div id="devPane-studio">
+          <div class="dev-target-row" id="devTargetRow"></div>
+          <div class="alert warn" id="devNoPathAlert" style="display:none"><i class="ti ti-alert-triangle"></i> এই টার্গেটের জন্য এখনো ফাইল Path সেট করা হয়নি। আগে <b>Dev Settings</b> ট্যাবে গিয়ে GitHub সংযোগ ও ফাইল Path বসান।</div>
+
+          <div class="two-col">
+            <div>
+              <div class="card">
+                <div class="card-title"><i class="ti ti-robot"></i> AI Provider</div>
+                <div class="provider-toggle">
+                  <div class="provider-opt active" id="devProvGemini" onclick="devSetProvider('gemini')">✨ Gemini <span style="font-weight:500;opacity:.7">(টেক্সট + ছবি)</span></div>
+                  <div class="provider-opt" id="devProvGroq" onclick="devSetProvider('groq')">⚡ Groq <span style="font-weight:500;opacity:.7">(দ্রুত, শুধু টেক্সট)</span></div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-title"><i class="ti ti-message-2"></i> Change Request</div>
+                <div class="field"><label>কী পরিবর্তন / নতুন ফিচার চান?</label><textarea id="devPrompt" placeholder="উদাহরণ: এডমিন প্যানেলে Jobs স্ক্রিনে একটা নতুন Filter বাটন যোগ করো।"></textarea></div>
+                <div class="field"><label>নির্দিষ্ট কোড অংশ (ঐচ্ছিক — নির্ভুলতা বাড়ায়)</label><textarea id="devTargetArea" placeholder="চাইলে এখানে ঠিক যে অংশটার আশেপাশে পরিবর্তন করতে চান তার কোড পেস্ট করুন। খালি রাখলে AI নিজে থেকেই প্রাসঙ্গিক অংশ খুঁজে বের করবে।" style="min-height:70px"></textarea></div>
+                <div class="field"><label>ডিজাইন/মকআপ ছবি (ঐচ্ছিক)</label>
+                  <div class="upload-box" id="devImgBox" onclick="document.getElementById('devImgInput').click()">
+                    <div id="devImgInner"><div style="font-size:26px;margin-bottom:6px">🖼️</div><div style="font-size:12px;color:var(--text3);font-weight:600">ছবি বেছে নিতে ক্লিক করুন</div></div>
+                  </div>
+                  <input type="file" id="devImgInput" accept="image/*" style="display:none" onchange="devHandleImage(this)">
+                </div>
+                <button class="btn btn-primary" id="devGenBtn" style="width:100%" onclick="devGenerateChanges()"><i class="ti ti-wand"></i> Generate Precision Patch</button>
+              </div>
+            </div>
+            <div>
+              <div class="card" id="devPatchCard" style="display:none">
+                <div class="card-title"><i class="ti ti-git-commit"></i> AI-এর প্রস্তাবিত Patch সমূহ — <span id="devPatchTargetLabel"></span></div>
+                <div id="devPatchSummaryText" style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.6"></div>
+                <div class="patch-stats-row" id="devPatchStats"></div>
+                <div id="devPatchList"></div>
+              </div>
+              <div class="card" id="devRawCard" style="display:none">
+                <div class="card-title"><i class="ti ti-alert-triangle"></i> AI বৈধ JSON দেয়নি — Raw আউটপুট</div>
+                <div class="diff-block" id="devRawText"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="preview-wrap" id="devPreviewWrap" style="display:none">
+            <div class="preview-hd">
+              <div class="preview-hd-title"><i class="ti ti-device-desktop"></i> Live Preview (এখনো GitHub-এ প্রকাশিত হয়নি)</div>
+              <div class="preview-target-tabs" id="devPreviewTargetTabs"></div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn btn-ghost btn-sm" onclick="devOpenPreviewNewTab()"><i class="ti ti-external-link"></i> নতুন ট্যাবে</button>
+                <button class="btn btn-ghost btn-sm" onclick="devCopyGeneratedCode()"><i class="ti ti-copy"></i> Copy</button>
+                <button class="btn btn-ghost btn-sm" onclick="devRefreshPreviewFromCode()"><i class="ti ti-refresh"></i> Refresh</button>
+              </div>
+            </div>
+            <div class="preview-tabs">
+              <div class="preview-tab active" id="devTabPreview" onclick="devSwitchInnerTab('preview')">👁️ Preview</div>
+              <div class="preview-tab" id="devTabCode" onclick="devSwitchInnerTab('code')">📄 Code (edit করা যাবে)</div>
+            </div>
+            <iframe id="devPreviewFrame" sandbox="allow-scripts allow-forms allow-modals allow-popups"></iframe>
+            <textarea id="devPreviewCodeBox" style="display:none" spellcheck="false" oninput="devOnCodeBoxEdit()"></textarea>
+            <div class="decision-bar">
+              <button class="btn btn-danger" onclick="devDiscardChanges()"><i class="ti ti-x"></i> Reject / Discard</button>
+              <button class="btn btn-green" onclick="devAcceptAndCommit()" id="devAcceptBtn"><i class="ti ti-rocket"></i> Accept &amp; Commit to GitHub</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- HISTORY PANE -->
+        <div id="devPane-history" style="display:none">
+          <div class="alert warn"><i class="ti ti-alert-triangle"></i> Rollback করলে সেটাও একটা নতুন commit হিসেবে যোগ হবে — GitHub history কখনো হারাবে না।</div>
+          <div class="dev-target-row" id="devHistTargetRow"></div>
+          <div class="card" style="padding:0"><div id="devCommitsList"></div></div>
+        </div>
+
+        <!-- SETTINGS PANE -->
+        <div id="devPane-settings" style="display:none">
+          <div class="two-col">
+            <div>
+              <div class="card">
+                <div class="card-title"><i class="ti ti-brand-github"></i> GitHub Direct Connection</div>
+                <div class="alert warn"><i class="ti ti-alert-triangle"></i> Token ব্রাউজারের localStorage-এ সেভ থাকে। Token-এ শুধু এই repo-এর <b>Contents: Read & Write</b> পারমিশন দিন (Fine-grained PAT)।</div>
+                <div class="field"><label>GitHub Personal Access Token</label><div class="pw-wrap"><input type="password" id="devGhToken" placeholder="github_pat_... বা ghp_..."><span class="pw-eye" onclick="devTogglePw('devGhToken')"><i class="ti ti-eye"></i></span></div></div>
+                <div class="field"><label>Repository Path (owner/repo)</label><input type="text" id="devGhRepoPath" placeholder="your-username/your-repo"></div>
+                <div class="field"><label>Branch</label><input type="text" id="devGhBranch" placeholder="main" value="main"></div>
+                <button class="btn btn-primary" style="width:100%;margin-top:6px" onclick="devSaveGhSettings()"><i class="ti ti-device-floppy"></i> Save &amp; Test Connection</button>
+                <div class="lf-hint" style="margin-top:8px" id="devConnResult"></div>
+              </div>
+              <div class="card">
+                <div class="card-title"><i class="ti ti-key"></i> AI API Keys</div>
+                <div class="field"><label>Gemini API Key</label><div class="pw-wrap"><input type="password" id="devGeminiKey" placeholder="AIza..."><span class="pw-eye" onclick="devTogglePw('devGeminiKey')"><i class="ti ti-eye"></i></span></div></div>
+                <div class="field"><label>Groq API Key (ঐচ্ছিক)</label><div class="pw-wrap"><input type="password" id="devGroqKey" placeholder="gsk_..."><span class="pw-eye" onclick="devTogglePw('devGroqKey')"><i class="ti ti-eye"></i></span></div></div>
+                <button class="btn btn-ghost" style="width:100%" onclick="devSaveApiKeys()"><i class="ti ti-device-floppy"></i> Save Keys</button>
+              </div>
+            </div>
+            <div>
+              <div class="card">
+                <div class="card-title"><i class="ti ti-files"></i> Target File Paths</div>
+                <div class="lf-hint" style="margin-bottom:12px">রিপোর ভেতরের ঠিক path দিন (যেমন: <code>index.html</code> বা <code>admin/index.html</code>)।</div>
+                <div class="field"><label>🧑‍💻 User Site — File Path</label><input type="text" id="devPathUser" placeholder="index.html"></div>
+                <div class="field"><label>🛠️ Admin Panel — File Path</label><input type="text" id="devPathAdmin" placeholder="admin/index.html"></div>
+                <button class="btn btn-primary" style="width:100%" onclick="devSaveTargetPaths()"><i class="ti ti-device-floppy"></i> Save File Paths</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ===== LOGS ===== -->
       <div class="screen" id="screen-logs">
         <div class="sec-hd">
@@ -1030,6 +1239,7 @@ if (window.Capacitor?.Plugins?.OneSignal) {
               <option value="deposit">Deposit</option>
               <option value="withdrawal">Withdrawal</option>
               <option value="job">Jobs</option>
+              <option value="devstudio">Dev Studio</option>
             </select>
             <button class="btn btn-ghost btn-sm" onclick="clearLogs()"><i class="ti ti-trash"></i> Clear Logs</button>
           </div>
@@ -1283,6 +1493,16 @@ const S = {
     postFeatureEnabled: true, postMinReward: 0.02, postMaxReward: 5.00, postMinSlots: 5, postMaxSlots: 500, postPlatformFeePct: 10 },
 };
 
+// 🧬 AI Dev Studio state — dual-target (User Site / Admin Panel) precision patch engine
+S.dev = {
+  provider: 'gemini', activeTarget: 'user', previewTarget: 'user', subTab: 'studio',
+  targets: {
+    user:  { label: 'User Site',   path: '', content: '', sha: '', patches: [], previewContent: '', summary: '' },
+    admin: { label: 'Admin Panel', path: '', content: '', sha: '', patches: [], previewContent: '', summary: '' },
+  },
+  pendingImage: null, historyTarget: 'user', devInited: false,
+};
+
 const TG_EVENTS = [
   { id: 'e1', label: 'New User Registration', icon: 'ti-user-plus', enabled: true, msg: '👤 New user: {name} ({email})' },
   { id: 'e2', label: 'Deposit Request', icon: 'ti-arrow-bar-to-down', enabled: true, msg: '💰 Deposit: {user} — ${amount} via {method}. TxID: {txnId}' },
@@ -1359,6 +1579,7 @@ function initAdmin() {
   else { setOsConnected(false); }
   const fe = ls('wha_fb_email');
   if (fe && $('setFbEmail')) $('setFbEmail').value = fe;
+  devUpdateGhStatusPill();
 }
 function updateClock() { $('adminClock').textContent = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
 
@@ -1384,7 +1605,7 @@ function v(id) { return ($(id)||{}).value?.trim()||''; }
 function ls(k,val) { if(val!==undefined) { localStorage.setItem(k,val); return; } return localStorage.getItem(k)||''; }
 function fmtAmt(n) { return '$'+(parseFloat(n)||0).toFixed(2); }
 
-// ===== AI PROXY (Groq + Gemini via Cloudflare Worker) =====
+// ===== AI PROXY (Groq + Gemini via Cloudflare Worker) — used by the small "AI দিয়ে লিখুন" compose buttons =====
 const AI_PROXY_URL = 'https://workhive-ai-proxy.omor-faruk-sojol-2.workers.dev';
 async function callAIProxy(prompt, systemPrompt = '', provider = 'groq') {
   const res = await fetch(AI_PROXY_URL, {
@@ -1438,12 +1659,13 @@ function openLightbox(url) { const lb=$('imgLightbox'); $('lightboxImg').src=url
 function closeLightbox() { $('imgLightbox').classList.remove('show'); }
 
 // ===== NAVIGATION =====
-const pageNames = { dashboard:'Dashboard', users:'User Management', thirdgen:'Third Generation', jobs:'Job Approvals', tasks:'Task Submissions', deposits:'Deposits', withdrawals:'Withdrawals', 'payment-methods':'Payment Methods', telegram:'Telegram Bot', broadcast:'Broadcast', notifications:'Notifications', settings:'Site Settings', logs:'Activity Logs' };
+const pageNames = { dashboard:'Dashboard', users:'User Management', thirdgen:'Third Generation', jobs:'Job Approvals', tasks:'Task Submissions', deposits:'Deposits', withdrawals:'Withdrawals', 'payment-methods':'Payment Methods', telegram:'Telegram Bot', broadcast:'Broadcast', notifications:'Notifications', settings:'Site Settings', logs:'Activity Logs', devstudio:'AI Dev Studio' };
 function goScreen(name) {
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   const sc = $('screen-'+name); if(sc) sc.classList.add('active');
   window.scrollTo(0,0);
   if (name==='thirdgen') renderThirdGen();
+  if (name==='devstudio') devInit();
 }
 function goPushSettings() {
   goScreen('telegram');
@@ -1746,7 +1968,7 @@ function updateStats() {
   const pendW = S.withdrawals.filter(w=>w.status==='pending');
   const totalPW = pendW.reduce((a,w)=>a+(w.amount||0),0);
   const activeJobs = S.jobs.filter(j=>j.status==='approved').length;
-  const pendJobs = S.jobs.filter(j=>j.status==='pending').length;
+  const pendJobs = S.jobs.filter(j=>j.status==='pending'||j.status==='pending_reapproval').length;
   const kycPend = S.users.filter(u=>u.kyc==='Pending').length;
   const confDep = S.deposits.filter(d=>d.status==='confirmed').reduce((a,d)=>a+(d.amount||0),0);
   const pendDep = S.deposits.filter(d=>d.status==='pending').length;
@@ -1772,7 +1994,7 @@ function updateStats() {
   function set(id,v){const el=$(id);if(el)el.textContent=v;}
 }
 function updateBadges() {
-  const pj=S.jobs.filter(j=>j.status==='pending').length;
+  const pj=S.jobs.filter(j=>j.status==='pending'||j.status==='pending_reapproval').length;
   const pw=S.withdrawals.filter(w=>w.status==='pending').length;
   const pd=S.deposits.filter(d=>d.status==='pending').length;
   const pt=S.tasks.filter(t=>t.status==='pending').length;
@@ -2048,11 +2270,11 @@ function renderUserJobStats() {
   if (S.jobSourceFilter !== 'user') { el.style.display = 'none'; return; }
   el.style.display = 'grid';
   const userJobs = S.jobs.filter(j=>j.postedBy!=='admin');
-  const pending = userJobs.filter(j=>j.status==='pending').length;
+  const pending = userJobs.filter(j=>j.status==='pending'||j.status==='pending_reapproval').length;
   const approved = userJobs.filter(j=>j.status==='approved').length;
   const rejected = userJobs.filter(j=>j.status==='rejected').length;
   el.innerHTML = `
-    <div class="ujs-card"><div class="ujs-icon" style="background:var(--amber-bg);color:var(--amber)"><i class="ti ti-clock"></i></div><div><div class="ujs-val" style="color:var(--amber)">${pending}</div><div class="ujs-lbl">Pending</div></div></div>
+    <div class="ujs-card"><div class="ujs-icon" style="background:var(--amber-bg);color:var(--amber)"><i class="ti ti-clock"></i></div><div><div class="ujs-val" style="color:var(--amber)">${pending}</div><div class="ujs-lbl">Pending / Re-Approval</div></div></div>
     <div class="ujs-card"><div class="ujs-icon" style="background:var(--green-bg);color:var(--green)"><i class="ti ti-circle-check"></i></div><div><div class="ujs-val" style="color:var(--green)">${approved}</div><div class="ujs-lbl">Approved / Active</div></div></div>
     <div class="ujs-card"><div class="ujs-icon" style="background:var(--red-bg);color:var(--red)"><i class="ti ti-circle-x"></i></div><div><div class="ujs-val" style="color:var(--red)">${rejected}</div><div class="ujs-lbl">Rejected</div></div></div>`;
 }
@@ -2071,14 +2293,17 @@ function renderJobs() {
     const u=findUser(j.postedBy);
     const isAdminJob = j.postedBy==='admin';
     const isDaily = j.type==='dailylink';
+    const isReapproval = j.status==='pending_reapproval';
     const links = jobLinksOf(j);
     const shots = j.type==='proof' ? (j.screenshotCount||1) : 0;
     const heldNote = j.budgetHeld ? `<div style="font-size:11px;color:var(--amber);margin-top:4px"><i class="ti ti-lock" style="font-size:12px;vertical-align:-1px"></i> এই জবে ${fmtAmt(j.budgetHeld)} হোল্ড করা আছে${j.holdSettled?' (নিষ্পত্তি হয়ে গেছে)':''}</div>` : '';
-    return `<div class="job-card ${j.status||'pending'}">
+    const statusBadgeCls = j.status==='pending'?'amber':j.status==='pending_reapproval'?'purple':j.status==='approved'?'green':'red';
+    const statusBadgeTxt = j.status==='pending_reapproval'?'🔄 Re-Approval':(j.status||'pending');
+    return `<div class="job-card ${j.status==='pending_reapproval'?'pending':(j.status||'pending')}">
       <div class="job-poster">
         <div class="poster-av" style="${isAdminJob?'background:var(--purple)':''}">${isAdminJob?'🐝':initials(j.postedByName||'?')}</div>
         <div style="flex:1">
-          <div style="font-size:14px;font-weight:800">${j.postedByName||'Unknown'}${isAdminJob?' <span class="badge purple" style="margin-left:6px">Admin Posted</span>':''}${isDaily?' <span class="badge teal" style="margin-left:6px">🔁 Daily Repeat</span>':''}${shots>1?` <span class="badge blue" style="margin-left:6px">📸 ${shots} Screenshots</span>`:''}${links.length>1?` <span class="badge amber" style="margin-left:6px">🔗 ${links.length} Links</span>`:''}</div>
+          <div style="font-size:14px;font-weight:800">${j.postedByName||'Unknown'}${isAdminJob?' <span class="badge purple" style="margin-left:6px">Admin Posted</span>':''}${isDaily?' <span class="badge teal" style="margin-left:6px">🔁 Daily Repeat</span>':''}${shots>1?` <span class="badge blue" style="margin-left:6px">📸 ${shots} Screenshots</span>`:''}${links.length>1?` <span class="badge amber" style="margin-left:6px">🔗 ${links.length} Links</span>`:''}${isReapproval?' <span class="badge purple" style="margin-left:6px">🔄 Edited by User</span>':''}</div>
           <div style="font-size:11.5px;color:var(--text3)">${j.postedByEmail||'—'}</div>
           ${heldNote}
         </div>
@@ -2104,16 +2329,18 @@ function renderJobs() {
         <div style="text-align:right;flex-shrink:0">
           <div style="font-size:22px;font-weight:900;color:var(--teal)">+${fmtAmt(j.reward)}</div>
           <div style="font-size:10.5px;color:var(--text3)">${isDaily?'per visit / 24h':'per task'}</div>
-          <span class="badge ${j.status==='pending'?'amber':j.status==='approved'?'green':'red'}" style="margin-top:6px">${j.status||'pending'}</span>
+          <span class="badge ${statusBadgeCls}" style="margin-top:6px">${statusBadgeTxt}</span>
         </div>
       </div>
       <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:11px;font-size:12.5px;color:var(--text2);margin-bottom:12px;line-height:1.6">${j.instructions||'(no instructions)'}</div>
       ${links.length?`<div style="margin-bottom:10px">${links.map((lnk,i)=>`<div style="font-size:12px;color:var(--blue);margin-bottom:4px"><i class="ti ti-link" style="font-size:13px;vertical-align:-1px"></i> ${links.length>1?`<b>Link ${i+1}:</b> `:''}<a href="${lnk}" target="_blank" style="color:var(--blue)">${lnk}</a></div>`).join('')}</div>`:''}
       ${j.rejectReason?`<div class="reject-reason-box"><i class="ti ti-message-circle-2"></i> <div><strong>Rejection reason:</strong> ${j.rejectReason}</div></div>`:''}
-      ${j.status==='pending'?`<div style="display:flex;gap:10px">
-        <button class="btn btn-approve" style="flex:1" onclick="approveJob('${j.id}')"><i class="ti ti-check"></i> Approve & Publish</button>
-        <button class="btn btn-message" onclick="openReject('job','${j.id}','${(j.title||'').replace(/'/g,"\\'")}')"><i class="ti ti-message-circle-2"></i> Reject with Reason</button>
-      </div>`:j.status==='approved'?`<div style="display:flex;gap:10px;align-items:center">
+      ${(j.status==='pending'||j.status==='pending_reapproval')?`
+        ${isReapproval?`<div class="alert warn" style="margin-bottom:10px"><i class="ti ti-refresh"></i> এই জবটি আগে Approved ছিল, কিন্তু ইউজার সম্প্রতি Edit করেছে — পরিবর্তনগুলো ভালোভাবে দেখে আবার Approve করুন।</div>`:''}
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-approve" style="flex:1" onclick="approveJob('${j.id}')"><i class="ti ti-check"></i> ${isReapproval?'Re-Approve & Publish':'Approve & Publish'}</button>
+          <button class="btn btn-message" onclick="openReject('job','${j.id}','${(j.title||'').replace(/'/g,"\\'")}')"><i class="ti ti-message-circle-2"></i> Reject with Reason</button>
+        </div>`:j.status==='approved'?`<div style="display:flex;gap:10px;align-items:center">
         <div class="alert success" style="flex:1;margin-bottom:0"><i class="ti ti-circle-check"></i> Live — Workers can see and complete this job.</div>
         ${isAdminJob?`<button class="btn btn-warning btn-sm" onclick="editJob('${j.id}')"><i class="ti ti-edit"></i> Edit</button>`:''}
         <button class="btn btn-danger btn-sm" onclick="deleteJob('${j.id}','${(j.title||'').replace(/'/g,"\\'")}')"><i class="ti ti-trash"></i> Remove</button>
@@ -2811,14 +3038,14 @@ function renderSignupChart() {
     </div>`).join('');
 }
 function renderDashPendingJobs() {
-  const pending=S.jobs.filter(j=>j.status==='pending').slice(0,5);
+  const pending=S.jobs.filter(j=>j.status==='pending'||j.status==='pending_reapproval').slice(0,5);
   const el=$('dashPendingJobs'); if(!el)return;
   if(!pending.length){el.innerHTML='<div style="color:var(--text3);font-size:13px;text-align:center;padding:24px"><i class="ti ti-circle-check" style="font-size:20px;display:block;margin-bottom:6px"></i>No pending jobs</div>';return;}
   el.innerHTML=pending.map(j=>`
     <div class="pj-row">
       <div style="width:30px;height:30px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--text2);flex-shrink:0">${initials(j.postedByName||'?')}</div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:12.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${j.title||'Untitled'}</div>
+        <div style="font-size:12.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${j.title||'Untitled'}${j.status==='pending_reapproval'?' <span class="badge purple" style="font-size:8.5px;padding:1px 6px">🔄</span>':''}</div>
         <div style="font-size:11px;color:var(--text3)">${j.postedByName||'—'} · +${fmtAmt(j.reward)}/task</div>
       </div>
       <div style="display:flex;gap:5px;flex-shrink:0">
@@ -2905,6 +3132,576 @@ function showToast(msg,type='success'){const el=$('toast');el.className='toast '
 
 // ===== INIT TG EVENTS =====
 setTimeout(renderTgEvents, 100);
+
+// ══════════════════════════════════════════════════════════
+// ============ 🧬 AI DEV STUDIO — PRECISION PATCH ============
+//  Dual-target (User Site / Admin Panel) GitHub patch engine.
+//  AI never rewrites a whole file — it only proposes small,
+//  anchor-based INSERT_AFTER / INSERT_BEFORE / REPLACE patches,
+//  which are dry-run applied here and shown as a diff before
+//  anything is pushed to GitHub. Nothing reaches GitHub until
+//  you click "Accept & Commit".
+// ══════════════════════════════════════════════════════════
+function devEsc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function devLs(k,val){ if(val!==undefined){localStorage.setItem(k,val);return;} return localStorage.getItem(k)||''; }
+
+function devInit() {
+  if (S.dev.devInited) { devRenderSubNav(); devRenderTargetRow(); devUpdateGhStatusPill(); return; }
+  S.dev.devInited = true;
+  $('devGhToken').value = devLs('wha_dev_gh_token');
+  const owner=devLs('wha_dev_gh_owner'), repo=devLs('wha_dev_gh_repo');
+  $('devGhRepoPath').value = (owner&&repo) ? (owner+'/'+repo) : '';
+  $('devGhBranch').value = devLs('wha_dev_gh_branch') || 'main';
+  $('devGeminiKey').value = devLs('wha_dev_gemini_key');
+  $('devGroqKey').value = devLs('wha_dev_groq_key');
+  S.dev.targets.user.path = devLs('wha_dev_path_user') || '';
+  S.dev.targets.admin.path = devLs('wha_dev_path_admin') || '';
+  $('devPathUser').value = S.dev.targets.user.path;
+  $('devPathAdmin').value = S.dev.targets.admin.path;
+  devUpdateGhStatusPill();
+  devRenderSubNav();
+  devRenderTargetRow();
+  devGoSubTab('studio');
+}
+
+function devUpdateGhStatusPill() {
+  const ok = !!(devLs('wha_dev_gh_token') && devLs('wha_dev_gh_owner') && devLs('wha_dev_gh_repo'));
+  const pill = $('qmDevGhStatus');
+  if (pill) { pill.textContent = ok ? '🟢 Connected' : 'Not Connected'; pill.className = 'qm-status-pill ' + (ok?'ok':'off'); }
+}
+
+// ---- Sub nav (Studio / History / Settings) ----
+function devRenderSubNav() {
+  const tabs = [
+    {key:'studio', icon:'ti-sparkles', label:'AI Studio'},
+    {key:'history', icon:'ti-history', label:'History & Rollback'},
+    {key:'settings', icon:'ti-settings', label:'Dev Settings'},
+  ];
+  $('devSubNav').innerHTML = tabs.map(t=>`<div class="job-src-tab ${S.dev.subTab===t.key?'active':''}" onclick="devGoSubTab('${t.key}')"><i class="ti ${t.icon}"></i> ${t.label}</div>`).join('');
+}
+function devGoSubTab(tab) {
+  S.dev.subTab = tab;
+  devRenderSubNav();
+  ['studio','history','settings'].forEach(t=>{ const el=$('devPane-'+t); if(el) el.style.display = (t===tab)?'block':'none'; });
+  if (tab==='history') { devRenderHistTargetRow(); devLoadCommits(); }
+}
+
+// ---- Target switcher (which site the next Generate applies to) ----
+function devRenderTargetRow() {
+  const el = $('devTargetRow'); if (!el) return;
+  el.innerHTML = devTargetPillsHtml(S.dev.activeTarget, 'devSetTarget');
+  const t = S.dev.targets[S.dev.activeTarget];
+  $('devNoPathAlert').style.display = t.path ? 'none' : 'flex';
+}
+function devTargetPillsHtml(selectedKey, clickFn) {
+  const t = S.dev.targets;
+  const mk = (key, ico) => `<div class="dev-target-pill ${selectedKey===key?'active':''}" onclick="${clickFn}('${key}')">
+    <div class="dtp-ico">${ico}</div>
+    <div><div class="dtp-label">${t[key].label}</div><div class="dtp-sub">${t[key].path?devEsc(t[key].path):'⚠️ Path সেট করা নেই'}</div></div>
+  </div>`;
+  return mk('user','🧑\u200d💻') + mk('admin','🛠️');
+}
+function devSetTarget(key) {
+  S.dev.activeTarget = key;
+  devRenderTargetRow();
+}
+
+// ---- Provider / Image ----
+function devSetProvider(p) {
+  S.dev.provider = p;
+  $('devProvGemini').classList.toggle('active', p==='gemini');
+  $('devProvGroq').classList.toggle('active', p==='groq');
+}
+function devHandleImage(input) {
+  const file = input.files && input.files[0]; if (!file) return;
+  if (!file.type.startsWith('image/')) { showToast('একটা ইমেজ ফাইল বেছে নিন','error'); return; }
+  if (file.size > 6*1024*1024) { showToast('ছবি খুব বড় (সর্বোচ্চ 6MB)','error'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const dataUrl = e.target.result;
+    S.dev.pendingImage = { base64: dataUrl.split(',')[1], mimeType: file.type };
+    $('devImgBox').classList.add('has-img');
+    $('devImgInner').innerHTML = `<img class="upload-preview" src="${dataUrl}"><div style="font-size:11px;color:var(--text3);text-align:center">✅ ছবি যুক্ত হয়েছে · <span style="color:var(--red);cursor:pointer;font-weight:700" onclick="event.stopPropagation();devRemoveImage()">সরিয়ে ফেলুন</span></div>`;
+  };
+  reader.readAsDataURL(file);
+}
+function devRemoveImage() {
+  S.dev.pendingImage = null;
+  $('devImgInput').value = '';
+  $('devImgBox').classList.remove('has-img');
+  $('devImgInner').innerHTML = `<div style="font-size:26px;margin-bottom:6px">🖼️</div><div style="font-size:12px;color:var(--text3);font-weight:600">ছবি বেছে নিতে ক্লিক করুন</div>`;
+}
+function devTogglePw(id) { const i=$(id); if(i) i.type = i.type==='password'?'text':'password'; }
+
+// ---- Dev Settings save ----
+async function devSaveGhSettings() {
+  const token=v('devGhToken'), repoPath=v('devGhRepoPath'), branch=v('devGhBranch')||'main';
+  if (!token) { showToast('GitHub Token দিন','error'); return; }
+  if (!repoPath.includes('/')) { showToast('owner/repo ফরম্যাটে দিন','error'); return; }
+  const [owner,repo] = repoPath.split('/').map(s=>s.trim());
+  if (!owner||!repo) { showToast('Repository Path সঠিক নয়','error'); return; }
+  devLs('wha_dev_gh_token', token); devLs('wha_dev_gh_owner', owner); devLs('wha_dev_gh_repo', repo); devLs('wha_dev_gh_branch', branch);
+  devUpdateGhStatusPill();
+  $('devConnResult').textContent = '⏳ টেস্ট করা হচ্ছে...';
+  try {
+    const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/branches/${encodeURIComponent(branch)}`, { headers: devGhHeaders() });
+    const data = await res.json().catch(()=>({}));
+    if (!res.ok) { $('devConnResult').innerHTML = `<span style="color:var(--red)">❌ ${devEsc(data.message||('ব্যর্থ ('+res.status+')'))}</span>`; return; }
+    $('devConnResult').innerHTML = '<span style="color:var(--green)">✅ সংযোগ সফল হয়েছে</span>';
+    addLog('🔌 Dev Studio: GitHub connection saved & tested','devstudio','purple');
+    showToast('✅ GitHub সংযুক্ত হয়েছে!','success');
+  } catch(e) { $('devConnResult').innerHTML = '<span style="color:var(--red)">❌ নেটওয়ার্ক সমস্যা</span>'; }
+}
+function devSaveApiKeys() {
+  devLs('wha_dev_gemini_key', v('devGeminiKey'));
+  devLs('wha_dev_groq_key', v('devGroqKey'));
+  showToast('✅ AI Key সেভ হয়েছে','success');
+}
+function devSaveTargetPaths() {
+  const up=v('devPathUser'), ap=v('devPathAdmin');
+  devLs('wha_dev_path_user', up); devLs('wha_dev_path_admin', ap);
+  S.dev.targets.user.path = up; S.dev.targets.admin.path = ap;
+  devRenderTargetRow();
+  showToast('✅ File Path সেভ হয়েছে — এখন দুটো সাইটই আলাদাভাবে টার্গেট করা যাবে','success');
+}
+function devCheckConfigured(key) {
+  if (!devLs('wha_dev_gh_token')||!devLs('wha_dev_gh_owner')||!devLs('wha_dev_gh_repo')) { showToast('আগে Dev Settings-এ GitHub সংযোগ করুন','error'); return false; }
+  if (!S.dev.targets[key].path) { showToast(`${S.dev.targets[key].label}-এর জন্য File Path সেট করা নেই — Dev Settings-এ যান`,'error'); return false; }
+  return true;
+}
+
+// ---- GitHub REST API (dev-scoped, direct from browser) ----
+function devGhHeaders(){ return { 'Authorization':'token '+devLs('wha_dev_gh_token'), 'Accept':'application/vnd.github+json' }; }
+function devGhBase(){ return `https://api.github.com/repos/${devLs('wha_dev_gh_owner')}/${devLs('wha_dev_gh_repo')}`; }
+function devB64Encode(str){ return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,(m,p1)=>String.fromCharCode('0x'+p1))); }
+function devB64Decode(str){ return decodeURIComponent(atob(str.replace(/\n/g,'')).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join('')); }
+async function devGhGetFile(path) {
+  const branch = devLs('wha_dev_gh_branch')||'main';
+  const res = await fetch(`${devGhBase()}/contents/${path.split('/').map(encodeURIComponent).join('/')}?ref=${encodeURIComponent(branch)}`, { headers: devGhHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'GitHub ফাইল রিড ব্যর্থ');
+  return { content: devB64Decode(data.content), sha: data.sha };
+}
+async function devGhPutFile(path, content, sha, message) {
+  const branch = devLs('wha_dev_gh_branch')||'main';
+  const res = await fetch(`${devGhBase()}/contents/${path.split('/').map(encodeURIComponent).join('/')}`, {
+    method:'PUT', headers: Object.assign({'Content-Type':'application/json'}, devGhHeaders()),
+    body: JSON.stringify({ message, content: devB64Encode(content), sha, branch }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'GitHub পুশ ব্যর্থ');
+  return { commitSha: data.commit && data.commit.sha };
+}
+async function devGhGetCommits(path, per_page=5) {
+  const branch = devLs('wha_dev_gh_branch')||'main';
+  const res = await fetch(`${devGhBase()}/commits?path=${encodeURIComponent(path)}&sha=${encodeURIComponent(branch)}&per_page=${per_page}`, { headers: devGhHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'Commit history লোড ব্যর্থ');
+  return data.map(c=>({ sha:c.sha, message:c.commit.message, author:c.commit.author?c.commit.author.name:'', date:c.commit.author?c.commit.author.date:'' }));
+}
+async function devGhGetFileAtCommit(path, sha) {
+  const res = await fetch(`${devGhBase()}/contents/${path.split('/').map(encodeURIComponent).join('/')}?ref=${sha}`, { headers: devGhHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'পুরনো ভার্সন লোড ব্যর্থ');
+  return { content: devB64Decode(data.content) };
+}
+
+// ---- AI calls (Gemini / Groq — direct, no server) ----
+function devBuildSystemPrompt(fileName) {
+  return `তুমি একজন এক্সপার্ট ওয়েব ডেভেলপার এবং তোমার একমাত্র কাজ পদ্ধতি হলো "Precision Patch" — তুমি কখনোই পুরো ফাইল নতুন করে লিখবে না বা রি-রাইট করবে না। তুমি শুধু নির্দিষ্ট, ছোট, targeted কোড পরিবর্তন/সংযোজন করবে।
+
+টার্গেট ফাইল: "${fileName}"
+
+তোমাকে অবশ্যই নিচের বৈধ JSON ফরম্যাটে উত্তর দিতে হবে — কোনো markdown code fence, ব্যাখ্যা, বা অতিরিক্ত টেক্সট ছাড়া, শুধু raw JSON:
+
+{
+  "summary": "পরিবর্তনের সংক্ষিপ্ত বাংলা বর্ণনা (এক থেকে দুই লাইনে)",
+  "patches": [
+    {
+      "description": "এই নির্দিষ্ট patch টা কী করে (সংক্ষেপে, বাংলায়)",
+      "filePath": "${fileName}",
+      "searchAnchor": "ফাইলে বিদ্যমান কোডের একটি হুবহু (character-by-character) ও ইউনিক অংশ",
+      "action": "INSERT_AFTER",
+      "newSnippet": "নতুন HTML/CSS/JS কোড"
+    }
+  ]
+}
+
+action-এর মান অবশ্যই এই তিনটার একটা হতে হবে: "INSERT_AFTER", "INSERT_BEFORE", অথবা "REPLACE"।
+
+কঠোর নিয়মাবলী (এগুলো ভাঙা যাবে না):
+1. "filePath" সবসময় ঠিক "${fileName}" হতে হবে — অন্য কোনো ফাইলের নাম দিও না, একাধিক ফাইলে পরিবর্তন সাপোর্টেড না (দুটো সাইট আলাদা patch হিসেবে আলাদাভাবে জেনারেট করতে হয়)।
+2. "searchAnchor" নিচে দেওয়া প্রকৃত কোড থেকেই হুবহু কপি করতে হবে (একটাও character/space/indentation ভিন্ন হওয়া চলবে না) এবং সেটা ফাইলে ঠিক একবার (unique) থাকতে হবে — অন্যথায় patch ব্যর্থ হবে।
+3. searchAnchor কমপক্ষে একটা সম্পূর্ণ লাইন বা HTML ট্যাগ/attribute-সহ অংশ হওয়া উচিত, যাতে নির্ভরযোগ্যভাবে খুঁজে পাওয়া যায় — কিন্তু অপ্রয়োজনীয়ভাবে লম্বা কোরো না।
+4. action = "INSERT_AFTER" হলে newSnippet ঠিক searchAnchor-এর পরে বসবে; searchAnchor নিজে অপরিবর্তিত থাকবে।
+5. action = "INSERT_BEFORE" হলে newSnippet ঠিক searchAnchor-এর আগে বসবে; searchAnchor নিজে অপরিবর্তিত থাকবে।
+6. action = "REPLACE" হলে searchAnchor সম্পূর্ণভাবে newSnippet দিয়ে প্রতিস্থাপিত হবে।
+7. একটা ফিচারের জন্য HTML + CSS + JS আলাদা জায়গায় বসাতে হলে "patches" অ্যারেতে একাধিক patch object দাও, প্রতিটার নিজস্ব সঠিক searchAnchor সহ।
+8. newSnippet-এ শুধু ঠিক যতটুকু নতুন/পরিবর্তিত কোড দরকার ততটুকুই দাও — কখনো পুরো সেকশন বা ফাইল কপি-পেস্ট কোরো না।
+9. বিদ্যমান কোডের কোনো অংশ অনুমান করে লিখবে না — শুধু নিচে দেওয়া প্রকৃত কোড থেকেই searchAnchor নাও। যদি প্রয়োজনীয় কোড অংশ নিচে দেওয়া না থাকে, summary-তে সেটা উল্লেখ করো এবং patches খালি রেখো।`;
+}
+function devParseAiJson(text) {
+  let cleaned = (text||'').trim().replace(/^```(json)?/i,'').replace(/```$/,'').trim();
+  const s = cleaned.indexOf('{'), e = cleaned.lastIndexOf('}');
+  if (s===-1||e===-1) return null;
+  try { return JSON.parse(cleaned.slice(s,e+1)); } catch(err) { return null; }
+}
+async function devCallGemini(sys, user, image) {
+  const key = devLs('wha_dev_gemini_key'); if (!key) throw new Error('Gemini API Key দিন Dev Settings-এ');
+  const parts = [{ text: sys+'\n\n'+user }];
+  if (image) parts.push({ inline_data:{ mime_type:image.mimeType, data:image.base64 } });
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ contents:[{parts}], generationConfig:{temperature:0.15} }),
+  });
+  const data = await res.json();
+  if (!res.ok) { const msg=(data.error&&data.error.message)||'Gemini ব্যর্থ'; const err=new Error(msg); err.isQuota = res.status===429||/quota/i.test(msg); throw err; }
+  const cand = data.candidates && data.candidates[0];
+  if (!cand) throw new Error('Gemini থেকে উত্তর আসেনি');
+  return (cand.content && cand.content.parts || []).map(p=>p.text||'').join('');
+}
+async function devCallGroq(sys, user) {
+  const key = devLs('wha_dev_groq_key'); if (!key) throw new Error('Groq API Key দিন Dev Settings-এ');
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+    body: JSON.stringify({ model:'llama-3.3-70b-versatile', messages:[{role:'system',content:sys},{role:'user',content:user}], temperature:0.15 }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error((data.error&&data.error.message)||'Groq ব্যর্থ');
+  return (data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content)||'';
+}
+
+// ---- Smart context engine (keeps huge files cheap & accurate) ----
+const DEV_SMALL_FILE_CHARS=6000, DEV_CHUNK_LINES=45, DEV_CONTEXT_WINDOW=18, DEV_MAX_CONTEXT_CHARS=9000;
+const DEV_BN_STOP=new Set(['করো','করে','করবে','দাও','যাতে','এই','এবং','একটা','একটি','করতে','চাই','চান','থাকবে','হবে','জন্য','সাথে','মধ্যে','সেটা','সেটি','নতুন','পুরানো','পুরনো','মতো','ভাবে']);
+const DEV_EN_STOP=new Set(['and','the','with','into','make','change','add','new','also','for','this','that','from','your']);
+function devTokenize(prompt){ return Array.from(new Set((prompt||'').split(/[^\p{L}\p{N}]+/u).map(w=>w.trim()).filter(w=>w.length>=2))).filter(w=>!DEV_BN_STOP.has(w)&&!DEV_EN_STOP.has(w.toLowerCase())); }
+function devKeywordContext(content, prompt) {
+  const kws = devTokenize(prompt).map(k=>k.toLowerCase()); if (!kws.length) return null;
+  const lines = content.split('\n'); const matched=[];
+  lines.forEach((l,i)=>{ const lo=l.toLowerCase(); if (kws.some(k=>lo.includes(k))) matched.push(i); });
+  if (!matched.length) return null;
+  const ranges=[];
+  matched.forEach(i=>{ const s=Math.max(0,i-DEV_CONTEXT_WINDOW), e=Math.min(lines.length,i+DEV_CONTEXT_WINDOW+1);
+    if (ranges.length && s<=ranges[ranges.length-1][1]) ranges[ranges.length-1][1]=Math.max(ranges[ranges.length-1][1],e);
+    else ranges.push([s,e]); });
+  let out = ranges.map(([s,e])=>`/* ...lines ${s+1}-${e}... */\n`+lines.slice(s,e).join('\n')).join('\n\n');
+  if (out.length>DEV_MAX_CONTEXT_CHARS) out = out.slice(0,DEV_MAX_CONTEXT_CHARS)+'\n/* ...truncated... */';
+  return out;
+}
+function devSplitChunks(content) {
+  const lines = content.split('\n'); const chunks=[];
+  for (let i=0;i<lines.length;i+=DEV_CHUNK_LINES) { const s=i,e=Math.min(i+DEV_CHUNK_LINES,lines.length); chunks.push({index:chunks.length,startLine:s,endLine:e,text:lines.slice(s,e).join('\n')}); }
+  return chunks;
+}
+function devChunkSig(text) {
+  const sig=[];
+  sig.push(...((text.match(/(?:id|class|name)="[^"]{0,60}"/g)||[]).slice(0,25)));
+  sig.push(...((text.match(/<!--[\s\S]{0,80}?-->/g)||[]).slice(0,8)));
+  sig.push(...((text.match(/>([^<>{}\n]{2,50})</g)||[]).slice(0,25).map(t=>t.slice(1,-1))));
+  sig.push(...((text.match(/function\s+\w+/g)||[])));
+  return sig.join(' | ').slice(0,700);
+}
+async function devSelectChunksViaAI(chunks, prompt, hasImage) {
+  const outline = chunks.map(c=>`[Chunk ${c.index} | lines ${c.startLine+1}-${c.endLine}]\n${devChunkSig(c.text)}`).join('\n\n');
+  const sys = `তুমি একজন কোড নেভিগেটর। নিচে একটা ফাইলের বিভিন্ন chunk-এর সিগনেচার দেওয়া আছে। ব্যবহারকারীর অনুরোধ অনুযায়ী কোন chunk(গুলো)-এ পরিবর্তন লাগতে পারে বের করো। শুধু JSON: {"chunks":[index,...]} — সর্বোচ্চ ৫টা।`;
+  const userMsg = `=== FILE OUTLINE ===\n${outline}\n\n=== USER REQUEST ===\n${prompt}`;
+  const useGemini = S.dev.provider==='gemini' || hasImage;
+  const raw = useGemini ? await devCallGemini(sys,userMsg,null) : await devCallGroq(sys,userMsg);
+  const parsed = devParseAiJson(raw);
+  if (parsed && Array.isArray(parsed.chunks) && parsed.chunks.length) return parsed.chunks.filter(n=>Number.isInteger(n)&&n>=0&&n<chunks.length);
+  return null;
+}
+async function devBuildSmartContext(content, prompt, hasImage, onStatus) {
+  if (content.length <= DEV_SMALL_FILE_CHARS) return { context: content, mode:'full' };
+  const kw = devKeywordContext(content, prompt);
+  if (kw) return { context: kw, mode:'keyword' };
+  if (onStatus) onStatus();
+  const chunks = devSplitChunks(content);
+  let chosen=null;
+  try { chosen = await devSelectChunksViaAI(chunks, prompt, hasImage); } catch(e) { chosen=null; }
+  if (!chosen || !chosen.length) chosen=[0,1,2];
+  const set = new Set();
+  chosen.forEach(idx=>{ for(let d=-1;d<=1;d++){ const ci=idx+d; if(ci>=0&&ci<chunks.length) set.add(ci); } });
+  const sorted = [...set].sort((a,b)=>a-b);
+  let out = sorted.map(i=>`/* ...lines ${chunks[i].startLine+1}-${chunks[i].endLine}... */\n`+chunks[i].text).join('\n\n');
+  if (out.length>DEV_MAX_CONTEXT_CHARS) out = out.slice(0,DEV_MAX_CONTEXT_CHARS)+'\n/* ...truncated... */';
+  return { context: out, mode:'ai-chunk' };
+}
+
+// ---- Generate (targets whichever site is currently selected) ----
+async function devGenerateChanges() {
+  const key = S.dev.activeTarget;
+  if (!devCheckConfigured(key)) return;
+  const prompt = v('devPrompt');
+  if (!prompt) { showToast('পরিবর্তনের নির্দেশ লিখুন','error'); return; }
+  const btn = $('devGenBtn');
+  btn.disabled=true; btn.innerHTML='<i class="ti ti-loader spin-ico"></i> ফাইল লোড হচ্ছে...';
+  $('devPatchCard').style.display='none'; $('devRawCard').style.display='none';
+  const target = S.dev.targets[key];
+  try {
+    const fileRes = await devGhGetFile(target.path);
+    target.content = fileRes.content; target.sha = fileRes.sha;
+    const manual = v('devTargetArea');
+    let contextText, contextMode;
+    if (manual) { contextText=manual; contextMode='manual'; }
+    else {
+      btn.innerHTML='<i class="ti ti-loader spin-ico"></i> প্রাসঙ্গিক অংশ খোঁজা হচ্ছে...';
+      const smart = await devBuildSmartContext(target.content, prompt, !!S.dev.pendingImage, ()=>{btn.innerHTML='<i class="ti ti-loader spin-ico"></i> AI অংশ বাছাই করছে...';});
+      contextText=smart.context; contextMode=smart.mode;
+    }
+    btn.innerHTML='<i class="ti ti-loader spin-ico"></i> AI Patch তৈরি করছে...';
+    const sysPrompt = devBuildSystemPrompt(target.path) + (contextMode!=='full' ? '\n\nমনে রাখো: নিচে পুরো ফাইল না, শুধু প্রাসঙ্গিক অংশ (মাঝেমধ্যে "/* ...lines X-Y... */" কমেন্ট সহ)। searchAnchor অবশ্যই এই অংশ থেকেই নিতে হবে।' : '');
+    const userPrompt = `=== ${contextMode==='full'?'CURRENT FILE CONTENT':'RELEVANT CODE SECTION(S)'} (${target.path}) ===\n${contextText}\n\n=== USER REQUEST ===\n${prompt}`;
+    const useGemini = S.dev.provider==='gemini' || !!S.dev.pendingImage;
+    if (S.dev.pendingImage && S.dev.provider!=='gemini') showToast('ছবি থাকায় Gemini ব্যবহার হচ্ছে','info');
+    let rawText;
+    try { rawText = useGemini ? await devCallGemini(sysPrompt,userPrompt,S.dev.pendingImage) : await devCallGroq(sysPrompt,userPrompt); }
+    catch(aiErr) {
+      if (useGemini && aiErr.isQuota) {
+        if (!S.dev.pendingImage && devLs('wha_dev_groq_key')) {
+          showToast('⚠️ Gemini quota আটকে — Groq দিয়ে চেষ্টা হচ্ছে','warn');
+          btn.innerHTML='<i class="ti ti-loader spin-ico"></i> Groq দিয়ে চেষ্টা হচ্ছে...';
+          rawText = await devCallGroq(sysPrompt,userPrompt);
+        } else { throw new Error('Gemini quota সমস্যা — Dev Settings-এ Groq Key যোগ করুন বা নতুন Gemini Key ব্যবহার করুন।'); }
+      } else { throw aiErr; }
+    }
+    const aiRes = devParseAiJson(rawText);
+    if (!aiRes || !Array.isArray(aiRes.patches)) {
+      $('devRawCard').style.display='block'; $('devRawText').textContent = rawText;
+      showToast('⚠️ AI বৈধ JSON দেয়নি','warn');
+      addLog(`⚠️ Dev Studio: AI returned invalid JSON for ${target.label}`,'devstudio','purple');
+      return;
+    }
+    if (!aiRes.patches.length) { showToast('AI কোনো patch প্রস্তাব করেনি — প্রম্পট আরও নির্দিষ্ট করুন','warn'); return; }
+    target.patches = aiRes.patches.map(p=>({ description:p.description||'', filePath:p.filePath||target.path, searchAnchor:p.searchAnchor||'', action:(p.action||'').toUpperCase(), newSnippet:p.newSnippet!=null?p.newSnippet:'', status:'pending' }));
+    target.summary = aiRes.summary || '';
+    devApplyAnchorPatches(key);
+    $('devPatchCard').style.display='block';
+    $('devPatchTargetLabel').textContent = target.label;
+    $('devPatchSummaryText').textContent = target.summary || 'পরিবর্তনের সারাংশ পাওয়া যায়নি।';
+    devRenderPatchStats(key); devRenderPatchList(key);
+    const appliedCount = target.patches.filter(p=>p.status==='applied').length;
+    if (appliedCount>0) { S.dev.previewTarget = key; devBuildPreview(key); showToast(`✅ ${appliedCount}/${target.patches.length}টা patch প্রয়োগ হয়েছে (${target.label})`,'success'); }
+    else showToast('⚠️ কোনো patch প্রয়োগ করা যায়নি — নিচে বিস্তারিত দেখুন','error');
+    const modeLabel = {full:'পুরো ফাইল', keyword:'কিওয়ার্ড-ম্যাচড', 'ai-chunk':'AI-বাছাইকৃত', manual:'ম্যানুয়াল'}[contextMode] || contextMode;
+    addLog(`✨ Dev Studio: ${appliedCount}/${target.patches.length} patch(es) generated for ${target.label} (context: ${modeLabel}) — ${(target.summary||'').slice(0,70)}`,'devstudio','purple');
+  } catch(e) { console.error(e); showToast('❌ '+e.message,'error'); }
+  finally { btn.disabled=false; btn.innerHTML='<i class="ti ti-wand"></i> Generate Precision Patch'; }
+}
+
+// ---- Anchor-based dry-run patch engine ----
+function devCountOcc(haystack, needle){ if(!needle) return 0; return haystack.split(needle).length-1; }
+function devTrimEdge(text){ const lines=text.split('\n'); if(lines.length>1) lines.shift(); return lines.join('\n'); }
+function devBuildDiffHtml(contentBefore, idx, anchor, action, newSnippet) {
+  const CTX=220;
+  let beforeCtx = contentBefore.slice(Math.max(0,idx-CTX), idx);
+  let afterCtx = contentBefore.slice(idx+anchor.length, idx+anchor.length+CTX);
+  beforeCtx = devTrimEdge(beforeCtx);
+  const afterLines = afterCtx.split('\n'); if (afterLines.length>1) afterLines.pop(); afterCtx = afterLines.join('\n');
+  let html='';
+  if (beforeCtx.trim()) html += `<span class="diff-line ctx">${devEsc(beforeCtx)}</span>`;
+  if (action==='REPLACE') { html += `<span class="diff-line del">− ${devEsc(anchor)}</span>`; html += `<span class="diff-line add">+ ${devEsc(newSnippet)}</span>`; }
+  else if (action==='INSERT_BEFORE') { html += `<span class="diff-line add">+ ${devEsc(newSnippet)}</span>`; html += `<span class="diff-line anchor">  ${devEsc(anchor)}</span>`; }
+  else { html += `<span class="diff-line anchor">  ${devEsc(anchor)}</span>`; html += `<span class="diff-line add">+ ${devEsc(newSnippet)}</span>`; }
+  if (afterCtx.trim()) html += `<span class="diff-line ctx">${devEsc(afterCtx)}</span>`;
+  return html;
+}
+function devApplyAnchorPatches(key) {
+  const target = S.dev.targets[key];
+  let working = target.content;
+  target.patches.forEach(p=>{
+    if (!p.filePath || p.filePath !== target.path) {
+      p.status='wrong_file'; p.diffHtml = `<span class="diff-line del">এই patch অন্য ফাইলের জন্য (${devEsc(p.filePath||'—')}), বর্তমান টার্গেট: "${devEsc(target.path)}" — বাদ দেওয়া হয়েছে।</span>`; return;
+    }
+    const anchor = p.searchAnchor||'';
+    if (!anchor) { p.status='no_anchor'; p.diffHtml='<span class="diff-line del">searchAnchor খালি।</span>'; return; }
+    if (!['INSERT_AFTER','INSERT_BEFORE','REPLACE'].includes(p.action)) { p.status='invalid_action'; p.diffHtml=`<span class="diff-line del">অজানা action: "${devEsc(p.action)}"</span>`; return; }
+    const count = devCountOcc(working, anchor);
+    if (count===0) { p.status='not_found'; p.diffHtml=`<span class="diff-line del">searchAnchor ফাইলে খুঁজে পাওয়া যায়নি:</span><span class="diff-line ctx">${devEsc(anchor.slice(0,300))}</span>`; return; }
+    if (count>1) { p.status='ambiguous'; p.count=count; p.diffHtml=`<span class="diff-line del">${count} বার পাওয়া গেছে (unique হতে হবে):</span><span class="diff-line ctx">${devEsc(anchor.slice(0,300))}</span>`; return; }
+    const idx = working.indexOf(anchor);
+    p.diffHtml = devBuildDiffHtml(working, idx, anchor, p.action, p.newSnippet);
+    let nw;
+    if (p.action==='INSERT_AFTER') nw = working.slice(0,idx+anchor.length)+'\n'+p.newSnippet+working.slice(idx+anchor.length);
+    else if (p.action==='INSERT_BEFORE') nw = working.slice(0,idx)+p.newSnippet+'\n'+working.slice(idx);
+    else nw = working.slice(0,idx)+p.newSnippet+working.slice(idx+anchor.length);
+    working = nw; p.status='applied';
+  });
+  target.previewContent = working;
+}
+function devRenderPatchStats(key) {
+  const target = S.dev.targets[key];
+  const applied = target.patches.filter(p=>p.status==='applied').length;
+  const failed = target.patches.length - applied;
+  const addedLines = target.patches.filter(p=>p.status==='applied').reduce((s,p)=>s+(p.newSnippet||'').split('\n').length,0);
+  $('devPatchStats').innerHTML = `
+    <div class="pstat ok"><div class="n">${applied}</div><div class="l">Applied</div></div>
+    <div class="pstat ${failed>0?'bad':''}"><div class="n">${failed}</div><div class="l">Failed</div></div>
+    <div class="pstat"><div class="n">+${addedLines}</div><div class="l">Lines Added</div></div>
+    <div class="pstat"><div class="n">${target.patches.length}</div><div class="l">Total</div></div>`;
+}
+const DEV_STATUS_LABELS = { applied:'✓ Applied', not_found:'✗ Not Found', ambiguous:'⚠ Ambiguous', wrong_file:'✗ Wrong File', no_anchor:'✗ No Anchor', invalid_action:'✗ Invalid Action', pending:'… Pending' };
+function devRenderPatchList(key) {
+  const target = S.dev.targets[key];
+  $('devPatchList').innerHTML = target.patches.map((p,i)=>`
+    <div class="patch-item">
+      <div class="patch-hd" onclick="devTogglePatch(${i})">
+        <span class="patch-status ${p.status}">${DEV_STATUS_LABELS[p.status]||p.status}</span>
+        <span class="action-badge ${p.action}">${devEsc(p.action||'?')}</span>
+        <span class="patch-desc">${devEsc(p.description||'Patch '+(i+1))}</span>
+        <i class="ti ti-chevron-down patch-toggle-ico" id="devPatchIco${i}"></i>
+      </div>
+      <div class="patch-body" id="devPatchBody${i}">
+        <div class="patch-file-path"><i class="ti ti-file-code"></i> ${devEsc(p.filePath||'')}</div>
+        <div class="diff-block">${p.diffHtml||''}</div>
+        ${p.status!=='applied'?`<div class="alert warn" style="margin-top:8px;margin-bottom:0"><i class="ti ti-info-circle"></i> এই patch preview-এ প্রয়োগ হয়নি। "Code" ট্যাবে গিয়ে সরাসরি ম্যানুয়ালি যোগ করে নিতে পারেন।</div>`:''}
+      </div>
+    </div>`).join('');
+  target.patches.forEach((p,i)=>{ if (p.status!=='applied') devTogglePatch(i,true); });
+}
+function devTogglePatch(i, force) {
+  const body=$('devPatchBody'+i), ico=$('devPatchIco'+i); if(!body) return;
+  const open = force!==undefined?force:!body.classList.contains('open');
+  body.classList.toggle('open',open); if(ico) ico.classList.toggle('open',open);
+}
+
+// ---- Preview (dual-target tabs — see both User Site & Admin Panel previews) ----
+function devRenderPreviewTargetTabs() {
+  const el = $('devPreviewTargetTabs'); if (!el) return;
+  const t = S.dev.targets;
+  const mk = (key,label) => {
+    const has = !!t[key].previewContent;
+    return `<div class="preview-target-tab ${S.dev.previewTarget===key?'active':''}" onclick="devSwitchPreviewTarget('${key}')">${label}${has?' •':''}</div>`;
+  };
+  el.innerHTML = mk('user','User Site') + mk('admin','Admin Panel');
+}
+function devSwitchPreviewTarget(key) {
+  if (!S.dev.targets[key].previewContent) { showToast(`${S.dev.targets[key].label}-এর জন্য এখনো কোনো Preview নেই`,'info'); return; }
+  devBuildPreview(key);
+}
+function devBuildPreview(key) {
+  const target = S.dev.targets[key];
+  if (!target.previewContent) { $('devPreviewWrap').style.display='none'; return; }
+  S.dev.previewTarget = key;
+  $('devPreviewFrame').srcdoc = target.previewContent;
+  $('devPreviewCodeBox').value = target.previewContent;
+  devSwitchInnerTab('preview');
+  devRenderPreviewTargetTabs();
+  $('devPreviewWrap').style.display='block';
+  $('devPreviewWrap').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function devSwitchInnerTab(tab) {
+  $('devTabPreview').classList.toggle('active', tab==='preview');
+  $('devTabCode').classList.toggle('active', tab==='code');
+  $('devPreviewFrame').style.display = tab==='preview'?'block':'none';
+  $('devPreviewCodeBox').style.display = tab==='code'?'block':'none';
+}
+function devOnCodeBoxEdit() {
+  S.dev.targets[S.dev.previewTarget].previewContent = $('devPreviewCodeBox').value;
+}
+function devRefreshPreviewFromCode() {
+  const key = S.dev.previewTarget;
+  S.dev.targets[key].previewContent = $('devPreviewCodeBox').value;
+  $('devPreviewFrame').srcdoc = S.dev.targets[key].previewContent;
+  devSwitchInnerTab('preview');
+  showToast('🔄 Preview রিফ্রেশ হয়েছে','info');
+}
+function devOpenPreviewNewTab() {
+  const c = S.dev.targets[S.dev.previewTarget].previewContent; if (!c) return;
+  const blob = new Blob([c],{type:'text/html'}); window.open(URL.createObjectURL(blob),'_blank');
+}
+function devCopyGeneratedCode() {
+  const c = S.dev.targets[S.dev.previewTarget].previewContent; if (!c) { showToast('কপি করার কিছু নেই','error'); return; }
+  navigator.clipboard.writeText(c).then(()=>showToast('📋 কপি হয়েছে','success')).catch(()=>{ $('devPreviewCodeBox').select(); document.execCommand('copy'); showToast('📋 কপি হয়েছে','success'); });
+}
+function devDiscardChanges() {
+  const key = S.dev.previewTarget;
+  const target = S.dev.targets[key];
+  target.patches=[]; target.previewContent=''; target.content=''; target.sha=''; target.summary='';
+  $('devPatchCard').style.display='none'; $('devRawCard').style.display='none';
+  devRenderPreviewTargetTabs();
+  const otherKey = key==='user'?'admin':'user';
+  if (S.dev.targets[otherKey].previewContent) devBuildPreview(otherKey);
+  else $('devPreviewWrap').style.display='none';
+  devRemoveImage();
+  $('devPrompt').value=''; $('devTargetArea').value='';
+  showToast(`${target.label}: বাতিল করা হয়েছে — GitHub-এ কিছুই যায়নি`,'info');
+}
+async function devAcceptAndCommit() {
+  const key = S.dev.previewTarget;
+  const target = S.dev.targets[key];
+  if (!target.previewContent) { showToast('আগে একটা প্যাচ Generate করুন','error'); return; }
+  const failedCount = target.patches.filter(p=>p.status!=='applied').length;
+  const warnMsg = failedCount>0 ? `\n\n⚠️ ${failedCount}টা patch প্রয়োগ হয়নি, শুধু বাকিগুলো commit হবে।` : '';
+  if (!confirm(`"${target.label}" (${target.path}) ফাইলে এই পরিবর্তনগুলো এখনই GitHub-এ commit করতে চান?\n\n${target.summary||''}${warnMsg}`)) return;
+  const btn = $('devAcceptBtn');
+  btn.disabled=true; btn.innerHTML='<i class="ti ti-loader spin-ico"></i> Committing...';
+  try {
+    const latest = await devGhGetFile(target.path);
+    const codeToCommit = $('devPreviewCodeBox').value || target.previewContent;
+    const res = await devGhPutFile(target.path, codeToCommit, latest.sha, `AI Dev Studio (${target.label}): ${target.summary||'precision patch'}`.slice(0,200));
+    showToast(`🚀 ${target.label} — Commit হয়ে গেছে!`,'success');
+    addLog(`🚀 Dev Studio: committed ${target.label} (${target.path}) — commit ${(res.commitSha||'').slice(0,7)} — ${target.summary||''} (${target.patches.filter(p=>p.status==='applied').length} patches)`,'devstudio','purple');
+    target.patches=[]; target.previewContent=''; target.content=''; target.sha=''; target.summary='';
+    $('devPatchCard').style.display='none';
+    const otherKey = key==='user'?'admin':'user';
+    if (S.dev.targets[otherKey].previewContent) devBuildPreview(otherKey); else $('devPreviewWrap').style.display='none';
+  } catch(e) { console.error(e); showToast('❌ Commit ব্যর্থ: '+e.message,'error'); }
+  finally { btn.disabled=false; btn.innerHTML='<i class="ti ti-rocket"></i> Accept &amp; Commit to GitHub'; }
+}
+
+// ---- History & Rollback (per target — last 5 commits, one-click revert) ----
+function devRenderHistTargetRow() {
+  const el = $('devHistTargetRow'); if(!el) return;
+  el.innerHTML = devTargetPillsHtml(S.dev.historyTarget, 'devSetHistTarget');
+}
+function devSetHistTarget(key) { S.dev.historyTarget = key; devRenderHistTargetRow(); devLoadCommits(); }
+async function devLoadCommits() {
+  const key = S.dev.historyTarget;
+  const target = S.dev.targets[key];
+  const el = $('devCommitsList');
+  if (!devLs('wha_dev_gh_token')||!devLs('wha_dev_gh_owner')||!devLs('wha_dev_gh_repo')) { el.innerHTML='<div style="padding:24px;text-align:center;color:var(--text3)">আগে Dev Settings-এ GitHub সংযোগ করুন</div>'; return; }
+  if (!target.path) { el.innerHTML=`<div style="padding:24px;text-align:center;color:var(--text3)">${target.label}-এর জন্য File Path সেট করা নেই</div>`; return; }
+  el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text3)"><i class="ti ti-loader spin-ico"></i> লোড হচ্ছে...</div>';
+  try {
+    const commits = await devGhGetCommits(target.path, 5);
+    if (!commits.length) { el.innerHTML='<div style="padding:24px;text-align:center;color:var(--text3)">কোনো commit history পাওয়া যায়নি</div>'; return; }
+    el.innerHTML = commits.map((c,idx)=>`
+      <div class="commit-item">
+        <div class="commit-icon"><i class="ti ti-git-commit"></i></div>
+        <div class="commit-body">
+          <div class="commit-msg">${devEsc((c.message||'').split('\n')[0])}</div>
+          <div class="commit-meta">${devEsc(c.author||'')} · ${c.date?new Date(c.date).toLocaleString():''} · <span class="commit-sha">${c.sha.slice(0,7)}</span>${idx===0?' · <span style="color:var(--green);font-weight:700">বর্তমান</span>':''}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="btn btn-info btn-xs" onclick="devPreviewCommit('${c.sha}')"><i class="ti ti-eye"></i> Preview</button>
+          ${idx===0?'':`<button class="btn btn-danger btn-xs" onclick="devRollback('${c.sha}','${devEsc((c.message||'').split('\\n')[0]).replace(/'/g,"\\'")}')"><i class="ti ti-history"></i> Rollback</button>`}
+        </div>
+      </div>`).join('');
+  } catch(e) { console.error(e); el.innerHTML = `<div class="alert danger" style="margin:14px"><i class="ti ti-alert-triangle"></i> লোড ব্যর্থ: ${devEsc(e.message)}</div>`; }
+}
+async function devPreviewCommit(sha) {
+  try {
+    showToast('⏳ লোড হচ্ছে...','info');
+    const target = S.dev.targets[S.dev.historyTarget];
+    const res = await devGhGetFileAtCommit(target.path, sha);
+    const blob = new Blob([res.content],{type:'text/html'}); window.open(URL.createObjectURL(blob),'_blank');
+  } catch(e) { showToast('❌ '+e.message,'error'); }
+}
+async function devRollback(sha, msg) {
+  const target = S.dev.targets[S.dev.historyTarget];
+  if (!confirm(`"${target.label}" এই ভার্সনে ফিরিয়ে নিতে চান?\n\n"${msg}" (${sha.slice(0,7)})\n\nএটা নতুন commit হিসেবে যোগ হবে — history হারাবে না।`)) return;
+  try {
+    showToast('⏳ Rollback করা হচ্ছে...','info');
+    const oldFile = await devGhGetFileAtCommit(target.path, sha);
+    const latest = await devGhGetFile(target.path);
+    const res = await devGhPutFile(target.path, oldFile.content, latest.sha, `Rollback ${target.path} to ${sha.slice(0,7)} via AI Dev Studio`);
+    showToast('✅ Rollback সম্পন্ন!','success');
+    addLog(`↩️ Dev Studio: rolled back ${target.label} to ${sha.slice(0,7)} — new commit ${(res.commitSha||'').slice(0,7)}`,'devstudio','purple');
+    devLoadCommits();
+  } catch(e) { console.error(e); showToast('❌ Rollback ব্যর্থ: '+e.message,'error'); }
+}
 </script>
 </body>
 </html>
