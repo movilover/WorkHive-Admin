@@ -367,6 +367,10 @@ tr.dup-row td{background:rgba(239,68,68,0.03)}
 .ujs-val{font-size:19px;font-weight:900;line-height:1}
 .ujs-lbl{font-size:10.5px;color:var(--text3);font-weight:700;text-transform:uppercase;margin-top:2px}
 
+/* KYC review */
+.kyc-doc-thumb{width:100%;height:130px;object-fit:cover;border-radius:var(--radius);border:1px solid var(--border);cursor:zoom-in;background:#000}
+.kyc-doc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+
 /* ===== AI Dev Studio (Precision Patch Engine) ===== */
 .dev-target-row{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
 .dev-target-pill{flex:1;min-width:200px;display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:var(--r-lg);background:var(--bg2);border:1.5px solid var(--border);cursor:pointer;transition:.15s}
@@ -493,7 +497,7 @@ tr.dup-row td{background:rgba(239,68,68,0.03)}
     <button class="btn-login" onclick="doLogin()">
       <i class="ti ti-lock" style="font-size:15px;vertical-align:-2px"></i> Secure Login
     </button>
-    <div class="sec-note"><i class="ti ti-shield-check" style="font-size:14px"></i> 256-bit encrypted · 3 attempts max</div>
+    <div class="sec-note"><i class="ti ti-shield-check" style="font-size:14px"></i> 256-bit encrypted · 3 attempts max · password &amp; code stored as SHA-256 hash</div>
   </div>
 </div>
 
@@ -545,6 +549,12 @@ tr.dup-row td{background:rgba(239,68,68,0.03)}
             <div class="qm-icon blue-bg" style="background:var(--blue-bg);color:var(--blue)"><i class="ti ti-users"></i></div>
             <div class="qm-text"><div class="qm-label">User Management</div><div class="qm-sub">সকল ইউজার দেখুন, ব্যান/আনব্যান, KYC ভেরিফাই, মেসেজ পাঠান</div></div>
             <span class="qm-badge blue" id="nb-users">0</span>
+            <i class="ti ti-chevron-right qm-chev"></i>
+          </div>
+          <div class="qm-row" onclick="goScreen('kyc')">
+            <div class="qm-icon" style="background:var(--amber-bg);color:var(--amber)"><i class="ti ti-id-badge-2"></i></div>
+            <div class="qm-text"><div class="qm-label">🪪 KYC Review</div><div class="qm-sub">সাবমিট করা KYC ডকুমেন্ট রিভিউ ও ভেরিফাই করুন</div></div>
+            <span class="qm-badge" id="nb-kyc">0</span>
             <i class="ti ti-chevron-right qm-chev"></i>
           </div>
           <div class="qm-row" onclick="goScreen('thirdgen')">
@@ -669,7 +679,7 @@ tr.dup-row td{background:rgba(239,68,68,0.03)}
             <div class="sc-label">Task Submissions</div>
             <span class="sc-badge warn" id="stat-tasks-pending">0 pending</span>
           </div>
-          <div class="stat-card red">
+          <div class="stat-card red" onclick="goScreen('kyc')">
             <div class="sc-icon red"><i class="ti ti-alert-triangle"></i></div>
             <div class="sc-val" id="stat-kyc">0</div>
             <div class="sc-label">KYC Pending</div>
@@ -750,6 +760,23 @@ tr.dup-row td{background:rgba(239,68,68,0.03)}
         </div>
       </div>
 
+      <!-- ===== KYC REVIEW ===== -->
+      <div class="screen" id="screen-kyc">
+        <div class="sec-hd">
+          <h2><button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')" style="margin-right:6px"><i class="ti ti-arrow-left"></i></button><i class="ti ti-id-badge-2"></i> KYC Review</h2>
+          <div class="sec-actions">
+            <select class="styled-select" onchange="filterKyc(this.value)">
+              <option value="pending">Pending</option>
+              <option value="verified">Verified</option>
+              <option value="rejected">Rejected</option>
+              <option value="all">All Submitted</option>
+            </select>
+          </div>
+        </div>
+        <div class="alert info" id="kycFeatureNote"><i class="ti ti-info-circle"></i> এখানে ইউজারদের জমা দেওয়া NID/Passport/Driving License ডকুমেন্ট রিভিউ করুন। Approve করলে ইউজার KYC Verified হবে এবং প্রোফাইলে ব্যাজ দেখাবে। Reject করলে কারণ লিখতে হবে — ইউজার সেটা দেখে আবার জমা দিতে পারবে।</div>
+        <div id="kycList"></div>
+      </div>
+
       <!-- ===== THIRD GENERATION ===== -->
       <div class="screen" id="screen-thirdgen">
         <div class="sec-hd">
@@ -826,19 +853,7 @@ await setDoc(doc(db, 'users', newUser.uid), {
           <i class="ti ti-refresh"></i>
           <div style="flex:1">
             <strong>🔄 Job Edit → Re-Approval Flow</strong>
-            <div style="margin-top:4px">ইউজার তার Approved থাকা কোনো জব Edit করলে, সেটা স্বয়ংক্রিয়ভাবে <b>"Needs Re-Approval"</b> স্ট্যাটাসে চলে আসবে এবং Worker-দের কাছ থেকে সাথে সাথে লুকিয়ে যাবে — যতক্ষণ না আপনি আবার Approve করছেন। এটা কাজ করার জন্য User Site-এর job-edit save ফাংশনে নিচের পরিবর্তনটুকু যোগ করতে হবে (এটা এখন <b>🧬 AI Dev Studio → User Site</b> টার্গেট দিয়ে এক ক্লিকেই Patch করা যাবে):</div>
-            <div class="code-block-wrap">
-              <div class="code-block-lbl"><i class="ti ti-code"></i> Job edit সেভ করার ফাংশনে (Firestore update-এর ঠিক আগে)</div>
-              <pre class="code-block"><code><span class="cm">// আগে থেকে Approved থাকা জব ইউজার এডিট করলে, স্ট্যাটাস reset করে re-approval-এ পাঠান</span>
-const jobSnap = await getDoc(doc(db, 'jobs', jobId));
-const wasApproved = jobSnap.exists() && jobSnap.data().status === 'approved';
-
-await updateDoc(doc(db, 'jobs', jobId), {
-  ...updatedFields,             <span class="cm">// title, instructions, reward ইত্যাদি নতুন মান</span>
-  status: wasApproved ? 'pending_reapproval' : (jobSnap.data()?.status || 'pending'),
-  editedAt: serverTimestamp(),
-});</code></pre>
-            </div>
+            <div style="margin-top:4px">ইউজার তার Approved থাকা কোনো জব Edit করলে, সেটা স্বয়ংক্রিয়ভাবে <b>"Needs Re-Approval"</b> স্ট্যাটাসে চলে আসবে এবং Worker-দের কাছ থেকে সাথে সাথে লুকিয়ে যাবে — যতক্ষণ না আপনি আবার Approve করছেন। User App-এর সর্বশেষ ফিক্সড কোডে এই ফিচারটি ইতিমধ্যে সক্রিয় আছে (Job Edit বাটন → status reset → re-approval)।</div>
           </div>
         </div>
 
@@ -942,7 +957,7 @@ await updateDoc(doc(db, 'jobs', jobId), {
         <div class="two-col" style="margin-top:16px" id="oneSignalCard">
           <div class="card">
             <div class="card-title"><i class="ti ti-bell-ringing"></i> OneSignal Push Notifications</div>
-            <div class="alert info"><i class="ti ti-info-circle"></i> এটা সেট করলে অ্যাডমিন প্যানেল থেকে যেকোনো action (Task Reject, Withdrawal Processing/Sent, Deposit Confirm/Reject, Job Approve/Reject ইত্যাদি) এর সাথে সাথেই ইউজারের ফোনে <strong>আসল push notification</strong> (heads-up পপআপ + সাউন্ড) পাঠানো হবে — শুধু in-app notification list-এ না।</div>
+            <div class="alert info"><i class="ti ti-info-circle"></i> এটা সেট করলে অ্যাডমিন প্যানেল থেকে যেকোনো action (Task Reject, Withdrawal Processing/Sent, Deposit Confirm/Reject, Job Approve/Reject, KYC Approve/Reject ইত্যাদি) এর সাথে সাথেই ইউজারের ফোনে <strong>আসল push notification</strong> (heads-up পপআপ + সাউন্ড) পাঠানো হবে — শুধু in-app notification list-এ না।</div>
             <div class="alert warn"><i class="ti ti-alert-triangle"></i> ২০২৪ সালের নভেম্বরের পর OneSignal পুরনো ("Legacy") REST API Key বাতিল করে নতুন "Rich" API Key চালু করেছে, এবং পুরনো Legacy App API Key ২০২৬-এর Q1 থেকে সম্পূর্ণভাবে অচল হয়ে যাচ্ছে। নিচের REST API Key ফিল্ডে অবশ্যই <strong>OneSignal Dashboard → Settings → Keys & IDs</strong> থেকে নতুন <strong>Rich API Key</strong> ব্যবহার করুন — পুরনো (legacy) key দিলে push পাঠানো ব্যর্থ হতে পারে।</div>
             <div class="field"><label>OneSignal App ID</label><input type="text" id="osAppId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" value="93de5a5d-7a31-487f-9549-4e3c41144f39"></div>
             <div class="lf-hint" style="margin-top:-8px;margin-bottom:12px">এই App ID টা পাবলিক (secret না) এবং তোমার Android অ্যাপে (MainActivity.java, OneSignal.initWithContext) যেটা বসানো আছে সেটাই এখানে আগে থেকে বসানো আছে। ভিন্ন App ID ব্যবহার করলে দুটো জায়গায় মিলছে কিনা নিশ্চিত করো।</div>
@@ -960,7 +975,7 @@ await updateDoc(doc(db, 'jobs', jobId), {
           </div>
           <div class="card">
             <div class="card-title"><i class="ti ti-alert-triangle"></i> জরুরি — একটা ধাপ এখনো বাকি</div>
-            <div class="alert warn"><i class="ti ti-alert-triangle"></i> এই admin panel পুশ পাঠানোর সময় নির্দিষ্ট ইউজারকে target করে <code>Firebase UID</code> দিয়ে (OneSignal "External ID")। কিন্তু কোনো ইউজারের ফোন OneSignal-কে তার Firebase UID জানায় না, যতক্ষণ না আপনার লাইভ সাইটের (movilover.github.io/WorkHive) কোডে লগইনের পরে এই কল যুক্ত করা হয়:</div>
+            <div class="alert warn"><i class="ti ti-alert-triangle"></i> এই admin panel পুশ পাঠানোর সময় নির্দিষ্ট ইউজারকে target করে <code>Firebase UID</code> দিয়ে (OneSignal "External ID")। কিন্তু কোনো ইউজারের ফোন OneSignal-কে তার Firebase UID জানায় না, যতক্ষণ না আপনার লাইভ সাইটের কোডে লগইনের পরে এই কল যুক্ত করা হয়:</div>
             <div class="code-block-wrap">
               <div class="code-block-lbl"><i class="ti ti-code"></i> Firebase Auth login-এর ঠিক পরে ও logout-এর সময়</div>
               <pre class="code-block"><code><span class="cm">// লগইন সফল হওয়ার পরে — এই ডিভাইসকে ইউজারের সাথে লিংক করুন</span>
@@ -1054,6 +1069,18 @@ if (window.Capacitor?.Plugins?.OneSignal) {
               <button class="btn btn-primary" style="width:100%" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> Save Job Posting Settings</button>
             </div>
             <div class="card">
+              <div class="card-title"><i class="ti ti-id-badge-2"></i> KYC Verification</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;margin-bottom:6px">
+                <div>
+                  <div style="font-size:14px;font-weight:700">Enable KYC</div>
+                  <div style="font-size:12px;color:var(--text3);margin-top:2px">Off হলে User App-এ KYC ফর্ম বন্ধ দেখাবে (Submit করা যাবে না)</div>
+                </div>
+                <label class="toggle"><input type="checkbox" id="setKycEnabled" checked onchange="saveSettings()"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+              </div>
+              <div class="lf-hint">ইতিমধ্যে জমা হওয়া KYC রিভিউ করতে <b>KYC Review</b> স্ক্রিনে যান (Dashboard থেকে অথবা এখানে)।</div>
+              <button class="btn btn-ghost" style="width:100%;margin-top:10px" onclick="goScreen('kyc')"><i class="ti ti-id-badge-2"></i> Go to KYC Review</button>
+            </div>
+            <div class="card">
               <div class="card-title"><i class="ti ti-headset"></i> Support Info</div>
               <div class="field"><label>Support Email</label><input type="text" id="setSupportEmail" value="support@workhive.app"></div>
               <div class="field"><label>Support / Live Chat Hours</label><input type="text" id="setSupportHours" value="9 AM – 11 PM"></div>
@@ -1066,12 +1093,12 @@ if (window.Capacitor?.Plugins?.OneSignal) {
               <div class="card-title"><i class="ti ti-lock"></i> Security Settings</div>
               <div class="field"><label>New Admin Password</label><input type="password" id="newPass" placeholder="Leave blank to keep current"></div>
               <div class="field"><label>New Security Code (6 digits)</label><input type="text" id="newCode" placeholder="6-digit code" maxlength="6"></div>
-              <div class="alert warn"><i class="ti ti-alert-triangle"></i> Security code পরিবর্তন করলে সঙ্গে সঙ্গে effective হবে।</div>
+              <div class="alert warn"><i class="ti ti-alert-triangle"></i> Security code পরিবর্তন করলে সঙ্গে সঙ্গে effective হবে। পাসওয়ার্ড ও কোড এখন শুধুমাত্র SHA-256 hash আকারে localStorage-এ সংরক্ষিত হয় — plaintext কখনো সেভ হয় না।</div>
               <button class="btn btn-warning" style="width:100%" onclick="saveSecurity()"><i class="ti ti-lock"></i> Update Security</button>
             </div>
             <div class="card">
               <div class="card-title"><i class="ti ti-cloud-lock"></i> Firebase Admin Account</div>
-              <div class="lf-hint" style="margin-bottom:10px">এই account দিয়েই admin panel Firestore-এ read/write করে (permission-এর জন্য প্রয়োজন)। এই email অবশ্যই Firebase Console → Authentication-এ email/password দিয়ে তৈরি করা এবং verified থাকতে হবে, এবং firestore.rules-এর <code>isChatAdmin()</code>-এ যোগ করা থাকতে হবে।</div>
+              <div class="lf-hint" style="margin-bottom:10px">এই account দিয়েই admin panel Firestore-এ read/write করে (permission-এর জন্য প্রয়োজন)। এই email অবশ্যই Firebase Console → Authentication-এ email/password দিয়ে তৈরি করা এবং verified থাকতে হবে, এবং firestore.rules-এর <code>isChatAdmin()</code>-এ যোগ করা থাকতে হবে। <b>নোট:</b> এই Firebase পাসওয়ার্ডটি hash করে রাখা সম্ভব নয় কারণ Firebase Authentication সার্ভারে সাইন-ইন করতে প্রকৃত পাসওয়ার্ড লাগে — তাই এটি ব্রাউজারের localStorage-এ থেকে যায়; শুধুমাত্র বিশ্বস্ত ডিভাইস থেকে এই প্যানেল ব্যবহার করুন।</div>
               <div class="field"><label>Firebase Admin Email</label><input type="text" id="setFbEmail" placeholder="admin@yourproject.com"></div>
               <div class="field"><label>Firebase Admin Password</label><input type="password" id="setFbPass" placeholder="••••••••"></div>
               <button class="btn btn-info" style="width:100%" onclick="updateFirebaseAdminAccount()"><i class="ti ti-plug"></i> Save & Reconnect</button>
@@ -1239,6 +1266,7 @@ if (window.Capacitor?.Plugins?.OneSignal) {
               <option value="deposit">Deposit</option>
               <option value="withdrawal">Withdrawal</option>
               <option value="job">Jobs</option>
+              <option value="kyc">KYC</option>
               <option value="devstudio">Dev Studio</option>
             </select>
             <button class="btn btn-ghost btn-sm" onclick="clearLogs()"><i class="ti ti-trash"></i> Clear Logs</button>
@@ -1289,7 +1317,7 @@ if (window.Capacitor?.Plugins?.OneSignal) {
       <div><div class="modal-title" id="rejectTitle"><i class="ti ti-message-circle-2" style="vertical-align:-3px;color:var(--purple)"></i> Reject</div><div class="modal-sub" id="rejectSub"></div></div>
       <div class="modal-close" onclick="closeModal('rejectModal')"><i class="ti ti-x"></i></div>
     </div>
-    <div class="field"><label>Rejection Reason (User এটা দেখতে পাবে)</label><textarea id="rejectReason" rows="3" placeholder="যেমন: স্ক্রিনশট স্পষ্ট নয় / ভুল তথ্য / সময়সীমা পার হয়ে গেছে…"></textarea><button type="button" class="btn btn-ghost btn-xs" style="margin-top:6px" onclick="aiComposeInto('rejectReason','Write a short, polite, clear rejection reason in Bangla for a rejected task/job/deposit/withdrawal submission on a micro-task app', this)"><i class="ti ti-sparkles"></i> AI দিয়ে কারণ লিখুন</button></div>
+    <div class="field"><label>Rejection Reason (User এটা দেখতে পাবে)</label><textarea id="rejectReason" rows="3" placeholder="যেমন: স্ক্রিনশট স্পষ্ট নয় / ভুল তথ্য / সময়সীমা পার হয়ে গেছে…"></textarea><button type="button" class="btn btn-ghost btn-xs" style="margin-top:6px" onclick="aiComposeInto('rejectReason','Write a short, polite, clear rejection reason in Bangla for a rejected task/job/deposit/withdrawal/KYC submission on a micro-task app', this)"><i class="ti ti-sparkles"></i> AI দিয়ে কারণ লিখুন</button></div>
     <div id="rejectRefundNote" class="alert info" style="display:none"><i class="ti ti-cash"></i> এই জবে হোল্ড করা বাজেট Reject করার সাথে সাথেই পোস্টকারীর ব্যালেন্সে ফেরত যাবে।</div>
     <div style="display:flex;gap:10px;margin-top:8px">
       <button class="btn btn-ghost" style="flex:1" onclick="closeModal('rejectModal')">Cancel</button>
@@ -1404,6 +1432,16 @@ if (window.Capacitor?.Plugins?.OneSignal) {
   </div>
 </div>
 
+<div class="modal-overlay" id="kycReviewModal">
+  <div class="modal-box" style="max-width:560px">
+    <div class="modal-hd">
+      <div><div class="modal-title">🪪 KYC Submission</div><div class="modal-sub" id="kycModalSub"></div></div>
+      <div class="modal-close" onclick="closeModal('kycReviewModal')"><i class="ti ti-x"></i></div>
+    </div>
+    <div id="kycModalContent"></div>
+  </div>
+</div>
+
 <!-- Firebase -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -1475,14 +1513,20 @@ onAuthStateChanged(auth, user => {
 </script>
 
 <script>
+// ===== SECURITY: SHA-256 hashing helper (no plaintext admin secrets stored) =====
+async function sha256Hex(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 // ===== STATE =====
 const S = {
   users: [], jobs: [], deposits: [], withdrawals: [], tasks: [], methods: [],
   adminNotifs: [], logs: [],
   jobFilter: 'all', jobSourceFilter: 'all', depFilter: 'pending', taskFilter: 'pending',
-  wdFilter: 'pending',
+  wdFilter: 'pending', kycFilter: 'pending',
   logFilter: 'all', userFilter: 'all',
-  _rejectCtx: null, _balUid: null, _msgUid: null, _editJobId: null,
+  _rejectCtx: null, _balUid: null, _msgUid: null, _editJobId: null, _kycUid: null,
   tg: { token: '', chatId: '', connected: false },
   os: { appId: '', restKey: '', connected: false },
   bcHistory: [],
@@ -1490,7 +1534,8 @@ const S = {
   settings: { name: 'WorkHive', minWd: 5, minDep: 1, fee: 5, refGen1: 0.5, refGen2: 0.25, refGen3: 0.10,
     supportEmail: 'support@workhive.app', supportHours: '9 AM – 11 PM', supportResponse: 'Within 12 hours',
     banner: '', bannerType: 'info', spinEnabled: true,
-    postFeatureEnabled: true, postMinReward: 0.02, postMaxReward: 5.00, postMinSlots: 5, postMaxSlots: 500, postPlatformFeePct: 10 },
+    postFeatureEnabled: true, postMinReward: 0.02, postMaxReward: 5.00, postMinSlots: 5, postMaxSlots: 500, postPlatformFeePct: 10,
+    kycEnabled: true },
 };
 
 // 🧬 AI Dev Studio state — dual-target (User Site / Admin Panel) precision patch engine
@@ -1510,6 +1555,7 @@ const TG_EVENTS = [
   { id: 'e4', label: 'New Job Submitted', icon: 'ti-briefcase', enabled: true, msg: '💼 New job by {user}: "{title}" — needs approval' },
   { id: 'e5', label: 'Task Proof Submitted', icon: 'ti-check-box', enabled: true, msg: '🎯 {user} submitted proof for "{task}"' },
   { id: 'e6', label: 'User Banned', icon: 'ti-ban', enabled: true, msg: '⛔ User {name} has been banned' },
+  { id: 'e7', label: 'KYC Submitted', icon: 'ti-id-badge-2', enabled: true, msg: '🪪 KYC submitted by {name} — needs review' },
 ];
 
 // ===== FB WAIT =====
@@ -1517,16 +1563,22 @@ window._fbReadyPromise = new Promise(r => { window._fbResolve = r; });
 if (window._fbReady) window._fbResolve();
 async function waitFb() { if (!window._fb || !window._fbReady) await Promise.race([window._fbReadyPromise, new Promise(r => setTimeout(r, 6000))]); return !!window._fb; }
 
-// ===== AUTH =====
+// ===== AUTH (hardened: password + security code stored only as SHA-256 hash) =====
 let attempts = 0, lockUntil = null;
-function doLogin() {
+async function doLogin() {
   const u = v('loginUser'), p = v('loginPass'), c = v('loginCode'), err = $('loginErr');
   const fbEmail = v('loginFbEmail'), fbPass = v('loginFbPass');
   if (lockUntil && Date.now() < lockUntil) { err.textContent = `🔒 Locked. Wait ${Math.ceil((lockUntil-Date.now())/1000)}s`; return; }
   if (!u || !p || !c) { err.textContent = 'All fields are required'; return; }
   if (!fbEmail || !fbPass) { err.textContent = 'Firebase Admin Email ও Password দিন (ডাটা লোড করতে প্রয়োজন)'; return; }
-  const cu = ls('wha_user') || 'admin', cp = ls('wha_pass') || 'WorkHive@2024!', cc = ls('wha_code') || '272727';
-  if (u === cu && p === cp && c === cc) {
+  const cu = ls('wha_user') || 'admin';
+  let passHash = ls('wha_pass_hash'), codeHash = ls('wha_code_hash');
+  if (!passHash) { passHash = await sha256Hex('WorkHive@2024!'); ls('wha_pass_hash', passHash); }
+  if (!codeHash) { codeHash = await sha256Hex('272727'); ls('wha_code_hash', codeHash); }
+  const [pHash, cHash] = await Promise.all([sha256Hex(p), sha256Hex(c)]);
+  // purge any legacy plaintext keys from earlier versions of this panel
+  localStorage.removeItem('wha_pass'); localStorage.removeItem('wha_code');
+  if (u === cu && pHash === passHash && cHash === codeHash) {
     attempts = 0; sessionStorage.setItem('wh_tok', '1');
     ls('wha_fb_email', fbEmail); ls('wha_fb_pass', fbPass);
     if (window.fbAdminSignIn) {
@@ -1659,12 +1711,13 @@ function openLightbox(url) { const lb=$('imgLightbox'); $('lightboxImg').src=url
 function closeLightbox() { $('imgLightbox').classList.remove('show'); }
 
 // ===== NAVIGATION =====
-const pageNames = { dashboard:'Dashboard', users:'User Management', thirdgen:'Third Generation', jobs:'Job Approvals', tasks:'Task Submissions', deposits:'Deposits', withdrawals:'Withdrawals', 'payment-methods':'Payment Methods', telegram:'Telegram Bot', broadcast:'Broadcast', notifications:'Notifications', settings:'Site Settings', logs:'Activity Logs', devstudio:'AI Dev Studio' };
+const pageNames = { dashboard:'Dashboard', users:'User Management', kyc:'KYC Review', thirdgen:'Third Generation', jobs:'Job Approvals', tasks:'Task Submissions', deposits:'Deposits', withdrawals:'Withdrawals', 'payment-methods':'Payment Methods', telegram:'Telegram Bot', broadcast:'Broadcast', notifications:'Notifications', settings:'Site Settings', logs:'Activity Logs', devstudio:'AI Dev Studio' };
 function goScreen(name) {
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   const sc = $('screen-'+name); if(sc) sc.classList.add('active');
   window.scrollTo(0,0);
   if (name==='thirdgen') renderThirdGen();
+  if (name==='kyc') renderKycQueue();
   if (name==='devstudio') devInit();
 }
 function goPushSettings() {
@@ -1818,9 +1871,13 @@ async function loadUsers() {
   S.users = [];
   snap.forEach(d => {
     const u = d.data();
+    const kycStatus = u.kycStatus || (u.kyc ? 'verified' : 'none');
     S.users.push({
       id:d.id, name:u.name||'Unknown', email:u.email||'—', username:u.username||'',
-      balance:u.balance||0, tasks:u.tasksCompleted||0, kyc:u.kyc?'Verified':'Pending',
+      balance:u.balance||0, tasks:u.tasksCompleted||0,
+      kyc: kycStatus==='verified' ? 'Verified' : 'Pending',
+      kycStatus, kycFullName:u.kycFullName||'', kycIdType:u.kycIdType||'', kycIdNumber:u.kycIdNumber||'',
+      kycFrontUrl:u.kycFrontUrl||'', kycBackUrl:u.kycBackUrl||'', kycRejectReason:u.kycRejectReason||'',
       status:u.status||'active', country:u.country||'—', totalEarned:u.totalEarned||0,
       totalWithdrawn:u.totalWithdrawn||0, phone:u.phone||'—', referralCode:u.referralCode||'—',
       pendingAmount:u.pendingAmount||0, workerLevel:u.workerLevel||1,
@@ -1830,282 +1887,74 @@ async function loadUsers() {
     });
   });
   renderUsers(); updateStats(); updateBadges(); renderDashCountry(); renderThirdGen();
+  if ($('screen-kyc')?.classList.contains('active')) renderKycQueue();
 }
 function findUser(id) { return S.users.find(u=>u.id===id); }
 
-// ===== FIRESTORE: JOBS =====
-function normalizeJobDoc(id, data) {
-  const isAdmin = data.postedByAdmin !== false;
-  const postedBy = isAdmin ? 'admin' : (data.postedBy || data.postedById || '');
-  const postedByEmail = data.postedByEmail || (findUser(postedBy)?.email) || '';
-  let status = data.status || 'pending';
-  if (status === 'pending_review') status = 'pending';
-  return {
-    id, ...data,
-    postedBy, postedByEmail, status,
-    budgetHeld: data.budgetHeld || 0,
-    holdSettled: !!data.holdSettled,
-  };
-}
-function listenJobs() {
-  const fb = window._fb; if (!fb) return;
-  fb.onSnapshot(fb.collection(fb.db,'jobs'), snap => {
-    S.jobs = [];
-    snap.forEach(d => S.jobs.push(normalizeJobDoc(d.id, d.data())));
-    S.jobs.sort((a,b)=>(b._ts||0)-(a._ts||0));
-    renderJobs(); renderDashPendingJobs(); updateStats(); updateBadges(); renderJobSrcTabs(); renderUserJobStats();
-  }, (e)=>{console.warn('listenJobs error (check Firestore Rules / Auth):',e);showToast('❌ Jobs load failed — check Firebase Admin login','error');});
-}
-
-// ===== FIRESTORE: DEPOSITS =====
-function listenDeposits() {
-  const fb = window._fb; if (!fb) return;
-  fb.onSnapshot(fb.collection(fb.db,'deposits'), snap => {
-    S.deposits = [];
-    snap.forEach(d => S.deposits.push({id:d.id,...d.data()}));
-    S.deposits.sort((a,b)=>(b._ts||0)-(a._ts||0));
-    renderDeposits(); renderDashDeposits(); updateStats(); updateBadges(); renderStatusTabs('depositTabs','dep');
-  }, (e)=>{console.warn('listenDeposits error (check Firestore Rules / Auth):',e);showToast('❌ Deposits load failed — check Firebase Admin login','error');});
-}
-
-// ===== FIRESTORE: WITHDRAWALS =====
-function listenWithdrawals() {
-  const fb = window._fb; if (!fb) return;
-  fb.onSnapshot(fb.collection(fb.db,'withdrawals'), snap => {
-    S.withdrawals = [];
-    snap.forEach(d => S.withdrawals.push({id:d.id,...d.data()}));
-    S.withdrawals.sort((a,b)=>(b._ts||0)-(a._ts||0));
-    renderWithdrawals(); renderDashWithdrawals(); updateStats(); updateBadges(); renderStatusTabs('withdrawTabs','wd');
-  }, (e)=>{console.warn('listenWithdrawals error (check Firestore Rules / Auth):',e);showToast('❌ Withdrawals load failed — check Firebase Admin login','error');});
-}
-
-// ===== FIRESTORE: TASKS =====
-function listenTasks() {
-  const fb = window._fb; if (!fb) return;
-  fb.onSnapshot(fb.collection(fb.db,'taskSubmissions'), snap => {
-    S.tasks = [];
-    snap.forEach(d => S.tasks.push({id:d.id,...d.data()}));
-    S.tasks.sort((a,b)=>(b._ts||0)-(a._ts||0));
-    renderTasks(); updateStats(); updateBadges(); renderStatusTabs('taskTabs','task');
-  }, (e)=>{console.warn('listenTasks error (check Firestore Rules / Auth):',e);showToast('❌ Task submissions load failed — check Firebase Admin login','error');});
-}
-
-// ===== FIRESTORE: METHODS =====
-function listenMethods() {
-  const fb = window._fb; if (!fb) return;
-  fb.onSnapshot(fb.collection(fb.db,'paymentMethods'), async snap => {
-    S.methods = [];
-    snap.forEach(d => S.methods.push({id:d.id,...d.data()}));
-    if (!S.methods.length) await seedMethods();
-    renderMethods();
-  }, (e)=>{console.warn('listenMethods error (check Firestore Rules / Auth):',e);});
-}
-async function seedMethods() {
-  const fb = window._fb; if (!fb) return;
-  const defaults = [
-    {name:'bKash',emoji:'📱',logo:'',number:'01711000000',minDeposit:1,depositFee:0,withdrawFee:5,enabled:true},
-    {name:'Nagad',emoji:'💳',logo:'',number:'01711000001',minDeposit:1,depositFee:0,withdrawFee:5,enabled:true},
-    {name:'Rocket',emoji:'🚀',logo:'',number:'01711000002',minDeposit:1,depositFee:0,withdrawFee:5,enabled:false},
-    {name:'USDT (TRC20)',emoji:'₮',logo:'',number:'TRxxxxxxxxxxxxxxxxxxxxxxxxxx',minDeposit:5,depositFee:0,withdrawFee:3,enabled:true},
-  ];
-  for (const m of defaults) await fb.addDoc(fb.collection(fb.db,'paymentMethods'),m).catch(()=>{});
-}
-
-// ===== FIRESTORE: SETTINGS =====
-function listenSettings() {
-  const fb = window._fb; if (!fb) return;
-  fb.onSnapshot(fb.doc(fb.db,'siteSettings','global'), snap => {
-    if (snap.exists()) {
-      const d = snap.data();
-      Object.assign(S.settings, {
-        name: d.name ?? S.settings.name,
-        minWd: d.minWithdraw ?? S.settings.minWd,
-        minDep: d.minDeposit ?? S.settings.minDep,
-        fee: d.withdrawFee ?? S.settings.fee,
-        refGen1: d.refGen1 ?? S.settings.refGen1,
-        refGen2: d.refGen2 ?? S.settings.refGen2,
-        refGen3: d.refGen3 ?? S.settings.refGen3,
-        supportEmail: d.supportEmail ?? S.settings.supportEmail,
-        supportHours: d.supportHours ?? S.settings.supportHours,
-        supportResponse: d.supportResponse ?? S.settings.supportResponse,
-        banner: d.banner ?? S.settings.banner,
-        bannerType: d.bannerType ?? S.settings.bannerType,
-        spinEnabled: d.spinEnabled !== undefined ? d.spinEnabled : S.settings.spinEnabled,
-        postFeatureEnabled: d.postFeatureEnabled !== undefined ? d.postFeatureEnabled : S.settings.postFeatureEnabled,
-        postMinReward: d.postMinReward ?? S.settings.postMinReward,
-        postMaxReward: d.postMaxReward ?? S.settings.postMaxReward,
-        postMinSlots: d.postMinSlots ?? S.settings.postMinSlots,
-        postMaxSlots: d.postMaxSlots ?? S.settings.postMaxSlots,
-        postPlatformFeePct: d.postPlatformFeePct ?? S.settings.postPlatformFeePct,
-      });
-      const s = S.settings;
-      if ($('setName')) $('setName').value = s.name||'WorkHive';
-      if ($('setMinWd')) $('setMinWd').value = s.minWd||5;
-      if ($('setMinDep')) $('setMinDep').value = s.minDep||1;
-      if ($('setFee')) $('setFee').value = s.fee||5;
-      if ($('setRefGen1')) $('setRefGen1').value = s.refGen1??0.5;
-      if ($('setRefGen2')) $('setRefGen2').value = s.refGen2??0.25;
-      if ($('setRefGen3')) $('setRefGen3').value = s.refGen3??0.10;
-      if ($('setSupportEmail')) $('setSupportEmail').value = s.supportEmail||'';
-      if ($('setSupportHours')) $('setSupportHours').value = s.supportHours||'';
-      if ($('setSupportResponse')) $('setSupportResponse').value = s.supportResponse||'';
-      if ($('setBannerMsg')) $('setBannerMsg').value = s.banner||'';
-      if ($('setBannerType')) $('setBannerType').value = s.bannerType||'info';
-      if ($('toggleSpin')) $('toggleSpin').checked = s.spinEnabled!==false;
-      if ($('setPostEnabled')) $('setPostEnabled').checked = s.postFeatureEnabled!==false;
-      if ($('setPostMinReward')) $('setPostMinReward').value = s.postMinReward??0.02;
-      if ($('setPostMaxReward')) $('setPostMaxReward').value = s.postMaxReward??5.00;
-      if ($('setPostMinSlots')) $('setPostMinSlots').value = s.postMinSlots??5;
-      if ($('setPostMaxSlots')) $('setPostMaxSlots').value = s.postMaxSlots??500;
-      if ($('setPostFeePct')) $('setPostFeePct').value = s.postPlatformFeePct??10;
-      renderThirdGen();
-    }
-  }, (e)=>{console.warn('listenSettings error (check Firestore Rules / Auth):',e);});
-}
-
-// ===== STATS =====
-function updateStats() {
-  const pendW = S.withdrawals.filter(w=>w.status==='pending');
-  const totalPW = pendW.reduce((a,w)=>a+(w.amount||0),0);
-  const activeJobs = S.jobs.filter(j=>j.status==='approved').length;
-  const pendJobs = S.jobs.filter(j=>j.status==='pending'||j.status==='pending_reapproval').length;
-  const kycPend = S.users.filter(u=>u.kyc==='Pending').length;
-  const confDep = S.deposits.filter(d=>d.status==='confirmed').reduce((a,d)=>a+(d.amount||0),0);
-  const pendDep = S.deposits.filter(d=>d.status==='pending').length;
-  const pendTask = S.tasks.filter(t=>t.status==='pending').length;
-  computeDuplicateGroups();
-  const dupCount = S.dupUserIds.size;
-  set('stat-users', S.users.length);
-  set('stat-dep', fmtAmt(confDep));
-  set('stat-dep-pending', pendDep+' pending');
-  set('stat-wd', fmtAmt(totalPW));
-  set('stat-wd-count', pendW.length+' pending');
-  set('stat-jobs', activeJobs);
-  set('stat-jobs-pending', pendJobs+' pending');
-  set('stat-tasks', S.tasks.length);
-  set('stat-tasks-pending', pendTask+' pending');
-  set('stat-kyc', kycPend);
-  set('stat-kyc-badge', kycPend+' KYC pending');
-  set('stat-dupes', dupCount);
-  set('stat-dupes-badge', dupCount ? '⚠️ Review needed' : 'All clear');
-  set('hs-users', S.users.length);
-  set('hs-deposits', fmtAmt(confDep));
-  set('hs-jobs', activeJobs);
-  function set(id,v){const el=$(id);if(el)el.textContent=v;}
-}
-function updateBadges() {
-  const pj=S.jobs.filter(j=>j.status==='pending'||j.status==='pending_reapproval').length;
-  const pw=S.withdrawals.filter(w=>w.status==='pending').length;
-  const pd=S.deposits.filter(d=>d.status==='pending').length;
-  const pt=S.tasks.filter(t=>t.status==='pending').length;
-  const pn=S.adminNotifs.filter(n=>!n.read).length;
-  computeDuplicateGroups();
-  const dupCount = S.dupUserIds.size;
-  setBadge('nb-users',S.users.length,'blue');
-  setBadge('nb-thirdgen',dupCount,'red');
-  setBadge('nb-jobs',pj,'red');
-  setBadge('nb-tasks',pt,'red');
-  setBadge('nb-deposits',pd,'red');
-  setBadge('nb-withdrawals',pw,'red');
-  setBadge('nb-notifs',pn,'red');
-  $('topDot').style.display=pn>0?'block':'none';
-  function setBadge(id,n,cls){ const el=$(id); if(!el)return; el.textContent=n; if(el.classList.contains('qm-badge')){ el.classList.toggle('show', n>0); } else { el.style.display=n>0?'':'none'; } }
-}
-
-// ===== RENDER: USERS =====
-function renderUsers(list) {
-  list = list || (S.userFilter==='all' ? S.users : S.users.filter(u=>u.status===S.userFilter));
-  $('userTbody').innerHTML = list.map((u,i) => `
-    <tr class="${S.dupUserIds&&S.dupUserIds.has(u.id)?'dup-row':''}">
-      <td style="color:var(--text3);font-size:12px">${i+1}</td>
-      <td>
-        <div style="display:flex;align-items:center;gap:10px">
-          <div class="user-av" style="background:var(--${avColor(u.name)}-bg);color:var(--${avColor(u.name)});border-color:var(--${avColor(u.name)}-border)">${initials(u.name)}</div>
-          <div><div class="td-primary">${u.name}${S.dupUserIds&&S.dupUserIds.has(u.id)?' <i class="ti ti-alert-triangle dup-flag" title="Possible duplicate account — check Third Generation screen"></i>':''}</div><div class="td-sub">${u.email}${u.username?' · @'+u.username:''}</div></div>
+// ===== KYC REVIEW =====
+function renderKycQueue() {
+  const el = $('kycList'); if (!el) return;
+  const filter = S.kycFilter || 'pending';
+  let list = S.users.filter(u => u.kycStatus && u.kycStatus !== 'none');
+  if (filter !== 'all') list = list.filter(u => u.kycStatus === filter);
+  if (!list.length) { el.innerHTML = '<div class="card" style="text-align:center;padding:40px;color:var(--text3)">কোনো KYC সাবমিশন পাওয়া যায়নি।</div>'; return; }
+  el.innerHTML = list.map(u => {
+    const statusBadge = u.kycStatus==='verified' ? '<span class="badge green">✅ Verified</span>' : u.kycStatus==='rejected' ? '<span class="badge red">❌ Rejected</span>' : '<span class="badge amber">⏳ Pending</span>';
+    return `<div class="job-card">
+      <div class="job-poster">
+        <div class="poster-av">${initials(u.name)}</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:800">${u.name} ${statusBadge}</div>
+          <div style="font-size:11.5px;color:var(--text3)">${u.email}</div>
         </div>
-      </td>
-      <td style="font-size:12px;color:var(--text2)">${u.joined}</td>
-      <td class="bal-chip">${fmtAmt(u.balance)}${u.postingHold?`<div style="font-size:9.5px;color:var(--amber);font-weight:700">+${fmtAmt(u.postingHold)} held</div>`:''}</td>
-      <td style="font-weight:700">${u.tasks}</td>
-      <td><span class="badge ${u.kyc==='Verified'?'green':'amber'}">${u.kyc}</span></td>
-      <td><span class="badge ${u.status==='active'?'green':'red'}">${u.status}</span></td>
-      <td>
-        <div style="display:flex;gap:5px;flex-wrap:wrap">
-          <button class="btn btn-info btn-xs" onclick="viewUser('${u.id}')"><i class="ti ti-eye"></i> View</button>
-          <button class="btn btn-message btn-xs" title="Send this user a message (shows in their notification icon)" onclick="openMsgUser('${u.id}')"><i class="ti ti-message-circle-2"></i></button>
-          <button class="btn btn-xs ${u.status==='active'?'btn-danger':'btn-approve'}" onclick="toggleBan('${u.id}')">${u.status==='active'?'<i class="ti ti-ban"></i>':'<i class="ti ti-check"></i>'}</button>
-          ${u.kyc==='Pending'?`<button class="btn btn-warning btn-xs" onclick="verifyKyc('${u.id}')"><i class="ti ti-id-badge"></i></button>`:''}
-        </div>
-      </td>
-    </tr>`).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:28px">No users found</td></tr>';
-}
-function filterUsers(q) {
-  const ql=q.toLowerCase();
-  renderUsers(S.users.filter(u=>u.name.toLowerCase().includes(ql)||u.email.toLowerCase().includes(ql)||(u.username||'').toLowerCase().includes(ql)));
-}
-function filterUsersByStatus(val) { S.userFilter=val; renderUsers(); }
-
-function viewUser(id) {
-  const u=findUser(id); if(!u)return;
-  $('udTitle').textContent=u.name;
-  $('udSub').textContent='@'+(u.username||'—')+' · '+u.email;
-  $('udContent').innerHTML=`
-    <div class="detail-grid">
-      <div class="detail-box"><div class="dl">Balance</div><div class="dv" style="color:var(--teal)">${fmtAmt(u.balance)}</div></div>
-      <div class="detail-box"><div class="dl">Total Earned</div><div class="dv" style="color:var(--green)">${fmtAmt(u.totalEarned)}</div></div>
-      <div class="detail-box"><div class="dl">Pending</div><div class="dv" style="color:var(--amber)">${fmtAmt(u.pendingAmount)}</div></div>
-      <div class="detail-box"><div class="dl">Withdrawn</div><div class="dv" style="color:var(--amber)">${fmtAmt(u.totalWithdrawn)}</div></div>
-      <div class="detail-box"><div class="dl">Tasks Done</div><div class="dv">${u.tasks}</div></div>
-      <div class="detail-box"><div class="dl">Worker Level</div><div class="dv">L${u.workerLevel||1}</div></div>
-      <div class="detail-box"><div class="dl">Held (Job Posts)</div><div class="dv" style="color:var(--amber)">${fmtAmt(u.postingHold||0)}</div></div>
-      <div class="detail-box"><div class="dl">KYC</div><div class="dv"><span class="badge ${u.kyc==='Verified'?'green':'amber'}">${u.kyc}</span></div></div>
-      <div class="detail-box"><div class="dl">Status</div><div class="dv"><span class="badge ${u.status==='active'?'green':'red'}">${u.status}</span></div></div>
-      <div class="detail-box"><div class="dl">Country</div><div class="dv" style="font-size:14px">${u.country}</div></div>
-      <div class="detail-box"><div class="dl">Phone</div><div class="dv" style="font-size:14px">${u.phone}</div></div>
-    </div>
-    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:12px">
-      <div style="font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Referral Code</div>
-      <div style="font-size:20px;font-weight:900;color:var(--amber);letter-spacing:3px">${u.referralCode}</div>
-    </div>
-    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:14px">
-      <div style="font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Joined</div>
-      <div style="font-size:14px;font-weight:700">${u.joined}</div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px">
-      <button class="btn btn-warning" onclick="closeModal('userDetailModal');openBalAdj('${u.id}')"><i class="ti ti-currency-dollar"></i> Balance</button>
-      <button class="btn btn-approve" onclick="verifyKyc('${u.id}');closeModal('userDetailModal')"><i class="ti ti-id-badge"></i> KYC</button>
-      <button class="btn btn-message" onclick="closeModal('userDetailModal');openMsgUser('${u.id}')"><i class="ti ti-message-circle-2"></i> Message</button>
-      <button class="btn ${u.status==='active'?'btn-danger':'btn-approve'}" onclick="toggleBan('${u.id}');closeModal('userDetailModal')">${u.status==='active'?'<i class="ti ti-ban"></i> Ban':'<i class="ti ti-check"></i> Unban'}</button>
+        <button class="btn btn-info btn-sm" onclick="openKycReview('${u.id}')"><i class="ti ti-eye"></i> View Documents</button>
+      </div>
+      <div class="detail-grid" style="grid-template-columns:repeat(3,1fr)">
+        <div class="detail-box"><div class="dl">Full Name (KYC)</div><div class="dv" style="font-size:13px">${u.kycFullName||'—'}</div></div>
+        <div class="detail-box"><div class="dl">ID Type</div><div class="dv" style="font-size:13px">${u.kycIdType||'—'}</div></div>
+        <div class="detail-box"><div class="dl">ID Number</div><div class="dv" style="font-size:13px">${u.kycIdNumber||'—'}</div></div>
+      </div>
+      ${u.kycStatus==='rejected'&&u.kycRejectReason?`<div class="reject-reason-box"><i class="ti ti-message-circle-2"></i><div><strong>Rejection reason:</strong> ${u.kycRejectReason}</div></div>`:''}
+      ${u.kycStatus==='pending'?`<div style="display:flex;gap:10px;margin-top:10px">
+        <button class="btn btn-approve" style="flex:1" onclick="approveKycUser('${u.id}')"><i class="ti ti-check"></i> Approve &amp; Verify</button>
+        <button class="btn btn-message" onclick="openReject('kyc','${u.id}','${(u.name||'').replace(/'/g,"\\'")}')"><i class="ti ti-message-circle-2"></i> Reject with Reason</button>
+      </div>`:''}
     </div>`;
-  openModal('userDetailModal');
+  }).join('');
 }
-
-async function toggleBan(id) {
-  const u=findUser(id); if(!u)return;
-  const newStatus = u.status==='active'?'banned':'active';
+function filterKyc(val) { S.kycFilter = val; renderKycQueue(); }
+function openKycReview(uid) {
+  const u = findUser(uid); if(!u) { showToast('User not found','error'); return; }
+  $('kycModalSub').textContent = u.name + ' — ' + u.email;
+  $('kycModalContent').innerHTML = `
+    <div class="detail-grid" style="grid-template-columns:1fr 1fr 1fr">
+      <div class="detail-box"><div class="dl">Full Name</div><div class="dv" style="font-size:13px">${u.kycFullName||'—'}</div></div>
+      <div class="detail-box"><div class="dl">ID Type</div><div class="dv" style="font-size:13px">${u.kycIdType||'—'}</div></div>
+      <div class="detail-box"><div class="dl">ID Number</div><div class="dv" style="font-size:13px">${u.kycIdNumber||'—'}</div></div>
+    </div>
+    <div class="kyc-doc-grid">
+      <div><div class="proof-lbl" style="margin-bottom:6px">Front Side</div>${u.kycFrontUrl?`<img class="kyc-doc-thumb" src="${u.kycFrontUrl}" onclick="openLightbox('${u.kycFrontUrl}')">`:'<div style="color:var(--text3);font-size:12px">No image</div>'}</div>
+      <div><div class="proof-lbl" style="margin-bottom:6px">Back Side</div>${u.kycBackUrl?`<img class="kyc-doc-thumb" src="${u.kycBackUrl}" onclick="openLightbox('${u.kycBackUrl}')">`:'<div style="color:var(--text3);font-size:12px">No image</div>'}</div>
+    </div>
+    ${u.kycStatus==='pending'?`<div style="display:flex;gap:10px;margin-top:6px">
+      <button class="btn btn-message" style="flex:1" onclick="closeModal('kycReviewModal');openReject('kyc','${u.id}','${(u.name||'').replace(/'/g,"\\'")}')"><i class="ti ti-message-circle-2"></i> Reject</button>
+      <button class="btn btn-approve" style="flex:1" onclick="closeModal('kycReviewModal');approveKycUser('${u.id}')"><i class="ti ti-check"></i> Approve &amp; Verify</button>
+    </div>`:`<div class="alert ${u.kycStatus==='verified'?'success':'danger'}"><i class="ti ti-${u.kycStatus==='verified'?'circle-check':'circle-x'}"></i> ${u.kycStatus==='verified'?'Already verified.':'Already rejected.'}</div>`}
+  `;
+  openModal('kycReviewModal');
+}
+async function approveKycUser(uid) {
+  const u = findUser(uid); if(!u) return;
   const fb=window._fb; if(!fb){showToast('Firebase not ready','error');return;}
   try{
-    await fb.updateDoc(fb.doc(fb.db,'users',id),{status:newStatus});
-    u.status=newStatus; renderUsers();
-    addLog(`${newStatus==='banned'?'⛔ Banned':'✅ Unbanned'}: ${u.name}`,'user',newStatus==='banned'?'red':'green');
-    if(newStatus==='banned') sendTgEvent('e6',{name:u.name});
-    notifyUser(id, newStatus==='banned'?'⛔ Account Banned':'✅ Account Restored', newStatus==='banned'?'Your account was suspended by admin.':'Your account has been restored.');
-    showToast(newStatus==='banned'?`⛔ ${u.name} banned`:`✅ ${u.name} unbanned`, newStatus==='banned'?'error':'success');
-    renderThirdGen();
+    await fb.updateDoc(fb.doc(fb.db,'users',uid),{kyc:true, kycStatus:'verified', kycRejectReason:''});
+    u.kyc='Verified'; u.kycStatus='verified'; renderUsers(); renderKycQueue(); updateStats(); updateBadges();
+    addLog(`🪪 KYC verified: ${u.name}`,'kyc','green');
+    notifyUser(uid,'✅ KYC Verified!','Your identity has been verified. You can now withdraw without restriction.');
+    showToast(`✅ KYC verified: ${u.name}`,'success');
   }catch(e){ console.error(e); showToast('❌ Update failed — check Firestore permissions','error'); }
 }
-
-async function verifyKyc(id) {
-  const u=findUser(id); if(!u)return;
-  const fb=window._fb; if(!fb){showToast('Firebase not ready','error');return;}
-  try{
-    await fb.updateDoc(fb.doc(fb.db,'users',id),{kyc:true});
-    u.kyc='Verified'; renderUsers(); updateStats();
-    addLog(`🪪 KYC verified: ${u.name}`,'user','green');
-    notifyUser(id,'🪪 KYC Verified!','Your identity has been verified. You can now withdraw.');
-    showToast(`🪪 KYC verified: ${u.name}`,'success');
-  }catch(e){ console.error(e); showToast('❌ Update failed — check Firestore permissions','error'); }
-}
+async function verifyKyc(id) { return approveKycUser(id); }
 
 // ===== THIRD GENERATION =====
 function getReferralNetwork(uid) {
@@ -2245,6 +2094,89 @@ function filterThirdGen(q) {
   rows.forEach(r => { r.style.display = r.textContent.toLowerCase().includes(ql) ? '' : 'none'; });
 }
 
+// ===== RENDER: USERS =====
+function renderUsers(list) {
+  list = list || (S.userFilter==='all' ? S.users : S.users.filter(u=>u.status===S.userFilter));
+  $('userTbody').innerHTML = list.map((u,i) => `
+    <tr class="${S.dupUserIds&&S.dupUserIds.has(u.id)?'dup-row':''}">
+      <td style="color:var(--text3);font-size:12px">${i+1}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="user-av" style="background:var(--${avColor(u.name)}-bg);color:var(--${avColor(u.name)});border-color:var(--${avColor(u.name)}-border)">${initials(u.name)}</div>
+          <div><div class="td-primary">${u.name}${S.dupUserIds&&S.dupUserIds.has(u.id)?' <i class="ti ti-alert-triangle dup-flag" title="Possible duplicate account — check Third Generation screen"></i>':''}</div><div class="td-sub">${u.email}${u.username?' · @'+u.username:''}</div></div>
+        </div>
+      </td>
+      <td style="font-size:12px;color:var(--text2)">${u.joined}</td>
+      <td class="bal-chip">${fmtAmt(u.balance)}${u.postingHold?`<div style="font-size:9.5px;color:var(--amber);font-weight:700">+${fmtAmt(u.postingHold)} held</div>`:''}</td>
+      <td style="font-weight:700">${u.tasks}</td>
+      <td><span class="badge ${u.kyc==='Verified'?'green':'amber'}">${u.kyc}</span></td>
+      <td><span class="badge ${u.status==='active'?'green':'red'}">${u.status}</span></td>
+      <td>
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          <button class="btn btn-info btn-xs" onclick="viewUser('${u.id}')"><i class="ti ti-eye"></i> View</button>
+          <button class="btn btn-message btn-xs" title="Send this user a message (shows in their notification icon)" onclick="openMsgUser('${u.id}')"><i class="ti ti-message-circle-2"></i></button>
+          <button class="btn btn-xs ${u.status==='active'?'btn-danger':'btn-approve'}" onclick="toggleBan('${u.id}')">${u.status==='active'?'<i class="ti ti-ban"></i>':'<i class="ti ti-check"></i>'}</button>
+          ${u.kycStatus==='pending'?`<button class="btn btn-warning btn-xs" onclick="openKycReview('${u.id}')"><i class="ti ti-id-badge-2"></i></button>`:''}
+        </div>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:28px">No users found</td></tr>';
+}
+function filterUsers(q) {
+  const ql=q.toLowerCase();
+  renderUsers(S.users.filter(u=>u.name.toLowerCase().includes(ql)||u.email.toLowerCase().includes(ql)||(u.username||'').toLowerCase().includes(ql)));
+}
+function filterUsersByStatus(val) { S.userFilter=val; renderUsers(); }
+
+function viewUser(id) {
+  const u=findUser(id); if(!u)return;
+  $('udTitle').textContent=u.name;
+  $('udSub').textContent='@'+(u.username||'—')+' · '+u.email;
+  $('udContent').innerHTML=`
+    <div class="detail-grid">
+      <div class="detail-box"><div class="dl">Balance</div><div class="dv" style="color:var(--teal)">${fmtAmt(u.balance)}</div></div>
+      <div class="detail-box"><div class="dl">Total Earned</div><div class="dv" style="color:var(--green)">${fmtAmt(u.totalEarned)}</div></div>
+      <div class="detail-box"><div class="dl">Pending</div><div class="dv" style="color:var(--amber)">${fmtAmt(u.pendingAmount)}</div></div>
+      <div class="detail-box"><div class="dl">Withdrawn</div><div class="dv" style="color:var(--amber)">${fmtAmt(u.totalWithdrawn)}</div></div>
+      <div class="detail-box"><div class="dl">Tasks Done</div><div class="dv">${u.tasks}</div></div>
+      <div class="detail-box"><div class="dl">Worker Level</div><div class="dv">L${u.workerLevel||1}</div></div>
+      <div class="detail-box"><div class="dl">Held (Job Posts)</div><div class="dv" style="color:var(--amber)">${fmtAmt(u.postingHold||0)}</div></div>
+      <div class="detail-box"><div class="dl">KYC</div><div class="dv"><span class="badge ${u.kyc==='Verified'?'green':'amber'}">${u.kyc}</span></div></div>
+      <div class="detail-box"><div class="dl">Status</div><div class="dv"><span class="badge ${u.status==='active'?'green':'red'}">${u.status}</span></div></div>
+      <div class="detail-box"><div class="dl">Country</div><div class="dv" style="font-size:14px">${u.country}</div></div>
+      <div class="detail-box"><div class="dl">Phone</div><div class="dv" style="font-size:14px">${u.phone}</div></div>
+    </div>
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:12px">
+      <div style="font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Referral Code</div>
+      <div style="font-size:20px;font-weight:900;color:var(--amber);letter-spacing:3px">${u.referralCode}</div>
+    </div>
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:14px">
+      <div style="font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Joined</div>
+      <div style="font-size:14px;font-weight:700">${u.joined}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px">
+      <button class="btn btn-warning" onclick="closeModal('userDetailModal');openBalAdj('${u.id}')"><i class="ti ti-currency-dollar"></i> Balance</button>
+      <button class="btn btn-approve" onclick="${u.kycStatus==='pending'?`closeModal('userDetailModal');openKycReview('${u.id}')`:`verifyKyc('${u.id}');closeModal('userDetailModal')`}"><i class="ti ti-id-badge"></i> KYC</button>
+      <button class="btn btn-message" onclick="closeModal('userDetailModal');openMsgUser('${u.id}')"><i class="ti ti-message-circle-2"></i> Message</button>
+      <button class="btn ${u.status==='active'?'btn-danger':'btn-approve'}" onclick="toggleBan('${u.id}');closeModal('userDetailModal')">${u.status==='active'?'<i class="ti ti-ban"></i> Ban':'<i class="ti ti-check"></i> Unban'}</button>
+    </div>`;
+  openModal('userDetailModal');
+}
+
+async function toggleBan(id) {
+  const u=findUser(id); if(!u)return;
+  const newStatus = u.status==='active'?'banned':'active';
+  const fb=window._fb; if(!fb){showToast('Firebase not ready','error');return;}
+  try{
+    await fb.updateDoc(fb.doc(fb.db,'users',id),{status:newStatus});
+    u.status=newStatus; renderUsers();
+    addLog(`${newStatus==='banned'?'⛔ Banned':'✅ Unbanned'}: ${u.name}`,'user',newStatus==='banned'?'red':'green');
+    if(newStatus==='banned') sendTgEvent('e6',{name:u.name});
+    notifyUser(id, newStatus==='banned'?'⛔ Account Banned':'✅ Account Restored', newStatus==='banned'?'Your account was suspended by admin.':'Your account has been restored.');
+    showToast(newStatus==='banned'?`⛔ ${u.name} banned`:`✅ ${u.name} unbanned`, newStatus==='banned'?'error':'success');
+    renderThirdGen();
+  }catch(e){ console.error(e); showToast('❌ Update failed — check Firestore permissions','error'); }
+}
+
 // ===== RENDER: JOBS =====
 function filterJobs(val) { S.jobFilter=val; renderJobs(); }
 
@@ -2283,6 +2215,29 @@ function jobLinksOf(j) {
   if (Array.isArray(j.links) && j.links.length) return j.links.filter(Boolean);
   return j.link ? [j.link] : [];
 }
+function normalizeJobDoc(id, data) {
+  const isAdmin = data.postedByAdmin !== false;
+  const postedBy = isAdmin ? 'admin' : (data.postedBy || data.postedById || '');
+  const postedByEmail = data.postedByEmail || (findUser(postedBy)?.email) || '';
+  let status = data.status || 'pending';
+  if (status === 'pending_review') status = 'pending';
+  return {
+    id, ...data,
+    postedBy, postedByEmail, status,
+    budgetHeld: data.budgetHeld || 0,
+    holdSettled: !!data.holdSettled,
+  };
+}
+function listenJobs() {
+  const fb = window._fb; if (!fb) return;
+  fb.onSnapshot(fb.collection(fb.db,'jobs'), snap => {
+    S.jobs = [];
+    snap.forEach(d => S.jobs.push(normalizeJobDoc(d.id, d.data())));
+    S.jobs.sort((a,b)=>(b._ts||0)-(a._ts||0));
+    renderJobs(); renderDashPendingJobs(); updateStats(); updateBadges(); renderJobSrcTabs(); renderUserJobStats();
+  }, (e)=>{console.warn('listenJobs error (check Firestore Rules / Auth):',e);showToast('❌ Jobs load failed — check Firebase Admin login','error');});
+}
+
 function renderJobs() {
   let list = S.jobFilter==='all' ? S.jobs : S.jobs.filter(j=>j.status===S.jobFilter);
   if (S.jobSourceFilter==='admin') list = list.filter(j=>j.postedBy==='admin');
@@ -2721,7 +2676,7 @@ async function completeWithdraw(id) {
 // ===== UNIFIED REJECT (message-icon powered, shows reason to the member) =====
 function openReject(type, id, label) {
   S._rejectCtx={type,id};
-  const titles={job:'Reject Job',deposit:'Reject Deposit',withdrawal:'Reject Withdrawal',task:'Reject Task Submission'};
+  const titles={job:'Reject Job',deposit:'Reject Deposit',withdrawal:'Reject Withdrawal',task:'Reject Task Submission',kyc:'Reject KYC'};
   $('rejectTitle').innerHTML=`<i class="ti ti-message-circle-2" style="vertical-align:-3px;color:var(--purple)"></i> ${titles[type]||'Reject'}`;
   $('rejectSub').textContent=(label||'')+' — কারণ লিখুন (user দেখবে)';
   $('rejectReason').value='';
@@ -2775,6 +2730,14 @@ async function confirmReject() {
       notifyUser(t?.workerId,'❌ Task Rejected',`"${t?.jobTitle}" was rejected. Reason: ${reason}`);
       addLog(`❌ Task rejected: ${t?.workerName} — "${t?.jobTitle}" — ${reason}`,'job','red');
       showToast('❌ Task rejected','error');
+    } else if(type==='kyc'){
+      const u=findUser(id);
+      await fb.updateDoc(fb.doc(fb.db,'users',id),{kycStatus:'rejected', kyc:false, kycRejectReason:reason});
+      if(u){u.kyc='Pending';u.kycStatus='rejected';u.kycRejectReason=reason;}
+      addLog(`❌ KYC rejected: ${u?.name} — ${reason}`,'kyc','red');
+      notifyUser(id,'❌ KYC Rejected',`Your KYC submission was rejected. Reason: ${reason}. Please resubmit with correct documents.`);
+      renderUsers(); renderKycQueue(); updateStats(); updateBadges();
+      showToast('❌ KYC rejected','error');
     }
   }catch(e){ console.error(e); showToast('❌ Reject failed — check Firestore permissions','error'); }
 }
@@ -2870,6 +2833,159 @@ async function addMethod(){
     ['nmName','nmEmoji','nmNumber'].forEach(id=>{ if($(id)) $(id).value=''; });
     showToast('✅ Payment method added!','success');
   }catch(e){ console.error(e); showToast('❌ Add failed — check Firestore permissions','error'); }
+}
+function listenMethods() {
+  const fb = window._fb; if (!fb) return;
+  fb.onSnapshot(fb.collection(fb.db,'paymentMethods'), async snap => {
+    S.methods = [];
+    snap.forEach(d => S.methods.push({id:d.id,...d.data()}));
+    if (!S.methods.length) await seedMethods();
+    renderMethods();
+  }, (e)=>{console.warn('listenMethods error (check Firestore Rules / Auth):',e);});
+}
+async function seedMethods() {
+  const fb = window._fb; if (!fb) return;
+  const defaults = [
+    {name:'bKash',emoji:'📱',logo:'',number:'01711000000',minDeposit:1,depositFee:0,withdrawFee:5,enabled:true},
+    {name:'Nagad',emoji:'💳',logo:'',number:'01711000001',minDeposit:1,depositFee:0,withdrawFee:5,enabled:true},
+    {name:'Rocket',emoji:'🚀',logo:'',number:'01711000002',minDeposit:1,depositFee:0,withdrawFee:5,enabled:false},
+    {name:'USDT (TRC20)',emoji:'₮',logo:'',number:'TRxxxxxxxxxxxxxxxxxxxxxxxxxx',minDeposit:5,depositFee:0,withdrawFee:3,enabled:true},
+  ];
+  for (const m of defaults) await fb.addDoc(fb.collection(fb.db,'paymentMethods'),m).catch(()=>{});
+}
+
+// ===== FIRESTORE: DEPOSITS/WITHDRAWALS/TASKS listeners =====
+function listenDeposits() {
+  const fb = window._fb; if (!fb) return;
+  fb.onSnapshot(fb.collection(fb.db,'deposits'), snap => {
+    S.deposits = [];
+    snap.forEach(d => S.deposits.push({id:d.id,...d.data()}));
+    S.deposits.sort((a,b)=>(b._ts||0)-(a._ts||0));
+    renderDeposits(); renderDashDeposits(); updateStats(); updateBadges(); renderStatusTabs('depositTabs','dep');
+  }, (e)=>{console.warn('listenDeposits error (check Firestore Rules / Auth):',e);showToast('❌ Deposits load failed — check Firebase Admin login','error');});
+}
+function listenWithdrawals() {
+  const fb = window._fb; if (!fb) return;
+  fb.onSnapshot(fb.collection(fb.db,'withdrawals'), snap => {
+    S.withdrawals = [];
+    snap.forEach(d => S.withdrawals.push({id:d.id,...d.data()}));
+    S.withdrawals.sort((a,b)=>(b._ts||0)-(a._ts||0));
+    renderWithdrawals(); renderDashWithdrawals(); updateStats(); updateBadges(); renderStatusTabs('withdrawTabs','wd');
+  }, (e)=>{console.warn('listenWithdrawals error (check Firestore Rules / Auth):',e);showToast('❌ Withdrawals load failed — check Firebase Admin login','error');});
+}
+function listenTasks() {
+  const fb = window._fb; if (!fb) return;
+  fb.onSnapshot(fb.collection(fb.db,'taskSubmissions'), snap => {
+    S.tasks = [];
+    snap.forEach(d => S.tasks.push({id:d.id,...d.data()}));
+    S.tasks.sort((a,b)=>(b._ts||0)-(a._ts||0));
+    renderTasks(); updateStats(); updateBadges(); renderStatusTabs('taskTabs','task');
+  }, (e)=>{console.warn('listenTasks error (check Firestore Rules / Auth):',e);showToast('❌ Task submissions load failed — check Firebase Admin login','error');});
+}
+
+// ===== FIRESTORE: SETTINGS =====
+function listenSettings() {
+  const fb = window._fb; if (!fb) return;
+  fb.onSnapshot(fb.doc(fb.db,'siteSettings','global'), snap => {
+    if (snap.exists()) {
+      const d = snap.data();
+      Object.assign(S.settings, {
+        name: d.name ?? S.settings.name,
+        minWd: d.minWithdraw ?? S.settings.minWd,
+        minDep: d.minDeposit ?? S.settings.minDep,
+        fee: d.withdrawFee ?? S.settings.fee,
+        refGen1: d.refGen1 ?? S.settings.refGen1,
+        refGen2: d.refGen2 ?? S.settings.refGen2,
+        refGen3: d.refGen3 ?? S.settings.refGen3,
+        supportEmail: d.supportEmail ?? S.settings.supportEmail,
+        supportHours: d.supportHours ?? S.settings.supportHours,
+        supportResponse: d.supportResponse ?? S.settings.supportResponse,
+        banner: d.banner ?? S.settings.banner,
+        bannerType: d.bannerType ?? S.settings.bannerType,
+        spinEnabled: d.spinEnabled !== undefined ? d.spinEnabled : S.settings.spinEnabled,
+        postFeatureEnabled: d.postFeatureEnabled !== undefined ? d.postFeatureEnabled : S.settings.postFeatureEnabled,
+        postMinReward: d.postMinReward ?? S.settings.postMinReward,
+        postMaxReward: d.postMaxReward ?? S.settings.postMaxReward,
+        postMinSlots: d.postMinSlots ?? S.settings.postMinSlots,
+        postMaxSlots: d.postMaxSlots ?? S.settings.postMaxSlots,
+        postPlatformFeePct: d.postPlatformFeePct ?? S.settings.postPlatformFeePct,
+        kycEnabled: d.kycEnabled !== undefined ? d.kycEnabled : S.settings.kycEnabled,
+      });
+      const s = S.settings;
+      if ($('setName')) $('setName').value = s.name||'WorkHive';
+      if ($('setMinWd')) $('setMinWd').value = s.minWd||5;
+      if ($('setMinDep')) $('setMinDep').value = s.minDep||1;
+      if ($('setFee')) $('setFee').value = s.fee||5;
+      if ($('setRefGen1')) $('setRefGen1').value = s.refGen1??0.5;
+      if ($('setRefGen2')) $('setRefGen2').value = s.refGen2??0.25;
+      if ($('setRefGen3')) $('setRefGen3').value = s.refGen3??0.10;
+      if ($('setSupportEmail')) $('setSupportEmail').value = s.supportEmail||'';
+      if ($('setSupportHours')) $('setSupportHours').value = s.supportHours||'';
+      if ($('setSupportResponse')) $('setSupportResponse').value = s.supportResponse||'';
+      if ($('setBannerMsg')) $('setBannerMsg').value = s.banner||'';
+      if ($('setBannerType')) $('setBannerType').value = s.bannerType||'info';
+      if ($('toggleSpin')) $('toggleSpin').checked = s.spinEnabled!==false;
+      if ($('setPostEnabled')) $('setPostEnabled').checked = s.postFeatureEnabled!==false;
+      if ($('setPostMinReward')) $('setPostMinReward').value = s.postMinReward??0.02;
+      if ($('setPostMaxReward')) $('setPostMaxReward').value = s.postMaxReward??5.00;
+      if ($('setPostMinSlots')) $('setPostMinSlots').value = s.postMinSlots??5;
+      if ($('setPostMaxSlots')) $('setPostMaxSlots').value = s.postMaxSlots??500;
+      if ($('setPostFeePct')) $('setPostFeePct').value = s.postPlatformFeePct??10;
+      if ($('setKycEnabled')) $('setKycEnabled').checked = s.kycEnabled!==false;
+      renderThirdGen();
+    }
+  }, (e)=>{console.warn('listenSettings error (check Firestore Rules / Auth):',e);});
+}
+
+// ===== STATS =====
+function updateStats() {
+  const pendW = S.withdrawals.filter(w=>w.status==='pending');
+  const totalPW = pendW.reduce((a,w)=>a+(w.amount||0),0);
+  const activeJobs = S.jobs.filter(j=>j.status==='approved').length;
+  const pendJobs = S.jobs.filter(j=>j.status==='pending'||j.status==='pending_reapproval').length;
+  const kycPend = S.users.filter(u=>u.kycStatus==='pending').length;
+  const confDep = S.deposits.filter(d=>d.status==='confirmed').reduce((a,d)=>a+(d.amount||0),0);
+  const pendDep = S.deposits.filter(d=>d.status==='pending').length;
+  const pendTask = S.tasks.filter(t=>t.status==='pending').length;
+  computeDuplicateGroups();
+  const dupCount = S.dupUserIds.size;
+  set('stat-users', S.users.length);
+  set('stat-dep', fmtAmt(confDep));
+  set('stat-dep-pending', pendDep+' pending');
+  set('stat-wd', fmtAmt(totalPW));
+  set('stat-wd-count', pendW.length+' pending');
+  set('stat-jobs', activeJobs);
+  set('stat-jobs-pending', pendJobs+' pending');
+  set('stat-tasks', S.tasks.length);
+  set('stat-tasks-pending', pendTask+' pending');
+  set('stat-kyc', kycPend);
+  set('stat-kyc-badge', kycPend+' KYC pending');
+  set('stat-dupes', dupCount);
+  set('stat-dupes-badge', dupCount ? '⚠️ Review needed' : 'All clear');
+  set('hs-users', S.users.length);
+  set('hs-deposits', fmtAmt(confDep));
+  set('hs-jobs', activeJobs);
+  function set(id,v){const el=$(id);if(el)el.textContent=v;}
+}
+function updateBadges() {
+  const pj=S.jobs.filter(j=>j.status==='pending'||j.status==='pending_reapproval').length;
+  const pw=S.withdrawals.filter(w=>w.status==='pending').length;
+  const pd=S.deposits.filter(d=>d.status==='pending').length;
+  const pt=S.tasks.filter(t=>t.status==='pending').length;
+  const pn=S.adminNotifs.filter(n=>!n.read).length;
+  const pk=S.users.filter(u=>u.kycStatus==='pending').length;
+  computeDuplicateGroups();
+  const dupCount = S.dupUserIds.size;
+  setBadge('nb-users',S.users.length,'blue');
+  setBadge('nb-kyc',pk,'red');
+  setBadge('nb-thirdgen',dupCount,'red');
+  setBadge('nb-jobs',pj,'red');
+  setBadge('nb-tasks',pt,'red');
+  setBadge('nb-deposits',pd,'red');
+  setBadge('nb-withdrawals',pw,'red');
+  setBadge('nb-notifs',pn,'red');
+  $('topDot').style.display=pn>0?'block':'none';
+  function setBadge(id,n,cls){ const el=$(id); if(!el)return; el.textContent=n; if(el.classList.contains('qm-badge')){ el.classList.toggle('show', n>0); } else { el.style.display=n>0?'':'none'; } }
 }
 
 // ===== TELEGRAM =====
@@ -2977,6 +3093,7 @@ async function saveSettings() {
     postMinSlots: parseInt($('setPostMinSlots')?.value)||5,
     postMaxSlots: parseInt($('setPostMaxSlots')?.value)||500,
     postPlatformFeePct: parseFloat($('setPostFeePct')?.value)||10,
+    kycEnabled: $('setKycEnabled')?.checked!==false,
   });
   const fb=window._fb; if(!fb){showToast('Firebase not ready','error');return;}
   try{
@@ -3000,17 +3117,18 @@ async function saveSettings() {
       postMinSlots:S.settings.postMinSlots,
       postMaxSlots:S.settings.postMaxSlots,
       postPlatformFeePct:S.settings.postPlatformFeePct,
+      kycEnabled:S.settings.kycEnabled,
     }, {merge:true});
     addLog('⚙️ Settings updated (live on User App)','settings','green');
     showToast('💾 Settings saved! User App-এ লাইভ আপডেট হয়েছে।','success');
   }catch(e){ console.error(e); showToast('❌ Save failed — check Firestore permissions','error'); }
 }
-function saveSecurity() {
+async function saveSecurity() {
   const np=v('newPass'),nc=v('newCode');
-  if(np) ls('wha_pass',np);
-  if(nc){if(nc.length!==6||!/^\d+$/.test(nc)){showToast('Code must be exactly 6 digits','error');return;} ls('wha_code',nc);}
-  addLog('🔐 Security settings updated','login','amber');
-  showToast('🔐 Security updated!','success');
+  if(np) { ls('wha_pass_hash', await sha256Hex(np)); localStorage.removeItem('wha_pass'); }
+  if(nc){if(nc.length!==6||!/^\d+$/.test(nc)){showToast('Code must be exactly 6 digits','error');return;} ls('wha_code_hash', await sha256Hex(nc)); localStorage.removeItem('wha_code'); }
+  addLog('🔐 Security settings updated (hashed)','login','amber');
+  showToast('🔐 Security updated — stored as a hash, not plaintext','success');
   $('newPass').value=''; $('newCode').value='';
 }
 
@@ -3135,12 +3253,6 @@ setTimeout(renderTgEvents, 100);
 
 // ══════════════════════════════════════════════════════════
 // ============ 🧬 AI DEV STUDIO — PRECISION PATCH ============
-//  Dual-target (User Site / Admin Panel) GitHub patch engine.
-//  AI never rewrites a whole file — it only proposes small,
-//  anchor-based INSERT_AFTER / INSERT_BEFORE / REPLACE patches,
-//  which are dry-run applied here and shown as a diff before
-//  anything is pushed to GitHub. Nothing reaches GitHub until
-//  you click "Accept & Commit".
 // ══════════════════════════════════════════════════════════
 function devEsc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function devLs(k,val){ if(val!==undefined){localStorage.setItem(k,val);return;} return localStorage.getItem(k)||''; }
@@ -3170,7 +3282,6 @@ function devUpdateGhStatusPill() {
   if (pill) { pill.textContent = ok ? '🟢 Connected' : 'Not Connected'; pill.className = 'qm-status-pill ' + (ok?'ok':'off'); }
 }
 
-// ---- Sub nav (Studio / History / Settings) ----
 function devRenderSubNav() {
   const tabs = [
     {key:'studio', icon:'ti-sparkles', label:'AI Studio'},
@@ -3186,7 +3297,6 @@ function devGoSubTab(tab) {
   if (tab==='history') { devRenderHistTargetRow(); devLoadCommits(); }
 }
 
-// ---- Target switcher (which site the next Generate applies to) ----
 function devRenderTargetRow() {
   const el = $('devTargetRow'); if (!el) return;
   el.innerHTML = devTargetPillsHtml(S.dev.activeTarget, 'devSetTarget');
@@ -3206,7 +3316,6 @@ function devSetTarget(key) {
   devRenderTargetRow();
 }
 
-// ---- Provider / Image ----
 function devSetProvider(p) {
   S.dev.provider = p;
   $('devProvGemini').classList.toggle('active', p==='gemini');
@@ -3233,7 +3342,6 @@ function devRemoveImage() {
 }
 function devTogglePw(id) { const i=$(id); if(i) i.type = i.type==='password'?'text':'password'; }
 
-// ---- Dev Settings save ----
 async function devSaveGhSettings() {
   const token=v('devGhToken'), repoPath=v('devGhRepoPath'), branch=v('devGhBranch')||'main';
   if (!token) { showToast('GitHub Token দিন','error'); return; }
@@ -3270,7 +3378,6 @@ function devCheckConfigured(key) {
   return true;
 }
 
-// ---- GitHub REST API (dev-scoped, direct from browser) ----
 function devGhHeaders(){ return { 'Authorization':'token '+devLs('wha_dev_gh_token'), 'Accept':'application/vnd.github+json' }; }
 function devGhBase(){ return `https://api.github.com/repos/${devLs('wha_dev_gh_owner')}/${devLs('wha_dev_gh_repo')}`; }
 function devB64Encode(str){ return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,(m,p1)=>String.fromCharCode('0x'+p1))); }
@@ -3306,7 +3413,6 @@ async function devGhGetFileAtCommit(path, sha) {
   return { content: devB64Decode(data.content) };
 }
 
-// ---- AI calls (Gemini / Groq — direct, no server) ----
 function devBuildSystemPrompt(fileName) {
   return `তুমি একজন এক্সপার্ট ওয়েব ডেভেলপার এবং তোমার একমাত্র কাজ পদ্ধতি হলো "Precision Patch" — তুমি কখনোই পুরো ফাইল নতুন করে লিখবে না বা রি-রাইট করবে না। তুমি শুধু নির্দিষ্ট, ছোট, targeted কোড পরিবর্তন/সংযোজন করবে।
 
@@ -3371,7 +3477,6 @@ async function devCallGroq(sys, user) {
   return (data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content)||'';
 }
 
-// ---- Smart context engine (keeps huge files cheap & accurate) ----
 const DEV_SMALL_FILE_CHARS=6000, DEV_CHUNK_LINES=45, DEV_CONTEXT_WINDOW=18, DEV_MAX_CONTEXT_CHARS=9000;
 const DEV_BN_STOP=new Set(['করো','করে','করবে','দাও','যাতে','এই','এবং','একটা','একটি','করতে','চাই','চান','থাকবে','হবে','জন্য','সাথে','মধ্যে','সেটা','সেটি','নতুন','পুরানো','পুরনো','মতো','ভাবে']);
 const DEV_EN_STOP=new Set(['and','the','with','into','make','change','add','new','also','for','this','that','from','your']);
@@ -3429,7 +3534,6 @@ async function devBuildSmartContext(content, prompt, hasImage, onStatus) {
   return { context: out, mode:'ai-chunk' };
 }
 
-// ---- Generate (targets whichever site is currently selected) ----
 async function devGenerateChanges() {
   const key = S.dev.activeTarget;
   if (!devCheckConfigured(key)) return;
@@ -3490,7 +3594,6 @@ async function devGenerateChanges() {
   finally { btn.disabled=false; btn.innerHTML='<i class="ti ti-wand"></i> Generate Precision Patch'; }
 }
 
-// ---- Anchor-based dry-run patch engine ----
 function devCountOcc(haystack, needle){ if(!needle) return 0; return haystack.split(needle).length-1; }
 function devTrimEdge(text){ const lines=text.split('\n'); if(lines.length>1) lines.shift(); return lines.join('\n'); }
 function devBuildDiffHtml(contentBefore, idx, anchor, action, newSnippet) {
@@ -3566,7 +3669,6 @@ function devTogglePatch(i, force) {
   body.classList.toggle('open',open); if(ico) ico.classList.toggle('open',open);
 }
 
-// ---- Preview (dual-target tabs — see both User Site & Admin Panel previews) ----
 function devRenderPreviewTargetTabs() {
   const el = $('devPreviewTargetTabs'); if (!el) return;
   const t = S.dev.targets;
@@ -3651,7 +3753,6 @@ async function devAcceptAndCommit() {
   finally { btn.disabled=false; btn.innerHTML='<i class="ti ti-rocket"></i> Accept &amp; Commit to GitHub'; }
 }
 
-// ---- History & Rollback (per target — last 5 commits, one-click revert) ----
 function devRenderHistTargetRow() {
   const el = $('devHistTargetRow'); if(!el) return;
   el.innerHTML = devTargetPillsHtml(S.dev.historyTarget, 'devSetHistTarget');
