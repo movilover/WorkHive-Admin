@@ -280,6 +280,15 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
 .tg-dot.off{background:var(--red)}
 
 .method-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;display:flex;flex-direction:column;gap:12px;transition:.15s}
+.cat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;display:flex;flex-direction:column;gap:11px;transition:.15s}
+.cat-card:hover{border-color:var(--border2)}
+.cat-card-hd{display:flex;align-items:center;gap:10px}
+.cat-emoji-box{width:38px;height:38px;border-radius:11px;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.cat-name{font-size:15px;font-weight:800;flex:1}
+.cat-sub-pills{display:flex;flex-wrap:wrap;gap:6px}
+.cat-sub-pill{font-size:10.5px;font-weight:700;padding:4px 10px;border-radius:20px;background:var(--bg3);border:1px solid var(--border2);color:var(--text2)}
+.cat-sub-empty{font-size:11.5px;color:var(--text3)}
+.cat-card-actions{display:flex;gap:8px}
 .method-card:hover{border-color:var(--border2)}
 
 .notif-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;display:flex;gap:14px;margin-bottom:10px;cursor:pointer;transition:.15s}
@@ -577,6 +586,12 @@ tr.dup-row td{background:rgba(239,68,68,0.03)}
             <span class="qm-badge" id="nb-tasks">0</span>
             <i class="ti ti-chevron-right qm-chev"></i>
           </div>
+          <div class="qm-row" onclick="goScreen('categories')">
+            <div class="qm-icon" style="background:var(--pink-bg);color:var(--pink)"><i class="ti ti-category-2"></i></div>
+            <div class="qm-text"><div class="qm-label">🗂️ Categories &amp; Subcategories</div><div class="qm-sub">Job ক্যাটাগরি ও সাব-ক্যাটাগরি পরিচালনা করুন</div></div>
+            <span class="qm-badge blue" id="nb-categories">0</span>
+            <i class="ti ti-chevron-right qm-chev"></i>
+          </div>
 
           <div class="qm-section-lbl">Finance</div>
           <div class="qm-row" onclick="goScreen('deposits')">
@@ -860,6 +875,18 @@ await setDoc(doc(db, 'users', newUser.uid), {
         <div class="job-src-tabs" id="jobSrcTabs"></div>
         <div class="user-job-stats" id="userJobStats" style="display:none"></div>
         <div id="jobList"></div>
+      </div>
+
+      <!-- ===== CATEGORIES & SUBCATEGORIES ===== -->
+      <div class="screen" id="screen-categories">
+        <div class="sec-hd">
+          <h2><button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')" style="margin-right:6px"><i class="ti ti-arrow-left"></i></button><i class="ti ti-category-2"></i> Categories &amp; Subcategories</h2>
+          <div class="sec-actions">
+            <button class="btn btn-primary btn-sm" onclick="openCategoryModal()"><i class="ti ti-plus"></i> Add Category</button>
+          </div>
+        </div>
+        <div class="alert info"><i class="ti ti-info-circle"></i> এখানে যেসব ক্যাটাগরি/সাব-ক্যাটাগরি যোগ করবেন সেগুলো User App-এ Job Post ফর্মের dropdown-এ ও Tasks স্ক্রিনের ফিল্টার চিপে সাথে সাথেই লাইভ দেখাবে। কোনো ক্যাটাগরি ডিলিট করলে সেটা আর dropdown-এ থাকবে না — কিন্তু আগে থেকে পোস্ট করা জবে সেই ক্যাটাগরি নাম টেক্সট হিসেবে থেকেই যাবে।</div>
+        <div id="categoriesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px"></div>
       </div>
 
       <!-- ===== TASKS ===== -->
@@ -1370,6 +1397,30 @@ if (window.Capacitor?.Plugins?.OneSignal) {
   </div>
 </div>
 
+<div class="modal-overlay" id="categoryModal">
+  <div class="modal-box">
+    <div class="modal-hd">
+      <div><div class="modal-title" id="catModalTitle">Add Category</div><div class="modal-sub">User App-এ dropdown ও filter chip-এ লাইভ দেখাবে</div></div>
+      <div class="modal-close" onclick="closeModal('categoryModal')"><i class="ti ti-x"></i></div>
+    </div>
+    <div class="form-grid">
+      <div class="field"><label>Emoji</label><input type="text" id="catEmoji" placeholder="🛍️" maxlength="4"></div>
+      <div class="field"><label>Category Name</label><input type="text" id="catName" placeholder="e.g. Social Media"></div>
+    </div>
+    <div class="field">
+      <label>Subcategories</label>
+      <div id="catSubList"></div>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="addCatSubField()"><i class="ti ti-plus"></i> Add Subcategory</button>
+      <div class="lf-hint">প্রতিটা সাব-ক্যাটাগরি একটা আলাদা লাইন — খালি রাখলে সেভ হওয়ার সময় বাদ যাবে।</div>
+    </div>
+    <div class="auth-error" id="catErr"></div>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('categoryModal')">Cancel</button>
+      <button class="btn btn-primary" style="flex:1" id="catSaveBtn" onclick="saveCategory()"><i class="ti ti-device-floppy"></i> Save Category</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="postJobModal">
   <div class="modal-box" style="max-width:560px">
     <div class="modal-hd">
@@ -1379,11 +1430,12 @@ if (window.Capacitor?.Plugins?.OneSignal) {
     <div class="field"><label>Job Title</label><input type="text" id="pjTitle" placeholder="e.g. Like & Comment on Facebook Post"></div>
     <div class="form-grid">
       <div class="field"><label>Category</label>
-        <select id="pjCategory">
+        <select id="pjCategory" onchange="updatePjSubcategorySelect()">
           <option>Social Media</option><option>App Download</option><option>Website Visit</option>
           <option>Review/Rating</option><option>Watch Video</option><option>Survey</option><option>Other</option>
         </select>
       </div>
+      <div class="field" id="pjSubcategoryField" style="display:none"><label>Subcategory</label><select id="pjSubcategory"></select></div>
       <div class="field"><label>Submission Type</label>
         <select id="pjType" onchange="updatePjTypeUI()">
           <option value="proof">Proof Submission (text/screenshot info)</option>
@@ -1527,6 +1579,7 @@ const S = {
   wdFilter: 'pending', kycFilter: 'pending',
   logFilter: 'all', userFilter: 'all',
   _rejectCtx: null, _balUid: null, _msgUid: null, _editJobId: null, _kycUid: null,
+  categories: [], _editCatId: null, _catSubCount: 0,
   tg: { token: '', chatId: '', connected: false },
   os: { appId: '', restKey: '', connected: false },
   bcHistory: [],
@@ -1623,7 +1676,7 @@ function initAdmin() {
   updatePjTypeUI();
   renderStatusTabs('withdrawTabs','wd'); renderStatusTabs('depositTabs','dep'); renderStatusTabs('taskTabs','task');
   renderJobSrcTabs();
-  waitFb().then(() => { loadUsers(); listenJobs(); listenDeposits(); listenWithdrawals(); listenTasks(); listenMethods(); listenSettings(); });
+  waitFb().then(() => { loadUsers(); listenJobs(); listenDeposits(); listenWithdrawals(); listenTasks(); listenMethods(); listenSettings(); listenCategories(); });
   const t = ls('wha_tg_token'), ch = ls('wha_tg_chat');
   if (t && ch) { S.tg = {token:t,chatId:ch,connected:true}; setTimeout(() => { setTgConnected(true); const ti=$('tgToken');if(ti)ti.value=t; const ci=$('tgChatId');if(ci)ci.value=ch; }, 200); }
   const oa = ls('wha_os_appid'), ok = ls('wha_os_restkey');
@@ -1711,13 +1764,14 @@ function openLightbox(url) { const lb=$('imgLightbox'); $('lightboxImg').src=url
 function closeLightbox() { $('imgLightbox').classList.remove('show'); }
 
 // ===== NAVIGATION =====
-const pageNames = { dashboard:'Dashboard', users:'User Management', kyc:'KYC Review', thirdgen:'Third Generation', jobs:'Job Approvals', tasks:'Task Submissions', deposits:'Deposits', withdrawals:'Withdrawals', 'payment-methods':'Payment Methods', telegram:'Telegram Bot', broadcast:'Broadcast', notifications:'Notifications', settings:'Site Settings', logs:'Activity Logs', devstudio:'AI Dev Studio' };
+const pageNames = { dashboard:'Dashboard', users:'User Management', kyc:'KYC Review', thirdgen:'Third Generation', jobs:'Job Approvals', categories:'Categories & Subcategories', tasks:'Task Submissions', deposits:'Deposits', withdrawals:'Withdrawals', 'payment-methods':'Payment Methods', telegram:'Telegram Bot', broadcast:'Broadcast', notifications:'Notifications', settings:'Site Settings', logs:'Activity Logs', devstudio:'AI Dev Studio' };
 function goScreen(name) {
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   const sc = $('screen-'+name); if(sc) sc.classList.add('active');
   window.scrollTo(0,0);
   if (name==='thirdgen') renderThirdGen();
   if (name==='kyc') renderKycQueue();
+  if (name==='categories') renderCategoriesGrid();
   if (name==='devstudio') devInit();
 }
 function goPushSettings() {
@@ -2274,7 +2328,7 @@ function renderJobs() {
         <div style="flex:1;margin-right:14px">
           <div style="font-size:15px;font-weight:800;margin-bottom:6px">${j.title||'Untitled'}</div>
           <div style="font-size:12px;color:var(--text2);display:flex;flex-wrap:wrap;gap:10px">
-            <span><i class="ti ti-category" style="font-size:13px;vertical-align:-1px"></i> ${j.category||'—'}</span>
+            <span><i class="ti ti-category" style="font-size:13px;vertical-align:-1px"></i> ${j.category||'—'}${j.subcategory?' · '+j.subcategory:''}</span>
             <span><i class="ti ti-users" style="font-size:13px;vertical-align:-1px"></i> ${isDaily?'Unlimited (repeatable)':( (j.limit||0)+' workers')}</span>
             <span><i class="ti ti-world" style="font-size:13px;vertical-align:-1px"></i> ${j.country||'—'}</span>
             <span>${isDaily?'🔁 24h cooldown per user':((j.filled||0)+'/'+(j.limit||0)+' filled')}</span>
@@ -2411,6 +2465,7 @@ function openPostJobModal() {
   if($('pjLimit')) $('pjLimit').value='';
   if($('pjShots')) $('pjShots').value='1';
   if($('pjCategory')) $('pjCategory').value='Social Media';
+  populatePjCategorySelect();
   if($('pjType')) { $('pjType').value='proof'; updatePjTypeUI(); }
   openModal('postJobModal');
 }
@@ -2424,6 +2479,8 @@ function editJob(id) {
   $('pjSubmitBtn').innerHTML = '<i class="ti ti-device-floppy"></i> Save Changes';
   if ($('pjTitle')) $('pjTitle').value = j.title || '';
   if ($('pjCategory')) $('pjCategory').value = j.category || 'Social Media';
+  populatePjCategorySelect();
+  if ($('pjSubcategory') && j.subcategory) $('pjSubcategory').value = j.subcategory;
   if ($('pjType')) $('pjType').value = j.type || 'proof';
   if ($('pjInstructions')) $('pjInstructions').value = j.instructions || '';
   if ($('pjReward')) $('pjReward').value = j.reward || '';
@@ -2440,7 +2497,7 @@ function editJob(id) {
 }
 
 async function postJob() {
-  const title=v('pjTitle'), category=$('pjCategory').value, type=$('pjType').value, instructions=v('pjInstructions'), country=v('pjCountry')||'Global';
+  const title=v('pjTitle'), category=$('pjCategory').value, subcategory=$('pjSubcategory')?.value||'', type=$('pjType').value, instructions=v('pjInstructions'), country=v('pjCountry')||'Global';
   const reward=parseFloat($('pjReward').value)||0;
   const links = getAllLinkInputs();
   const screenshotCount = type==='proof' ? Math.max(1, Math.min(6, parseInt($('pjShots').value)||1)) : 1;
@@ -2456,7 +2513,7 @@ async function postJob() {
     if (isEdit) {
       const id = S._editJobId;
       await fb.updateDoc(fb.doc(fb.db,'jobs',id),{
-        title, category, type, links, link: links[0] || '',
+        title, category, subcategory, type, links, link: links[0] || '',
         instructions, reward, limit, country, screenshotCount,
       });
       closeModal('postJobModal');
@@ -2465,7 +2522,7 @@ async function postJob() {
       showToast('✅ Job updated!','success');
     } else {
       await fb.addDoc(fb.collection(fb.db,'jobs'),{
-        title, category, type,
+        title, category, subcategory, type,
         links, link: links[0] || '',
         instructions, reward, limit, filled:0, country,
         screenshotCount,
@@ -2852,6 +2909,117 @@ async function seedMethods() {
     {name:'USDT (TRC20)',emoji:'₮',logo:'',number:'TRxxxxxxxxxxxxxxxxxxxxxxxxxx',minDeposit:5,depositFee:0,withdrawFee:3,enabled:true},
   ];
   for (const m of defaults) await fb.addDoc(fb.collection(fb.db,'paymentMethods'),m).catch(()=>{});
+}
+
+// ===== CATEGORIES & SUBCATEGORIES =====
+function listenCategories() {
+  const fb = window._fb; if (!fb) return;
+  fb.onSnapshot(fb.query(fb.collection(fb.db,'categories'), fb.orderBy('order','asc')), snap => {
+    S.categories = [];
+    snap.forEach(d => S.categories.push({id:d.id, ...d.data()}));
+    renderCategoriesGrid();
+    populatePjCategorySelect();
+    const badge = $('nb-categories'); if (badge) { badge.textContent = S.categories.length; badge.classList.add('show'); }
+  }, (e)=>{console.warn('listenCategories error (check Firestore Rules / Auth):',e);});
+}
+function findCategoryById(id) { return S.categories.find(c=>c.id===id); }
+function renderCategoriesGrid() {
+  const el = $('categoriesGrid'); if (!el) return;
+  if (!S.categories.length) { el.innerHTML = '<div class="card" style="grid-column:1/-1;text-align:center;color:var(--text3);padding:32px"><i class="ti ti-category-2" style="font-size:26px;display:block;margin-bottom:8px"></i>এখনো কোনো ক্যাটাগরি যোগ করা হয়নি — "Add Category" চাপুন।</div>'; return; }
+  el.innerHTML = S.categories.map(c => {
+    const subs = Array.isArray(c.subcategories) ? c.subcategories : [];
+    return `<div class="cat-card">
+      <div class="cat-card-hd">
+        <div class="cat-emoji-box">${devEsc(c.emoji||'📁')}</div>
+        <div class="cat-name">${devEsc(c.name||'')}</div>
+      </div>
+      <div class="cat-sub-pills">${subs.length ? subs.map(s=>`<span class="cat-sub-pill">${devEsc(s)}</span>`).join('') : '<span class="cat-sub-empty">কোনো সাব-ক্যাটাগরি নেই</span>'}</div>
+      <div class="cat-card-actions">
+        <button class="btn btn-warning btn-sm" style="flex:1" onclick="openCategoryModal('${c.id}')"><i class="ti ti-edit"></i> Edit</button>
+        <button class="btn btn-danger btn-sm" style="flex:1" onclick="deleteCategory('${c.id}','${devEsc((c.name||'')).replace(/'/g,"\\'")}')"><i class="ti ti-trash"></i> Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function addCatSubField(value) {
+  S._catSubCount++;
+  const idx = S._catSubCount;
+  const wrap = document.createElement('div');
+  wrap.className = 'link-row'; wrap.id = 'catSubRow'+idx;
+  wrap.innerHTML = `<div class="link-num">${idx}</div><input type="text" class="cat-sub-input" placeholder="e.g. Page Like" value="${value?devEsc(value).replace(/"/g,'&quot;'):''}"><div class="link-row-remove" onclick="removeCatSubField(${idx})"><i class="ti ti-x"></i></div>`;
+  $('catSubList').appendChild(wrap);
+}
+function removeCatSubField(idx) { const row = $('catSubRow'+idx); if (row) row.remove(); }
+function resetCatSubFields(values) {
+  $('catSubList').innerHTML = ''; S._catSubCount = 0;
+  if (values && values.length) values.forEach(v=>addCatSubField(v));
+  else addCatSubField();
+}
+function openCategoryModal(id) {
+  S._editCatId = id || null;
+  const cat = id ? findCategoryById(id) : null;
+  $('catModalTitle').textContent = cat ? 'Edit Category' : 'Add Category';
+  $('catEmoji').value = cat ? (cat.emoji||'') : '';
+  $('catName').value = cat ? (cat.name||'') : '';
+  $('catErr').textContent = '';
+  resetCatSubFields(cat ? cat.subcategories : null);
+  openModal('categoryModal');
+}
+async function saveCategory() {
+  const emoji = v('catEmoji')||'📁', name = v('catName');
+  const errEl = $('catErr');
+  if (!name) { errEl.textContent = 'ক্যাটাগরি নাম দিন'; return; }
+  const dup = S.categories.find(c => c.name.toLowerCase()===name.toLowerCase() && c.id !== S._editCatId);
+  if (dup) { errEl.textContent = 'এই নামে একটা ক্যাটাগরি ইতিমধ্যে আছে'; return; }
+  const subs = Array.from(document.querySelectorAll('.cat-sub-input')).map(i=>i.value.trim()).filter(Boolean);
+  const fb = window._fb; if (!fb) { errEl.textContent = 'Firebase not ready'; return; }
+  const btn = $('catSaveBtn'); if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader spin-ico"></i> Saving...'; }
+  try {
+    if (S._editCatId) {
+      await fb.updateDoc(fb.doc(fb.db,'categories',S._editCatId), { emoji, name, subcategories: subs });
+      addLog(`✏️ Category updated: "${name}"`,'settings','purple');
+      showToast('✅ Category updated!','success');
+    } else {
+      const order = S.categories.length;
+      await fb.addDoc(fb.collection(fb.db,'categories'), { emoji, name, subcategories: subs, order, createdAt: fb.serverTimestamp() });
+      addLog(`🆕 Category added: "${name}" (${subs.length} subcategories)`,'settings','green');
+      showToast('✅ Category added — User App-এ লাইভ দেখাবে!','success');
+    }
+    closeModal('categoryModal');
+  } catch(e) { console.error(e); errEl.textContent = 'সেভ ব্যর্থ হয়েছে — Firestore permissions চেক করুন'; }
+  finally { if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-device-floppy"></i> Save Category'; } }
+}
+async function deleteCategory(id, name) {
+  if (!confirm(`"${name}" ক্যাটাগরিটা ডিলিট করতে চান? আগে থেকে পোস্ট করা জবে ক্যাটাগরি নাম টেক্সট হিসেবে থেকে যাবে, কিন্তু নতুন dropdown-এ আর দেখাবে না।`)) return;
+  const fb = window._fb; if (!fb) return;
+  try {
+    await fb.deleteDoc(fb.doc(fb.db,'categories',id));
+    addLog(`🗑️ Category deleted: "${name}"`,'settings','red');
+    showToast('🗑️ Category deleted','warn');
+  } catch(e) { console.error(e); showToast('❌ Delete failed — check Firestore permissions','error'); }
+}
+function populatePjCategorySelect() {
+  const sel = $('pjCategory'); if (!sel) return;
+  const prev = sel.value;
+  if (S.categories.length) {
+    sel.innerHTML = S.categories.map(c=>`<option value="${devEsc(c.name)}">${devEsc(c.emoji||'')} ${devEsc(c.name)}</option>`).join('');
+  } else {
+    sel.innerHTML = `<option>Social Media</option><option>App Download</option><option>Website Visit</option><option>Review/Rating</option><option>Watch Video</option><option>Survey</option><option>Other</option>`;
+  }
+  if (prev && Array.from(sel.options).some(o=>o.value===prev)) sel.value = prev;
+  updatePjSubcategorySelect();
+}
+function updatePjSubcategorySelect() {
+  const catName = $('pjCategory')?.value;
+  const cat = S.categories.find(c=>c.name===catName);
+  const field = $('pjSubcategoryField'), sel = $('pjSubcategory');
+  if (!field || !sel) return;
+  if (cat && Array.isArray(cat.subcategories) && cat.subcategories.length) {
+    field.style.display = 'block';
+    sel.innerHTML = '<option value="">— সাব-ক্যাটাগরি (ঐচ্ছিক) —</option>' + cat.subcategories.map(s=>`<option>${devEsc(s)}</option>`).join('');
+  } else {
+    field.style.display = 'none'; sel.innerHTML = '';
+  }
 }
 
 // ===== FIRESTORE: DEPOSITS/WITHDRAWALS/TASKS listeners =====
