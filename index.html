@@ -21,6 +21,10 @@
   --radius:10px;--r-lg:16px;--r-xl:22px;
   --sidebar:240px;
 }
+/* Real color emoji — applied only to icon-only elements (never to headings/banners/badges that mix emoji with English/Bangla text), so the Inter body font stays untouched everywhere else. */
+.emoji, .brand-icon, .tb-brand-icon, .poster-av, .cat-emoji-box, .notif-icon, .dtp-ico {
+  font-family: "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji","Segoe UI Symbol",sans-serif;
+}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow:hidden}
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-size:14px}
@@ -1791,7 +1795,7 @@ const TAB_DEFS = {
             {key:'rejected',label:'Rejected',icon:'ti-circle-x'}] },
   dep:  { list:'deposits', filterKey:'depFilter', render:'renderDeposits', tabs:[
             {key:'pending',label:'Pending',icon:'ti-clock'},
-            {key:'confirmed',label:'Confirmed',icon:'ti-circle-check'},
+            {key:'approved',label:'Approved',icon:'ti-circle-check'},
             {key:'rejected',label:'Rejected',icon:'ti-circle-x'}] },
   task: { list:'tasks', filterKey:'taskFilter', render:'renderTasks', tabs:[
             {key:'pending',label:'Pending',icon:'ti-clock'},
@@ -2658,11 +2662,11 @@ function renderDeposits() {
       <td style="color:var(--teal);font-weight:800;font-size:15px">${fmtAmt(d.amount)}</td>
       <td><div style="font-size:11.5px;font-family:monospace;color:var(--text2)">${d.txnId||d.txId||'—'}</div><div class="td-sub">${d.senderNumber||'—'}</div></td>
       <td style="font-size:12px;color:var(--text2)">${d.date||'—'}</td>
-      <td><span class="badge ${d.status==='confirmed'?'green':d.status==='rejected'?'red':'amber'}">${d.status||'pending'}</span>${d.status==='rejected'&&d.rejectReason?`<div style="font-size:10.5px;color:var(--red);margin-top:4px;max-width:160px;line-height:1.4"><i class="ti ti-message-circle-2" style="font-size:12px;vertical-align:-1px"></i> ${d.rejectReason}</div>`:''}</td>
+      <td><span class="badge ${d.status==='approved'?'green':d.status==='rejected'?'red':'amber'}">${d.status||'pending'}</span>${d.status==='rejected'&&d.rejectReason?`<div style="font-size:10.5px;color:var(--red);margin-top:4px;max-width:160px;line-height:1.4"><i class="ti ti-message-circle-2" style="font-size:12px;vertical-align:-1px"></i> ${d.rejectReason}</div>`:''}</td>
       <td>${d.status==='pending'?`<div style="display:flex;gap:5px">
         <button class="btn btn-approve btn-xs" onclick="confirmDeposit('${d.id}')"><i class="ti ti-check"></i> Confirm</button>
         <button class="btn btn-message btn-xs" title="Reject with reason" onclick="openReject('deposit','${d.id}','${d.method} ${fmtAmt(d.amount)}')"><i class="ti ti-message-circle-2"></i></button>
-      </div>`:d.status==='confirmed'?`<span style="color:var(--teal);font-size:12px;font-weight:700"><i class="ti ti-circle-check" style="vertical-align:-2px"></i> Credited</span>`:`<span style="color:var(--red);font-size:11.5px">Rejected</span>`}</td>
+      </div>`:d.status==='approved'?`<span style="color:var(--teal);font-size:12px;font-weight:700"><i class="ti ti-circle-check" style="vertical-align:-2px"></i> Credited</span>`:`<span style="color:var(--red);font-size:11.5px">Rejected</span>`}</td>
     </tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:24px">No deposits found</td></tr>';
 }
 
@@ -2670,9 +2674,9 @@ async function confirmDeposit(id) {
   const d=S.deposits.find(x=>x.id===id); if(!d)return;
   const fb=window._fb; if(!fb)return;
   try{
-    await fb.updateDoc(fb.doc(fb.db,'deposits',id),{status:'confirmed'});
+    await fb.updateDoc(fb.doc(fb.db,'deposits',id),{status:'approved'});
     if(d.userId) {
-      await fb.updateDoc(fb.doc(fb.db,'users',d.userId),{balance:fb.increment(d.amount||0),totalEarned:fb.increment(d.amount||0),pendingAmount:fb.increment(-(d.amount||0))}).catch(()=>{});
+      await fb.updateDoc(fb.doc(fb.db,'users',d.userId),{balance:fb.increment(d.amount||0),totalEarned:fb.increment(d.amount||0)}).catch(()=>{});
     }
     addLog(`💰 Deposit confirmed: ${d.userName} — ${fmtAmt(d.amount)} via ${d.method}`,'deposit','green');
     sendTgEvent('e2',{user:d.userName,amount:d.amount,method:d.method,txnId:d.txnId||d.txId||'—'});
@@ -2770,7 +2774,6 @@ async function confirmReject() {
     } else if(type==='deposit'){
       const d=S.deposits.find(x=>x.id===id);
       await fb.updateDoc(fb.doc(fb.db,'deposits',id),{status:'rejected',rejectReason:reason});
-      if(d?.userId) await fb.updateDoc(fb.doc(fb.db,'users',d.userId),{pendingAmount:fb.increment(-(d.amount||0))}).catch(()=>{});
       addLog(`❌ Deposit rejected: ${d?.userName} ${fmtAmt(d?.amount)} — ${reason}`,'deposit','red');
       notifyUser(d?.userId,'❌ Deposit Rejected',`Your ${d?.method} deposit of ${fmtAmt(d?.amount)} was rejected. Reason: ${reason}`);
       showToast('❌ Deposit rejected','error');
@@ -2853,9 +2856,23 @@ function renderMethods() {
         <label class="toggle"><input type="checkbox" ${m.enabled?'checked':''} onchange="toggleMethod('${m.id}',this.checked)"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
       </div>
       <div style="font-size:11px;color:var(--text3)">${m.enabled?'🟢 Enabled':'🔴 Disabled'} · Min deposit: ${fmtAmt(m.minDeposit)}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px">
+          <span style="font-size:11px;font-weight:700;color:var(--text2)">Show in Deposit</span>
+          <label class="toggle" style="width:34px;height:18px"><input type="checkbox" ${m.depositEnabled!==false?'checked':''} onchange="updateMethod('${m.id}','depositEnabled',this.checked)"><div class="toggle-track"></div><div class="toggle-thumb" style="width:14px;height:14px"></div></label>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px">
+          <span style="font-size:11px;font-weight:700;color:var(--text2)">Show in Withdraw</span>
+          <label class="toggle" style="width:34px;height:18px"><input type="checkbox" ${m.withdrawEnabled!==false?'checked':''} onchange="updateMethod('${m.id}','withdrawEnabled',this.checked)"><div class="toggle-track"></div><div class="toggle-thumb" style="width:14px;height:14px"></div></label>
+        </div>
+      </div>
       <div>
         <div style="font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Account / Wallet (Users will see this)</div>
         <input type="text" value="${m.number||''}" style="width:100%;padding:9px 12px;background:rgba(255,255,255,.04);border:1px solid var(--border2);border-radius:var(--radius);color:var(--text);font-family:monospace;font-size:13px;font-weight:700;outline:none" onchange="updateMethod('${m.id}','number',this.value)">
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Deposit Instructions (ঐচ্ছিক — User Deposit স্ক্রিনে দেখাবে)</div>
+        <input type="text" value="${m.depositInstructions||''}" placeholder="e.g. Send Money অপশনে পাঠান, Cash Out না" style="width:100%;padding:9px 12px;background:rgba(255,255,255,.04);border:1px solid var(--border2);border-radius:var(--radius);color:var(--text);font-size:12px;font-weight:600;outline:none" onchange="updateMethod('${m.id}','depositInstructions',this.value)">
       </div>
       <div>
         <div style="font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Update Logo Image</div>
@@ -3112,7 +3129,7 @@ function updateStats() {
   const activeJobs = S.jobs.filter(j=>j.status==='approved').length;
   const pendJobs = S.jobs.filter(j=>j.status==='pending'||j.status==='pending_reapproval').length;
   const kycPend = S.users.filter(u=>u.kycStatus==='pending').length;
-  const confDep = S.deposits.filter(d=>d.status==='confirmed').reduce((a,d)=>a+(d.amount||0),0);
+  const confDep = S.deposits.filter(d=>d.status==='approved').reduce((a,d)=>a+(d.amount||0),0);
   const pendDep = S.deposits.filter(d=>d.status==='pending').length;
   const pendTask = S.tasks.filter(t=>t.status==='pending').length;
   computeDuplicateGroups();
@@ -3351,7 +3368,7 @@ function renderDashDeposits() {
       </div>
       <div style="text-align:right;flex-shrink:0">
         <div style="font-size:13px;font-weight:800;color:var(--teal)">${fmtAmt(d.amount)}</div>
-        <span class="badge ${d.status==='confirmed'?'green':d.status==='rejected'?'red':'amber'}" style="font-size:9px;padding:1px 6px">${d.status||'pending'}</span>
+        <span class="badge ${d.status==='approved'?'green':d.status==='rejected'?'red':'amber'}" style="font-size:9px;padding:1px 6px">${d.status||'pending'}</span>
       </div>
     </div>`).join('')+'<div style="padding-top:10px;text-align:right"><a onclick="goScreen(\'deposits\')" style="font-size:12px;color:var(--blue);cursor:pointer;font-weight:700">View all →</a></div>';
 }
