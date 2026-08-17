@@ -2296,6 +2296,36 @@ function listenJobs() {
   }, (e)=>{console.warn('listenJobs error (check Firestore Rules / Auth):',e);showToast('❌ Jobs load failed — check Firebase Admin login','error');});
 }
 
+function jobLocationExpiryPreviewHtml(j) {
+  const chips = [];
+  // Location targeting preview
+  if (j.locationMode === 'specific' && Array.isArray(j.targetCountries) && j.targetCountries.length) {
+    chips.push(`<div class="detail-box"><div class="dl"><i class="ti ti-map-pin" style="font-size:11px;vertical-align:-1px"></i> Location Target</div><div class="dv" style="font-size:12px;font-weight:700;line-height:1.5">${j.targetCountries.map(c=>devEsc(c)).join(', ')}</div></div>`);
+  } else {
+    chips.push(`<div class="detail-box"><div class="dl"><i class="ti ti-world" style="font-size:11px;vertical-align:-1px"></i> Location Target</div><div class="dv" style="font-size:12px;font-weight:700">International — All Countries</div></div>`);
+  }
+  // Expiry preview
+  if (j.expiryDays) {
+    const expDate = j.expiresAt?.toDate ? j.expiresAt.toDate() : (j.expiresAt ? new Date(j.expiresAt) : null);
+    const expText = expDate && !isNaN(expDate) ? expDate.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+    chips.push(`<div class="detail-box"><div class="dl"><i class="ti ti-calendar-time" style="font-size:11px;vertical-align:-1px"></i> Expiry</div><div class="dv" style="font-size:12px;font-weight:700">${j.expiryDays} days${expDate?' (until '+expText+')':''}</div></div>`);
+  }
+  // Proof requirements preview
+  let proofBlock = '';
+  if (Array.isArray(j.proofRequirements) && j.proofRequirements.length) {
+    proofBlock = `<div style="margin-bottom:10px"><div style="font-size:10px;color:var(--text3);font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px"><i class="ti ti-clipboard-check" style="font-size:12px;vertical-align:-1px"></i> Proof Requirements Requested</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">${j.proofRequirements.map(r=>`<span class="badge ${r.type==='screenshot'?'blue':'teal'}">${r.type==='screenshot'?'📸':'📝'} ${devEsc(r.label||r.type)}</span>`).join('')}</div>
+    </div>`;
+  }
+  // Attachments preview
+  let attachBlock = '';
+  if (Array.isArray(j.attachmentUrls) && j.attachmentUrls.length) {
+    attachBlock = `<div style="margin-bottom:10px"><div style="font-size:10px;color:var(--text3);font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px"><i class="ti ti-paperclip" style="font-size:12px;vertical-align:-1px"></i> Attachments (${j.attachmentUrls.length})</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">${j.attachmentUrls.map(u=>`<img src="${devEsc(u)}" style="width:52px;height:52px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:zoom-in" onclick="openLightbox('${devEsc(u)}')">`).join('')}</div>
+    </div>`;
+  }
+  return `<div class="detail-grid" style="grid-template-columns:1fr 1fr;margin-bottom:10px">${chips.join('')}</div>${proofBlock}${attachBlock}`;
+}
 function renderJobs() {
   let list = S.jobFilter==='all' ? S.jobs : S.jobs.filter(j=>j.status===S.jobFilter);
   if (S.jobSourceFilter==='admin') list = list.filter(j=>j.postedBy==='admin');
@@ -2346,6 +2376,7 @@ function renderJobs() {
         </div>
       </div>
       <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:11px;font-size:12.5px;color:var(--text2);margin-bottom:12px;line-height:1.6">${j.instructions||'(no instructions)'}</div>
+      ${jobLocationExpiryPreviewHtml(j)}
       ${links.length?`<div style="margin-bottom:10px">${links.map((lnk,i)=>`<div style="font-size:12px;color:var(--blue);margin-bottom:4px"><i class="ti ti-link" style="font-size:13px;vertical-align:-1px"></i> ${links.length>1?`<b>Link ${i+1}:</b> `:''}<a href="${lnk}" target="_blank" style="color:var(--blue)">${lnk}</a></div>`).join('')}</div>`:''}
       ${j.rejectReason?`<div class="reject-reason-box"><i class="ti ti-message-circle-2"></i> <div><strong>Rejection reason:</strong> ${j.rejectReason}</div></div>`:''}
       ${(j.status==='pending'||j.status==='pending_reapproval')?`
