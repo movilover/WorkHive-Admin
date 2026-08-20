@@ -296,6 +296,26 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
 .method-card:hover{border-color:var(--border2)}
 
 .notif-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;display:flex;gap:14px;margin-bottom:10px;cursor:pointer;transition:.15s}
+
+/* Support Inbox */
+.sup-thread-row{display:flex;gap:11px;align-items:center;padding:13px 15px;border-bottom:1px solid var(--border);cursor:pointer;transition:.15s}
+.sup-thread-row:hover{background:rgba(255,255,255,.02)}
+.sup-thread-row.active{background:var(--green-bg)}
+.sup-thread-row.unread{border-left:3px solid var(--green)}
+.sup-thread-name{font-size:12.5px;font-weight:800}
+.sup-thread-preview{font-size:11px;color:var(--text3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px}
+.sup-thread-time{font-size:9.5px;color:var(--text3);flex-shrink:0}
+.sup-chat-card{padding:0;display:flex;flex-direction:column;height:72vh}
+.sup-msg-area{flex:1;overflow-y:auto;padding:14px 15px;display:flex;flex-direction:column;gap:10px}
+.sup-msg-row{display:flex;max-width:78%}
+.sup-msg-row.them{align-self:flex-start}
+.sup-msg-row.me{align-self:flex-end}
+.sup-msg-bubble{padding:10px 13px;border-radius:14px;font-size:12.5px;line-height:1.5}
+.sup-msg-row.them .sup-msg-bubble{background:var(--bg3);border:1px solid var(--border);border-bottom-left-radius:4px}
+.sup-msg-row.me .sup-msg-bubble{background:var(--green);color:#000;font-weight:600;border-bottom-right-radius:4px}
+.sup-msg-time{font-size:9.5px;opacity:.6;margin-top:4px}
+.sup-attach-btn{width:34px;height:34px;border-radius:9px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text3);flex-shrink:0}
+#supportReplyInput{flex:1;padding:10px 14px;border-radius:20px;background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:inherit;font-size:12.5px;outline:none}
 .notif-card.unread{border-color:rgba(34,197,94,.2);background:rgba(34,197,94,.02)}
 .notif-card:hover{border-color:var(--border2)}
 .notif-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
@@ -617,6 +637,12 @@ tr.dup-row td{background:rgba(239,68,68,0.03)}
           </div>
 
           <div class="qm-section-lbl">Communication</div>
+          <div class="qm-row" onclick="goScreen('support')">
+            <div class="qm-icon" style="background:var(--teal-bg);color:var(--teal)"><i class="ti ti-headset"></i></div>
+            <div class="qm-text"><div class="qm-label">💬 Support Inbox</div><div class="qm-sub">ইউজারদের সাপোর্ট মেসেজের রিয়েল-টাইম রিপ্লাই দিন</div></div>
+            <span class="qm-badge" id="nb-support">0</span>
+            <i class="ti ti-chevron-right qm-chev"></i>
+          </div>
           <div class="qm-row" onclick="goPushSettings()">
             <div class="qm-icon" style="background:var(--green-bg);color:var(--green)"><i class="ti ti-bell-ringing"></i></div>
             <div class="qm-text"><div class="qm-label">🔔 Push Notification (OneSignal)</div><div class="qm-sub">App ID ও REST API Key বসিয়ে সেটআপ করুন — এখানেই একমাত্র জায়গা</div></div>
@@ -989,11 +1015,9 @@ await setDoc(doc(db, 'users', newUser.uid), {
           <div class="card">
             <div class="card-title"><i class="ti ti-bell-ringing"></i> OneSignal Push Notifications</div>
             <div class="alert info"><i class="ti ti-info-circle"></i> এটা সেট করলে অ্যাডমিন প্যানেল থেকে যেকোনো action (Task Reject, Withdrawal Processing/Sent, Deposit Confirm/Reject, Job Approve/Reject, KYC Approve/Reject ইত্যাদি) এর সাথে সাথেই ইউজারের ফোনে <strong>আসল push notification</strong> (heads-up পপআপ + সাউন্ড) পাঠানো হবে — শুধু in-app notification list-এ না।</div>
-            <div class="alert warn"><i class="ti ti-alert-triangle"></i> ২০২৪ সালের নভেম্বরের পর OneSignal পুরনো ("Legacy") REST API Key বাতিল করে নতুন "Rich" API Key চালু করেছে, এবং পুরনো Legacy App API Key ২০২৬-এর Q1 থেকে সম্পূর্ণভাবে অচল হয়ে যাচ্ছে। নিচের REST API Key ফিল্ডে অবশ্যই <strong>OneSignal Dashboard → Settings → Keys & IDs</strong> থেকে নতুন <strong>Rich API Key</strong> ব্যবহার করুন — পুরনো (legacy) key দিলে push পাঠানো ব্যর্থ হতে পারে।</div>
+            <div class="alert warn"><i class="ti ti-shield-lock"></i> <strong>REST API Key এখন এই ব্রাউজারে থাকে না</strong> — Cloudflare Worker-এ <code>wrangler secret put ONESIGNAL_REST_KEY</code> দিয়ে সেট করা থাকে, Worker-ই OneSignal-কে কল করে। এখানে শুধু App ID (পাবলিক, secret না) আর নিচে Settings-এ Worker URL বসাতে হবে — দেখো <code>cf-worker/README.md</code>।</div>
             <div class="field"><label>OneSignal App ID</label><input type="text" id="osAppId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" value="93de5a5d-7a31-487f-9549-4e3c41144f39"></div>
             <div class="lf-hint" style="margin-top:-8px;margin-bottom:12px">এই App ID টা পাবলিক (secret না) এবং তোমার Android অ্যাপে (MainActivity.java, OneSignal.initWithContext) যেটা বসানো আছে সেটাই এখানে আগে থেকে বসানো আছে। ভিন্ন App ID ব্যবহার করলে দুটো জায়গায় মিলছে কিনা নিশ্চিত করো।</div>
-            <div class="field"><label>REST API Key</label><input type="password" id="osRestKey" placeholder="OneSignal Dashboard → Settings → Keys & IDs → REST/Rich API Key"></div>
-            <div class="lf-hint" style="margin-bottom:10px">⚠️ এই key টি secret — এটা browser-এ localStorage-এ save হয়। শুধু বিশ্বস্ত ডিভাইস থেকে এই admin panel access করুন।</div>
             <button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="saveOneSignalConfig()"><i class="ti ti-device-floppy"></i> Save Configuration</button>
             <button class="btn btn-ghost" style="width:100%" onclick="testOneSignalBroadcastPush()"><i class="ti ti-send"></i> Send Test Push (All Subscribed Devices)</button>
             <div class="tg-status">
@@ -1045,6 +1069,46 @@ if (window.Capacitor?.Plugins?.OneSignal) {
           <div class="card">
             <div class="card-title"><i class="ti ti-history"></i> Broadcast History</div>
             <div id="bcHistory"><div style="color:var(--text3);font-size:13px;text-align:center;padding:24px">No broadcasts yet</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== SUPPORT INBOX ===== -->
+      <div class="screen" id="screen-support">
+        <div class="sec-hd">
+          <h2><button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')" style="margin-right:6px"><i class="ti ti-arrow-left"></i></button><i class="ti ti-headset"></i> Support Inbox</h2>
+          <div class="sec-actions">
+            <select class="styled-select" onchange="filterSupportThreads(this.value)">
+              <option value="all">All Threads</option>
+              <option value="unread">Unread Only</option>
+            </select>
+          </div>
+        </div>
+        <div class="two-col" style="align-items:start">
+          <div class="card" style="padding:0;max-height:72vh;overflow-y:auto">
+            <div id="supportThreadList"></div>
+          </div>
+          <div class="card sup-chat-card" id="supportChatCard">
+            <div id="supportChatEmpty" style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--text3);text-align:center;padding:24px">
+              <div><i class="ti ti-message-circle-2" style="font-size:32px;display:block;margin-bottom:8px"></i>একটা থ্রেড সিলেক্ট করুন</div>
+            </div>
+            <div id="supportChatActive" style="display:none;flex-direction:column;height:100%">
+              <div style="display:flex;align-items:center;gap:10px;padding:13px 15px;border-bottom:1px solid var(--border);flex-shrink:0">
+                <div class="poster-av" id="supChatAvatar" style="width:34px;height:34px;font-size:13px">?</div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13px;font-weight:800" id="supChatName">—</div>
+                  <div style="font-size:10.5px;color:var(--text3)" id="supChatEmail">—</div>
+                </div>
+                <span class="badge blue" id="supChatLang">EN</span>
+              </div>
+              <div id="supportMsgArea" class="sup-msg-area"></div>
+              <div style="display:flex;align-items:center;gap:8px;padding:12px 14px;border-top:1px solid var(--border);flex-shrink:0">
+                <div class="sup-attach-btn" onclick="document.getElementById('supportAttachInput').click()"><i class="ti ti-paperclip"></i></div>
+                <input type="file" id="supportAttachInput" accept="image/*" style="display:none" onchange="handleSupportAdminAttach(this)">
+                <input type="text" id="supportReplyInput" placeholder="রিপ্লাই লিখুন...">
+                <button class="btn btn-primary btn-sm" onclick="sendSupportAdminReply()"><i class="ti ti-send"></i></button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -1110,6 +1174,15 @@ if (window.Capacitor?.Plugins?.OneSignal) {
               </div>
               <div class="lf-hint">ইতিমধ্যে জমা হওয়া KYC রিভিউ করতে <b>KYC Review</b> স্ক্রিনে যান (Dashboard থেকে অথবা এখানে)।</div>
               <button class="btn btn-ghost" style="width:100%;margin-top:10px" onclick="goScreen('kyc')"><i class="ti ti-id-badge-2"></i> Go to KYC Review</button>
+            </div>
+            <div class="card">
+              <div class="card-title"><i class="ti ti-folder"></i> Media Storage Settings (Cloudinary)</div>
+              <div class="alert warn"><i class="ti ti-alert-triangle"></i> Cloudinary Dashboard → Settings → Upload → এই preset-এ file size limit, allowed formats, folder restriction অবশ্যই সেট করে রাখো, যাতে কেউ misuse করতে না পারে। Unsigned preset পাবলিক হওয়ার জন্যই ডিজাইন করা — এটা একটা secret না, তাই এখানে সরাসরি রাখা নিরাপদ।</div>
+              <div class="field"><label>Cloud Name</label><input type="text" id="setCloudinaryCloudName" placeholder="e.g. paqs4n2j"></div>
+              <div class="field"><label>Unsigned Upload Preset</label><input type="text" id="setCloudinaryPreset" placeholder="e.g. ml_default"></div>
+              <button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> Save Media Settings</button>
+              <button class="btn btn-ghost" style="width:100%" onclick="testCloudinaryUpload()"><i class="ti ti-upload"></i> Test Upload</button>
+              <div class="lf-hint" id="cloudinaryTestResult" style="margin-top:8px"></div>
             </div>
             <div class="card">
               <div class="card-title"><i class="ti ti-headset"></i> Support Info</div>
@@ -1258,19 +1331,12 @@ if (window.Capacitor?.Plugins?.OneSignal) {
           <div class="two-col">
             <div>
               <div class="card">
-                <div class="card-title"><i class="ti ti-brand-github"></i> GitHub Direct Connection</div>
-                <div class="alert warn"><i class="ti ti-alert-triangle"></i> Token ব্রাউজারের localStorage-এ সেভ থাকে। Token-এ শুধু এই repo-এর <b>Contents: Read & Write</b> পারমিশন দিন (Fine-grained PAT)।</div>
-                <div class="field"><label>GitHub Personal Access Token</label><div class="pw-wrap"><input type="password" id="devGhToken" placeholder="github_pat_... বা ghp_..."><span class="pw-eye" onclick="devTogglePw('devGhToken')"><i class="ti ti-eye"></i></span></div></div>
-                <div class="field"><label>Repository Path (owner/repo)</label><input type="text" id="devGhRepoPath" placeholder="your-username/your-repo"></div>
+                <div class="card-title"><i class="ti ti-brand-github"></i> GitHub Connection (via Cloudflare Worker)</div>
+                <div class="alert info"><i class="ti ti-shield-lock"></i> GitHub PAT এবং Gemini/Groq API Key এখন এই ব্রাউজারে থাকে না — Cloudflare Worker-এ secret হিসেবে সেট করা থাকে (<code>wrangler secret put GITHUB_PAT</code> ইত্যাদি, দেখো <code>cf-worker/README.md</code>), আর repo owner/repo Worker-এর নিজস্ব config-এ (<code>wrangler.toml</code>) বসানো থাকে। এখানে শুধু Worker-এর URL আর branch বসাও।</div>
+                <div class="field"><label>Cloudflare Worker URL</label><input type="text" id="devWorkerUrl" placeholder="https://workhive-admin-worker.your-subdomain.workers.dev" onchange="saveWorkerUrl(this.value)"></div>
                 <div class="field"><label>Branch</label><input type="text" id="devGhBranch" placeholder="main" value="main"></div>
                 <button class="btn btn-primary" style="width:100%;margin-top:6px" onclick="devSaveGhSettings()"><i class="ti ti-device-floppy"></i> Save &amp; Test Connection</button>
                 <div class="lf-hint" style="margin-top:8px" id="devConnResult"></div>
-              </div>
-              <div class="card">
-                <div class="card-title"><i class="ti ti-key"></i> AI API Keys</div>
-                <div class="field"><label>Gemini API Key</label><div class="pw-wrap"><input type="password" id="devGeminiKey" placeholder="AIza..."><span class="pw-eye" onclick="devTogglePw('devGeminiKey')"><i class="ti ti-eye"></i></span></div></div>
-                <div class="field"><label>Groq API Key (ঐচ্ছিক)</label><div class="pw-wrap"><input type="password" id="devGroqKey" placeholder="gsk_..."><span class="pw-eye" onclick="devTogglePw('devGroqKey')"><i class="ti ti-eye"></i></span></div></div>
-                <button class="btn btn-ghost" style="width:100%" onclick="devSaveApiKeys()"><i class="ti ti-device-floppy"></i> Save Keys</button>
               </div>
             </div>
             <div>
@@ -1503,7 +1569,7 @@ if (window.Capacitor?.Plugins?.OneSignal) {
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
   getFirestore, collection, getDocs, doc, updateDoc, addDoc, onSnapshot,
-  query, where, orderBy, serverTimestamp, increment, setDoc, deleteDoc, getDoc, runTransaction
+  query, where, orderBy, serverTimestamp, increment, setDoc, deleteDoc, getDoc, runTransaction, deleteField
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import {
   getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut
@@ -1524,7 +1590,7 @@ const app = initializeApp(cfg);
 const db = getFirestore(app);
 const auth = getAuth(app);
 const storage = getStorage(app);
-window._fb = { db, auth, storage, collection, getDocs, doc, updateDoc, addDoc, onSnapshot, query, where, orderBy, serverTimestamp, increment, setDoc, deleteDoc, getDoc, runTransaction, fbStorageRef, deleteObject };
+window._fb = { db, auth, storage, collection, getDocs, doc, updateDoc, addDoc, onSnapshot, query, where, orderBy, serverTimestamp, increment, setDoc, deleteDoc, getDoc, runTransaction, deleteField, fbStorageRef, deleteObject };
 
 function fbSetStatus(text, ok) {
   const el = document.getElementById('fbStatus');
@@ -1542,6 +1608,11 @@ window.fbAdminSignIn = function (email, pass) {
 };
 window.fbAdminSignOut = function () {
   return signOut(auth);
+};
+// Used by the Cloudflare Worker fetch helper (workerFetch()) to attach
+// Authorization: Bearer <firebase-id-token> to every privileged request.
+window.fbGetIdToken = function () {
+  return auth.currentUser ? auth.currentUser.getIdToken() : Promise.resolve(null);
 };
 
 onAuthStateChanged(auth, user => {
@@ -1592,8 +1663,9 @@ const S = {
     supportEmail: 'support@workhive.app', supportHours: '9 AM – 11 PM', supportResponse: 'Within 12 hours',
     banner: '', bannerType: 'info', spinEnabled: true,
     postFeatureEnabled: true, postMinReward: 0.02, postMaxReward: 5.00, postMinSlots: 5, postMaxSlots: 500, postPlatformFeePct: 10,
-    kycEnabled: true },
+    kycEnabled: true, cloudinaryCloudName: '', cloudinaryUploadPreset: '' },
 };
+S.support = { threads: [], filter: 'all', activeUid: null, messages: [], _unsubThreads: null, _unsubChat: null };
 
 // 🧬 AI Dev Studio state — dual-target (User Site / Admin Panel) precision patch engine
 S.dev = {
@@ -1680,11 +1752,11 @@ function initAdmin() {
   updatePjTypeUI();
   renderStatusTabs('withdrawTabs','wd'); renderStatusTabs('depositTabs','dep'); renderStatusTabs('taskTabs','task');
   renderJobSrcTabs();
-  waitFb().then(() => { loadUsers(); listenJobs(); listenDeposits(); listenWithdrawals(); listenTasks(); listenMethods(); listenSettings(); listenCategories(); });
+  waitFb().then(() => { loadUsers(); listenJobs(); listenDeposits(); listenWithdrawals(); listenTasks(); listenMethods(); listenSettings(); listenCategories(); initSupportInbox(); });
   const t = ls('wha_tg_token'), ch = ls('wha_tg_chat');
   if (t && ch) { S.tg = {token:t,chatId:ch,connected:true}; setTimeout(() => { setTgConnected(true); const ti=$('tgToken');if(ti)ti.value=t; const ci=$('tgChatId');if(ci)ci.value=ch; }, 200); }
-  const oa = ls('wha_os_appid'), ok = ls('wha_os_restkey');
-  if (oa && ok) { S.os = {appId:oa, restKey:ok, connected:true}; setTimeout(() => { setOsConnected(true); const ai=$('osAppId');if(ai)ai.value=oa; const ri=$('osRestKey');if(ri)ri.value=ok; }, 200); }
+  const oa = ls('wha_os_appid');
+  if (oa) { S.os = {appId:oa, connected:true}; setTimeout(() => { setOsConnected(true); const ai=$('osAppId');if(ai)ai.value=oa; }, 200); }
   else { setOsConnected(false); }
   const fe = ls('wha_fb_email');
   if (fe && $('setFbEmail')) $('setFbEmail').value = fe;
@@ -1712,6 +1784,29 @@ function updateFirebaseAdminAccount() {
 function $(id) { return document.getElementById(id); }
 function v(id) { return ($(id)||{}).value?.trim()||''; }
 function ls(k,val) { if(val!==undefined) { localStorage.setItem(k,val); return; } return localStorage.getItem(k)||''; }
+
+// ===== CLOUDFLARE WORKER (privileged-action backend) =====
+// Every secret-dependent call (OneSignal push, GitHub PAT, Gemini/Groq AI, permanent
+// account deletion) now goes through this single helper instead of hitting the raw
+// third-party API directly — the Worker holds the actual secrets, this admin panel
+// never sees them. See cf-worker/README.md for deploy steps.
+function getWorkerUrl() { return (ls('wha_worker_url') || '').replace(/\/$/, ''); }
+function saveWorkerUrl(url) { ls('wha_worker_url', (url||'').trim().replace(/\/$/, '')); devUpdateGhStatusPill(); }
+async function workerFetch(path, body) {
+  const workerUrl = getWorkerUrl();
+  if (!workerUrl) { throw new Error('Cloudflare Worker URL configured নেই — Settings-এ গিয়ে বসান'); }
+  if (!window.fbGetIdToken) throw new Error('Firebase not ready');
+  const idToken = await window.fbGetIdToken();
+  if (!idToken) throw new Error('আবার লগইন করুন — ID token পাওয়া যায়নি');
+  const res = await fetch(workerUrl + path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + idToken },
+    body: JSON.stringify(body || {}),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || data.ok === false) throw new Error(data.error || ('Worker request failed (' + res.status + ')'));
+  return data;
+}
 function fmtAmt(n) { return '$'+(parseFloat(n)||0).toFixed(2); }
 
 // ===== AI PROXY (Groq + Gemini via Cloudflare Worker) — used by the small "AI দিয়ে লিখুন" compose buttons =====
@@ -1767,8 +1862,54 @@ function resizeImageFile(file, maxSize, callback) {
 function openLightbox(url) { const lb=$('imgLightbox'); $('lightboxImg').src=url; lb.classList.add('show'); }
 function closeLightbox() { $('imgLightbox').classList.remove('show'); }
 
+// ===== CLOUDINARY (dynamic — reads from S.settings, admin-configurable) =====
+const CLOUDINARY_CLOUD_NAME_DEFAULT = 'paqs4n2j';
+const CLOUDINARY_UPLOAD_PRESET_DEFAULT = 'ml_default';
+async function uploadToCloudinary(file, folder) {
+  const cloudName = S.settings.cloudinaryCloudName || CLOUDINARY_CLOUD_NAME_DEFAULT;
+  const uploadPreset = S.settings.cloudinaryUploadPreset || CLOUDINARY_UPLOAD_PRESET_DEFAULT;
+  const form = new FormData();
+  form.append('file', file);
+  form.append('upload_preset', uploadPreset);
+  form.append('folder', folder || 'workhive_support');
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method:'POST', body: form });
+  if (!res.ok) {
+    let detail = ''; try { detail = (await res.json())?.error?.message || ''; } catch(e) {}
+    throw new Error(detail || ('Cloudinary upload failed (' + res.status + ')'));
+  }
+  const json = await res.json();
+  return json.secure_url;
+}
+async function testCloudinaryUpload() {
+  const cloudName = v('setCloudinaryCloudName') || S.settings.cloudinaryCloudName || CLOUDINARY_CLOUD_NAME_DEFAULT;
+  const uploadPreset = v('setCloudinaryPreset') || S.settings.cloudinaryUploadPreset || CLOUDINARY_UPLOAD_PRESET_DEFAULT;
+  const resultEl = $('cloudinaryTestResult');
+  if (resultEl) resultEl.innerHTML = '<i class="ti ti-loader spin-ico"></i> টেস্ট করা হচ্ছে...';
+  try {
+    // 1x1 transparent PNG, generated client-side — no real file needed to validate the config.
+    const dataUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
+    const blob = await (await fetch(dataUrl)).blob();
+    const form = new FormData();
+    form.append('file', blob, 'test.png');
+    form.append('upload_preset', uploadPreset);
+    form.append('folder', 'workhive_config_test');
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method:'POST', body: form });
+    const data = await res.json();
+    if (res.ok && data.secure_url) {
+      if (resultEl) resultEl.innerHTML = '<span style="color:var(--green)"><i class="ti ti-circle-check"></i> সফল! কনফিগারেশন ঠিক আছে।</span>';
+      showToast('✅ Cloudinary test upload successful','success');
+    } else {
+      if (resultEl) resultEl.innerHTML = `<span style="color:var(--red)"><i class="ti ti-circle-x"></i> ব্যর্থ: ${devEsc(data.error?.message||'Unknown error')}</span>`;
+      showToast('❌ Test upload failed','error');
+    }
+  } catch(e) {
+    if (resultEl) resultEl.innerHTML = `<span style="color:var(--red)"><i class="ti ti-circle-x"></i> নেটওয়ার্ক এরর</span>`;
+    showToast('❌ Test upload failed — network error','error');
+  }
+}
+
 // ===== NAVIGATION =====
-const pageNames = { dashboard:'Dashboard', users:'User Management', kyc:'KYC Review', thirdgen:'Third Generation', jobs:'Job Approvals', categories:'Categories & Subcategories', tasks:'Task Submissions', deposits:'Deposits', withdrawals:'Withdrawals', 'payment-methods':'Payment Methods', telegram:'Telegram Bot', broadcast:'Broadcast', notifications:'Notifications', settings:'Site Settings', logs:'Activity Logs', devstudio:'AI Dev Studio' };
+const pageNames = { dashboard:'Dashboard', users:'User Management', kyc:'KYC Review', thirdgen:'Third Generation', jobs:'Job Approvals', categories:'Categories & Subcategories', tasks:'Task Submissions', deposits:'Deposits', withdrawals:'Withdrawals', 'payment-methods':'Payment Methods', telegram:'Telegram Bot', broadcast:'Broadcast', notifications:'Notifications', settings:'Site Settings', logs:'Activity Logs', devstudio:'AI Dev Studio', support:'Support Inbox' };
 function goScreen(name) {
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   const sc = $('screen-'+name); if(sc) sc.classList.add('active');
@@ -1776,6 +1917,7 @@ function goScreen(name) {
   if (name==='thirdgen') renderThirdGen();
   if (name==='kyc') renderKycQueue();
   if (name==='categories') renderCategoriesGrid();
+  if (name==='support') initSupportInbox();
   if (name==='devstudio') devInit();
 }
 function goPushSettings() {
@@ -1824,14 +1966,13 @@ function setStatusFilter(kind, val) {
 
 // ===== ONESIGNAL PUSH =====
 function saveOneSignalConfig() {
-  const appId = v('osAppId'), restKey = v('osRestKey');
+  const appId = v('osAppId');
   if (!appId) { showToast('OneSignal App ID দিন', 'error'); return; }
-  if (!restKey) { showToast('REST API Key দিন', 'error'); return; }
-  S.os = { appId, restKey, connected: true };
-  ls('wha_os_appid', appId); ls('wha_os_restkey', restKey);
+  S.os = { appId, connected: true };
+  ls('wha_os_appid', appId);
   setOsConnected(true);
-  addLog('🔔 OneSignal push configuration saved', 'settings', 'green');
-  showToast('✅ OneSignal configured!', 'success');
+  addLog('🔔 OneSignal App ID saved (REST key lives on the Cloudflare Worker now)', 'settings', 'green');
+  showToast('✅ OneSignal App ID saved!', 'success');
 }
 function setOsConnected(ok) {
   const dot = $('osDot'); const st = $('osStatusText'); const bi = $('osInfo');
@@ -1846,48 +1987,22 @@ function setOsConnected(ok) {
 }
 async function sendPushNotification(uid, title, message) {
   const appId = S.os.appId || ls('wha_os_appid');
-  const restKey = S.os.restKey || ls('wha_os_restkey');
-  if (!appId || !restKey || !uid) return;
+  if (!appId || !uid || !getWorkerUrl()) return;
   try {
-    const res = await fetch('https://api.onesignal.com/notifications', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json; charset=utf-8', 'Authorization': 'Key ' + restKey },
-      body: JSON.stringify({
-        app_id: appId,
-        target_channel: 'push',
-        include_aliases: { external_id: [uid] },
-        headings: { en: title },
-        contents: { en: message },
-        existing_android_channel_id: 'workhive_alerts',
-        priority: 10,
-        android_visibility: 1,
-      }),
-    });
-    const d = await res.json().catch(()=>({}));
-    if (!res.ok || (d && d.errors)) console.warn('OneSignal push not delivered:', d.errors || d);
+    const result = await workerFetch('/push/send', { appId, uid, title, message });
+    if (result.data && result.data.errors) console.warn('OneSignal push not delivered:', result.data.errors);
   } catch (e) { console.warn('OneSignal push failed:', e); }
 }
 async function testOneSignalBroadcastPush() {
   const appId = S.os.appId || ls('wha_os_appid');
-  const restKey = S.os.restKey || ls('wha_os_restkey');
-  if (!appId || !restKey) { showToast('আগে OneSignal configure করুন', 'error'); return; }
+  if (!appId) { showToast('আগে OneSignal App ID configure করুন', 'error'); return; }
+  if (!getWorkerUrl()) { showToast('আগে Settings-এ Cloudflare Worker URL বসান', 'error'); return; }
   try {
-    const res = await fetch('https://api.onesignal.com/notifications', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json; charset=utf-8', 'Authorization': 'Key ' + restKey },
-      body: JSON.stringify({
-        app_id: appId,
-        included_segments: ['Subscribed Users'],
-        headings: { en: '🐝 WorkHive Test Push' },
-        contents: { en: 'এটা একটা টেস্ট পুশ নোটিফিকেশন — সব সাবস্ক্রাইবড ডিভাইসে যাবে।' },
-        existing_android_channel_id: 'workhive_alerts',
-        priority: 10,
-      }),
-    });
-    const d = await res.json();
+    const result = await workerFetch('/push/broadcast', { appId, title: '🐝 WorkHive Test Push', message: 'এটা একটা টেস্ট পুশ নোটিফিকেশন — সব সাবস্ক্রাইবড ডিভাইসে যাবে।' });
+    const d = result.data || {};
     const recipients = d.id ? (d.recipients ?? (d.errors ? 0 : '')) : 0;
     showToast(d.id ? `✅ Test push sent${recipients!==''?` to ${recipients} device(s)`:''}` : '❌ ' + (d.errors ? JSON.stringify(d.errors) : 'Failed'), d.id ? 'success' : 'error');
-  } catch (e) { showToast('❌ Network error sending test push', 'error'); }
+  } catch (e) { showToast('❌ ' + e.message, 'error'); }
 }
 
 // ===== NOTIFY USER =====
@@ -2112,6 +2227,7 @@ function renderDupGroups() {
           </div>
           <span class="badge ${u.status==='active'?'green':'red'}" style="font-size:9.5px">${u.status}</span>
           <button class="btn btn-danger btn-xs" onclick="toggleBan('${u.id}')" title="Ban this account"><i class="ti ti-ban"></i></button>
+          ${u.status==='banned'?`<button class="btn btn-danger btn-xs" title="Permanently delete this account" onclick="confirmDeletePermanently('${u.id}')"><i class="ti ti-trash-x"></i></button>`:''}
         </div>`).join('')}
       </div>
     </div>`;
@@ -2174,6 +2290,7 @@ function renderUsers(list) {
           <button class="btn btn-info btn-xs" onclick="viewUser('${u.id}')"><i class="ti ti-eye"></i> View</button>
           <button class="btn btn-message btn-xs" title="Send this user a message (shows in their notification icon)" onclick="openMsgUser('${u.id}')"><i class="ti ti-message-circle-2"></i></button>
           <button class="btn btn-xs ${u.status==='active'?'btn-danger':'btn-approve'}" onclick="toggleBan('${u.id}')">${u.status==='active'?'<i class="ti ti-ban"></i>':'<i class="ti ti-check"></i>'}</button>
+          ${u.status==='banned'?`<button class="btn btn-danger btn-xs" title="Permanently delete this account" onclick="confirmDeletePermanently('${u.id}')"><i class="ti ti-trash-x"></i></button>`:''}
           ${u.kycStatus==='pending'?`<button class="btn btn-warning btn-xs" onclick="openKycReview('${u.id}')"><i class="ti ti-id-badge-2"></i></button>`:''}
         </div>
       </td>
@@ -2216,7 +2333,8 @@ function viewUser(id) {
       <button class="btn btn-approve" onclick="${u.kycStatus==='pending'?`closeModal('userDetailModal');openKycReview('${u.id}')`:`verifyKyc('${u.id}');closeModal('userDetailModal')`}"><i class="ti ti-id-badge"></i> KYC</button>
       <button class="btn btn-message" onclick="closeModal('userDetailModal');openMsgUser('${u.id}')"><i class="ti ti-message-circle-2"></i> Message</button>
       <button class="btn ${u.status==='active'?'btn-danger':'btn-approve'}" onclick="toggleBan('${u.id}');closeModal('userDetailModal')">${u.status==='active'?'<i class="ti ti-ban"></i> Ban':'<i class="ti ti-check"></i> Unban'}</button>
-    </div>`;
+    </div>
+    ${u.status==='banned'?`<button class="btn btn-danger" style="width:100%;margin-top:8px" onclick="closeModal('userDetailModal');confirmDeletePermanently('${u.id}')"><i class="ti ti-trash-x"></i> Delete Permanently</button>`:''}`;
   openModal('userDetailModal');
 }
 
@@ -2233,6 +2351,26 @@ async function toggleBan(id) {
     showToast(newStatus==='banned'?`⛔ ${u.name} banned`:`✅ ${u.name} unbanned`, newStatus==='banned'?'error':'success');
     renderThirdGen();
   }catch(e){ console.error(e); showToast('❌ Update failed — check Firestore permissions','error'); }
+}
+
+function confirmDeletePermanently(id) {
+  const u = findUser(id); if (!u) { showToast('User not found','error'); return; }
+  if (u.status !== 'banned') { showToast('আগে ইউজারকে Ban করতে হবে, তারপর স্থায়ীভাবে ডিলিট করা যাবে','error'); return; }
+  if (!getWorkerUrl()) { showToast('আগে Settings-এ Cloudflare Worker URL বসান — দেখো cf-worker/README.md','error'); return; }
+  const warning = `${u.name} (${u.email}) স্থায়ীভাবে মুছে ফেলা হবে — ফেরানো যাবে না।\nBalance: ${fmtAmt(u.balance)}\n\nFirebase Auth অ্যাকাউন্ট ও Firestore ডেটা মুছে যাবে। এই ইউজারের পোস্ট করা জব ও সাবমিশন archive করে রাখা হবে (মুছে যাবে না)।\n\nনিশ্চিত?`;
+  if (!confirm(warning)) return;
+  reallyDeletePermanently(id);
+}
+async function reallyDeletePermanently(id) {
+  const u = findUser(id); if (!u) return;
+  showToast('⏳ Deleting permanently...', 'info');
+  try {
+    const result = await workerFetch('/admin/delete-user', { uid: id });
+    addLog(`🗑️ Account permanently deleted: ${u.name} — was banned (${result.summary?.jobsArchived||0} jobs, ${result.summary?.submissionsArchived||0} submissions archived)`,'user','red');
+    showToast(`🗑️ ${u.name}'s account permanently deleted`,'success');
+    S.users = S.users.filter(x => x.id !== id);
+    renderUsers(); updateStats(); updateBadges(); renderThirdGen();
+  } catch(e) { console.error(e); showToast('❌ ' + e.message, 'error'); }
 }
 
 // ===== RENDER: JOBS =====
@@ -2384,9 +2522,10 @@ function renderJobs() {
         <div style="display:flex;gap:10px">
           <button class="btn btn-approve" style="flex:1" onclick="approveJob('${j.id}')"><i class="ti ti-check"></i> ${isReapproval?'Re-Approve & Publish':'Approve & Publish'}</button>
           <button class="btn btn-message" onclick="openReject('job','${j.id}','${(j.title||'').replace(/'/g,"\\'")}')"><i class="ti ti-message-circle-2"></i> Reject with Reason</button>
-        </div>`:j.status==='approved'?`<div style="display:flex;gap:10px;align-items:center">
-        <div class="alert success" style="flex:1;margin-bottom:0"><i class="ti ti-circle-check"></i> Live — Workers can see and complete this job.</div>
+        </div>`:j.status==='approved'?`<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <div class="alert success" style="flex:1;margin-bottom:0;min-width:180px"><i class="ti ti-circle-check"></i> Live — Workers can see and complete this job.</div>
         ${isAdminJob?`<button class="btn btn-warning btn-sm" onclick="editJob('${j.id}')"><i class="ti ti-edit"></i> Edit</button>`:''}
+        <button class="btn btn-message btn-sm" title="সমস্যা পাওয়া গেলে লাইভ জব বন্ধ করুন — ইতিমধ্যে সম্পন্ন worker-দের পেমেন্ট অক্ষত থাকবে, বাকি স্লটের বাজেট আংশিক ফেরত যাবে" onclick="openReject('job','${j.id}','${(j.title||'').replace(/'/g,"\\'")}')"><i class="ti ti-alert-triangle"></i> Reject (Problem Found)</button>
         <button class="btn btn-danger btn-sm" onclick="deleteJob('${j.id}','${(j.title||'').replace(/'/g,"\\'")}')"><i class="ti ti-trash"></i> Remove</button>
       </div>`:`<div style="display:flex;gap:10px;align-items:center">
         <div class="alert danger" style="flex:1;margin-bottom:0"><i class="ti ti-circle-x"></i> Rejected — Not visible to workers.</div>
@@ -2653,7 +2792,12 @@ async function approveTask(id) {
   const t=S.tasks.find(x=>x.id===id); if(!t)return;
   const fb=window._fb; if(!fb)return;
   try{
-    await fb.updateDoc(fb.doc(fb.db,'taskSubmissions',id),{status:'approved'});
+    await fb.updateDoc(fb.doc(fb.db,'taskSubmissions',id),{
+      status:'approved',
+      proofText: fb.deleteField(),
+      proofImageUrl: fb.deleteField(),
+      proofImageUrls: fb.deleteField(),
+    });
     if(t.workerId) await fb.updateDoc(fb.doc(fb.db,'users',t.workerId),{balance:fb.increment(t.reward||0),totalEarned:fb.increment(t.reward||0),tasksCompleted:fb.increment(1)}).catch(()=>{});
     if(t.jobId&&t.jobId!=='spin') fb.updateDoc(fb.doc(fb.db,'jobs',t.jobId),{filled:fb.increment(1)}).catch(()=>{});
     addLog(`✅ Task approved: ${t.workerName} — "${t.jobTitle}" +${fmtAmt(t.reward)}`,'job','green');
@@ -2774,11 +2918,20 @@ function openReject(type, id, label) {
   $('rejectReason').value='';
   const refundNote = $('rejectRefundNote');
   if (refundNote) {
-    let showNote = false;
+    let showNote = false, noteText = 'এই জবে হোল্ড করা বাজেট Reject করার সাথে সাথেই পোস্টকারীর ব্যালেন্সে ফেরত যাবে।';
     if (type === 'job') {
       const j = S.jobs.find(x=>x.id===id);
-      showNote = !!(j && j.budgetHeld && !j.holdSettled);
+      if (j && j.budgetHeld && !j.holdSettled) {
+        showNote = true;
+        if (j.status === 'approved' && j.filled) {
+          const remainingSlots = Math.max(0, (j.limit||0) - (j.filled||0));
+          const feePct = j.platformFeePct !== undefined ? j.platformFeePct : (S.settings.postPlatformFeePct||10);
+          const refundAmount = parseFloat((remainingSlots * (j.reward||0) * (1 + feePct/100)).toFixed(2));
+          noteText = `এই জবে ইতিমধ্যে ${j.filled} জন worker সম্পন্ন করেছে — তাদের পেমেন্ট অক্ষত থাকবে। বাকি ${remainingSlots} স্লটের ${fmtAmt(refundAmount)} পোস্টকারীর ব্যালেন্সে আংশিক ফেরত যাবে।`;
+        }
+      }
     }
+    refundNote.innerHTML = `<i class="ti ti-cash"></i> ${noteText}`;
     refundNote.style.display = showNote ? 'flex' : 'none';
   }
   openModal('rejectModal');
@@ -2792,16 +2945,25 @@ async function confirmReject() {
   try{
     if(type==='job'){
       const j=S.jobs.find(x=>x.id===id);
-      const needsRefund = j && j.budgetHeld && !j.holdSettled && j.postedBy && j.postedBy !== 'admin';
+      // Refund only the unspent portion: workers already paid from this job's
+      // hold keep their earnings. When filled===0 (the pending/pending_reapproval
+      // case) this naturally equals the full budgetHeld, same as before.
+      const remainingSlots = j ? Math.max(0, (j.limit||0) - (j.filled||0)) : 0;
+      const feePct = j && j.platformFeePct !== undefined ? j.platformFeePct : (S.settings.postPlatformFeePct||10);
+      const refundAmount = j ? parseFloat((remainingSlots * (j.reward||0) * (1 + feePct/100)).toFixed(2)) : 0;
+      const needsRefund = j && j.budgetHeld && !j.holdSettled && j.postedBy && j.postedBy !== 'admin' && refundAmount > 0;
       const jobUpd = {status:'rejected',rejectReason:reason};
       if (j && j.budgetHeld && !j.holdSettled) jobUpd.holdSettled = true;
       await fb.updateDoc(fb.doc(fb.db,'jobs',id),jobUpd);
       if (needsRefund) {
-        await fb.updateDoc(fb.doc(fb.db,'users',j.postedBy),{ balance: fb.increment(j.budgetHeld), postingHold: fb.increment(-j.budgetHeld) }).catch(()=>{});
+        await fb.updateDoc(fb.doc(fb.db,'users',j.postedBy),{ balance: fb.increment(refundAmount), postingHold: fb.increment(-j.budgetHeld) }).catch(()=>{});
       }
-      addLog(`❌ Job rejected: "${j?.title}" — ${reason}${needsRefund?` (${fmtAmt(j.budgetHeld)} refunded)`:''}`,'job','red');
-      notifyUser(j?.postedBy,'❌ Job Rejected'+(needsRefund?' (Refunded)':''),`Your job "${j?.title}" was not approved. Reason: ${reason}${needsRefund?` ${fmtAmt(j.budgetHeld)} has been refunded to your balance.`:''}`);
-      showToast(needsRefund ? `❌ Job rejected & ${fmtAmt(j.budgetHeld)} refunded` : '❌ Job rejected','error');
+      const wasLive = j && j.status === 'approved';
+      addLog(`❌ Job ${wasLive?'un-approved (problem found)':'rejected'}: "${j?.title}" — ${reason}${needsRefund?` (${fmtAmt(refundAmount)} refunded for ${remainingSlots} remaining slot${remainingSlots===1?'':'s'})`:''}`,'job','red');
+      notifyUser(j?.postedBy, wasLive ? '⚠️ Live Job Stopped' : '❌ Job Rejected', wasLive
+        ? `আপনার লাইভ জব "${j?.title}" সমস্যার কারণে বন্ধ করা হয়েছে। বাকি ${remainingSlots} স্লটের ${fmtAmt(refundAmount)} আপনার ব্যালেন্সে ফেরত দেওয়া হয়েছে। কারণ: ${reason}`
+        : `Your job "${j?.title}" was not approved. Reason: ${reason}${needsRefund?` ${fmtAmt(refundAmount)} has been refunded to your balance.`:''}`);
+      showToast(needsRefund ? `❌ Job ${wasLive?'stopped':'rejected'} & ${fmtAmt(refundAmount)} refunded` : `❌ Job ${wasLive?'stopped':'rejected'}`,'error');
     } else if(type==='deposit'){
       const d=S.deposits.find(x=>x.id===id);
       await fb.updateDoc(fb.doc(fb.db,'deposits',id),{status:'rejected',rejectReason:reason});
@@ -2817,7 +2979,12 @@ async function confirmReject() {
       showToast('❌ Withdrawal rejected & balance refunded','error');
     } else if(type==='task'){
       const t=S.tasks.find(x=>x.id===id);
-      await fb.updateDoc(fb.doc(fb.db,'taskSubmissions',id),{status:'rejected',rejectReason:reason});
+      await fb.updateDoc(fb.doc(fb.db,'taskSubmissions',id),{
+        status:'rejected', rejectReason:reason,
+        proofText: fb.deleteField(),
+        proofImageUrl: fb.deleteField(),
+        proofImageUrls: fb.deleteField(),
+      });
       notifyUser(t?.workerId,'❌ Task Rejected',`"${t?.jobTitle}" was rejected. Reason: ${reason}`);
       addLog(`❌ Task rejected: ${t?.workerName} — "${t?.jobTitle}" — ${reason}`,'job','red');
       showToast('❌ Task rejected','error');
@@ -3126,6 +3293,8 @@ function listenSettings() {
         postMaxSlots: d.postMaxSlots ?? S.settings.postMaxSlots,
         postPlatformFeePct: d.postPlatformFeePct ?? S.settings.postPlatformFeePct,
         kycEnabled: d.kycEnabled !== undefined ? d.kycEnabled : S.settings.kycEnabled,
+        cloudinaryCloudName: d.cloudinaryCloudName ?? S.settings.cloudinaryCloudName,
+        cloudinaryUploadPreset: d.cloudinaryUploadPreset ?? S.settings.cloudinaryUploadPreset,
       });
       const s = S.settings;
       if ($('setName')) $('setName').value = s.name||'WorkHive';
@@ -3138,6 +3307,8 @@ function listenSettings() {
       if ($('setSupportEmail')) $('setSupportEmail').value = s.supportEmail||'';
       if ($('setSupportHours')) $('setSupportHours').value = s.supportHours||'';
       if ($('setSupportResponse')) $('setSupportResponse').value = s.supportResponse||'';
+      if ($('setCloudinaryCloudName')) $('setCloudinaryCloudName').value = s.cloudinaryCloudName||'';
+      if ($('setCloudinaryPreset')) $('setCloudinaryPreset').value = s.cloudinaryUploadPreset||'';
       if ($('setBannerMsg')) $('setBannerMsg').value = s.banner||'';
       if ($('setBannerType')) $('setBannerType').value = s.bannerType||'info';
       if ($('toggleSpin')) $('toggleSpin').checked = s.spinEnabled!==false;
@@ -3310,6 +3481,8 @@ async function saveSettings() {
     postMaxSlots: parseInt($('setPostMaxSlots')?.value)||500,
     postPlatformFeePct: parseFloat($('setPostFeePct')?.value)||10,
     kycEnabled: $('setKycEnabled')?.checked!==false,
+    cloudinaryCloudName: v('setCloudinaryCloudName'),
+    cloudinaryUploadPreset: v('setCloudinaryPreset'),
   });
   const fb=window._fb; if(!fb){showToast('Firebase not ready','error');return;}
   try{
@@ -3334,6 +3507,8 @@ async function saveSettings() {
       postMaxSlots:S.settings.postMaxSlots,
       postPlatformFeePct:S.settings.postPlatformFeePct,
       kycEnabled:S.settings.kycEnabled,
+      cloudinaryCloudName:S.settings.cloudinaryCloudName,
+      cloudinaryUploadPreset:S.settings.cloudinaryUploadPreset,
     }, {merge:true});
     addLog('⚙️ Settings updated (live on User App)','settings','green');
     showToast('💾 Settings saved! User App-এ লাইভ আপডেট হয়েছে।','success');
@@ -3468,6 +3643,110 @@ function showToast(msg,type='success'){const el=$('toast');el.className='toast '
 setTimeout(renderTgEvents, 100);
 
 // ══════════════════════════════════════════════════════════
+// ================= 💬 SUPPORT INBOX =========================
+// ══════════════════════════════════════════════════════════
+let _supportInboxInited = false;
+function initSupportInbox() {
+  if (_supportInboxInited) return;
+  _supportInboxInited = true;
+  const fb = window._fb; if (!fb) { setTimeout(initSupportInbox, 400); _supportInboxInited = false; return; }
+  S.support._unsubThreads = fb.onSnapshot(
+    fb.query(fb.collection(fb.db, 'supportThreads'), fb.orderBy('updatedAt', 'desc')),
+    snap => {
+      S.support.threads = [];
+      snap.forEach(d => S.support.threads.push({ id: d.id, ...d.data() }));
+      renderSupportThreadList();
+      updateSupportBadge();
+    },
+    e => console.warn('supportThreads listener:', e)
+  );
+}
+function updateSupportBadge() {
+  const unread = S.support.threads.filter(t => t.unreadByAdmin).length;
+  const badge = $('nb-support');
+  if (badge) { badge.textContent = unread; badge.classList.toggle('show', unread > 0); }
+}
+function filterSupportThreads(val) { S.support.filter = val; renderSupportThreadList(); }
+function renderSupportThreadList() {
+  const el = $('supportThreadList'); if (!el) return;
+  let list = S.support.threads;
+  if (S.support.filter === 'unread') list = list.filter(t => t.unreadByAdmin);
+  if (!list.length) { el.innerHTML = '<div style="padding:28px;text-align:center;color:var(--text3)">কোনো সাপোর্ট থ্রেড নেই</div>'; return; }
+  el.innerHTML = list.map(t => {
+    const time = t.updatedAt?.toDate ? t.updatedAt.toDate().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+    return `<div class="sup-thread-row ${t.id === S.support.activeUid ? 'active' : ''} ${t.unreadByAdmin ? 'unread' : ''}" onclick="openSupportThread('${t.id}')">
+      <div class="user-av" style="background:var(--${avColor(t.userName)}-bg);color:var(--${avColor(t.userName)});border-color:var(--${avColor(t.userName)}-border)">${initials(t.userName)}</div>
+      <div style="flex:1;min-width:0">
+        <div class="sup-thread-name">${devEsc(t.userName || 'Unknown')}</div>
+        <div class="sup-thread-preview">${t.lastFrom === 'admin' ? '<b>You:</b> ' : ''}${devEsc(t.lastMessage || '')}</div>
+      </div>
+      <div class="sup-thread-time">${time}</div>
+    </div>`;
+  }).join('');
+}
+async function openSupportThread(uid) {
+  S.support.activeUid = uid;
+  renderSupportThreadList();
+  $('supportChatEmpty').style.display = 'none';
+  $('supportChatActive').style.display = 'flex';
+  const t = S.support.threads.find(x => x.id === uid);
+  if (t) {
+    $('supChatName').textContent = t.userName || 'Unknown';
+    $('supChatEmail').textContent = t.userEmail || '—';
+    $('supChatLang').textContent = (t.lang || 'en').toUpperCase();
+    $('supChatAvatar').textContent = initials(t.userName);
+  }
+  const fb = window._fb; if (!fb) return;
+  if (S.support._unsubChat) S.support._unsubChat();
+  S.support._unsubChat = fb.onSnapshot(
+    fb.query(fb.collection(fb.db, 'users', uid, 'supportChat'), fb.orderBy('_ts', 'asc'), fb.limit(200)),
+    snap => {
+      S.support.messages = [];
+      snap.forEach(d => S.support.messages.push({ id: d.id, ...d.data() }));
+      renderSupportChat();
+    },
+    e => console.warn('supportChat listener:', e)
+  );
+  if (t && t.unreadByAdmin) {
+    fb.setDoc(fb.doc(fb.db, 'supportThreads', uid), { unreadByAdmin: false }, { merge: true }).catch(() => {});
+  }
+}
+function renderSupportChat() {
+  const el = $('supportMsgArea'); if (!el) return;
+  el.innerHTML = S.support.messages.map(m => {
+    const time = m.createdAt?.toDate ? m.createdAt.toDate().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
+    const imgHtml = m.imageUrl ? `<img src="${devEsc(m.imageUrl)}" style="max-width:180px;border-radius:10px;display:block;margin-bottom:${m.text ? '6px' : '0'};cursor:pointer" onclick="openLightbox('${devEsc(m.imageUrl)}')">` : '';
+    return `<div class="sup-msg-row ${m.from === 'admin' ? 'me' : 'them'}"><div class="sup-msg-bubble">${imgHtml}${devEsc(m.text || '')}<div class="sup-msg-time">${time}</div></div></div>`;
+  }).join('');
+  el.scrollTop = el.scrollHeight;
+}
+async function sendSupportAdminReply() {
+  const uid = S.support.activeUid; if (!uid) return;
+  const input = $('supportReplyInput'); const text = input.value.trim(); if (!text) return;
+  const fb = window._fb; if (!fb) return;
+  input.value = '';
+  try {
+    await fb.addDoc(fb.collection(fb.db, 'users', uid, 'supportChat'), { from: 'admin', text, _ts: Date.now(), createdAt: fb.serverTimestamp() });
+    await fb.setDoc(fb.doc(fb.db, 'supportThreads', uid), { lastMessage: text, lastFrom: 'admin', unreadByAdmin: false, updatedAt: fb.serverTimestamp() }, { merge: true });
+    sendPushNotification(uid, '📩 Support Reply', text);
+  } catch (e) { console.error(e); showToast('❌ Reply failed — check Firestore permissions', 'error'); }
+}
+async function handleSupportAdminAttach(input) {
+  const file = input.files && input.files[0]; if (!file) return;
+  const uid = S.support.activeUid; if (!uid) { input.value = ''; return; }
+  if (!file.type.startsWith('image/')) { showToast('শুধু ছবি ফাইল দিন', 'error'); input.value = ''; return; }
+  if (file.size > 8 * 1024 * 1024) { showToast('ছবি খুব বড় (সর্বোচ্চ 8MB)', 'error'); input.value = ''; return; }
+  input.value = '';
+  const fb = window._fb; if (!fb) return;
+  try {
+    showToast('⬆ ছবি আপলোড হচ্ছে...', 'info');
+    const url = await uploadToCloudinary(file, 'workhive_support');
+    await fb.addDoc(fb.collection(fb.db, 'users', uid, 'supportChat'), { from: 'admin', text: '', imageUrl: url, _ts: Date.now(), createdAt: fb.serverTimestamp() });
+    await fb.setDoc(fb.doc(fb.db, 'supportThreads', uid), { lastMessage: '📷 Image', lastFrom: 'admin', unreadByAdmin: false, updatedAt: fb.serverTimestamp() }, { merge: true });
+  } catch (e) { console.error(e); showToast('❌ ছবি পাঠাতে ব্যর্থ হয়েছে', 'error'); }
+}
+
+// ══════════════════════════════════════════════════════════
 // ============ 🧬 AI DEV STUDIO — PRECISION PATCH ============
 // ══════════════════════════════════════════════════════════
 function devEsc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
@@ -3476,12 +3755,8 @@ function devLs(k,val){ if(val!==undefined){localStorage.setItem(k,val);return;} 
 function devInit() {
   if (S.dev.devInited) { devRenderSubNav(); devRenderTargetRow(); devUpdateGhStatusPill(); return; }
   S.dev.devInited = true;
-  $('devGhToken').value = devLs('wha_dev_gh_token');
-  const owner=devLs('wha_dev_gh_owner'), repo=devLs('wha_dev_gh_repo');
-  $('devGhRepoPath').value = (owner&&repo) ? (owner+'/'+repo) : '';
+  $('devWorkerUrl').value = getWorkerUrl();
   $('devGhBranch').value = devLs('wha_dev_gh_branch') || 'main';
-  $('devGeminiKey').value = devLs('wha_dev_gemini_key');
-  $('devGroqKey').value = devLs('wha_dev_groq_key');
   S.dev.targets.user.path = devLs('wha_dev_path_user') || '';
   S.dev.targets.admin.path = devLs('wha_dev_path_admin') || '';
   $('devPathUser').value = S.dev.targets.user.path;
@@ -3493,9 +3768,9 @@ function devInit() {
 }
 
 function devUpdateGhStatusPill() {
-  const ok = !!(devLs('wha_dev_gh_token') && devLs('wha_dev_gh_owner') && devLs('wha_dev_gh_repo'));
+  const ok = !!getWorkerUrl();
   const pill = $('qmDevGhStatus');
-  if (pill) { pill.textContent = ok ? '🟢 Connected' : 'Not Connected'; pill.className = 'qm-status-pill ' + (ok?'ok':'off'); }
+  if (pill) { pill.textContent = ok ? '🟢 Worker Connected' : 'Worker Not Configured'; pill.className = 'qm-status-pill ' + (ok?'ok':'off'); }
 }
 
 function devRenderSubNav() {
@@ -3559,27 +3834,16 @@ function devRemoveImage() {
 function devTogglePw(id) { const i=$(id); if(i) i.type = i.type==='password'?'text':'password'; }
 
 async function devSaveGhSettings() {
-  const token=v('devGhToken'), repoPath=v('devGhRepoPath'), branch=v('devGhBranch')||'main';
-  if (!token) { showToast('GitHub Token দিন','error'); return; }
-  if (!repoPath.includes('/')) { showToast('owner/repo ফরম্যাটে দিন','error'); return; }
-  const [owner,repo] = repoPath.split('/').map(s=>s.trim());
-  if (!owner||!repo) { showToast('Repository Path সঠিক নয়','error'); return; }
-  devLs('wha_dev_gh_token', token); devLs('wha_dev_gh_owner', owner); devLs('wha_dev_gh_repo', repo); devLs('wha_dev_gh_branch', branch);
+  const branch=v('devGhBranch')||'main';
+  devLs('wha_dev_gh_branch', branch);
   devUpdateGhStatusPill();
   $('devConnResult').textContent = '⏳ টেস্ট করা হচ্ছে...';
   try {
-    const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/branches/${encodeURIComponent(branch)}`, { headers: devGhHeaders() });
-    const data = await res.json().catch(()=>({}));
-    if (!res.ok) { $('devConnResult').innerHTML = `<span style="color:var(--red)">❌ ${devEsc(data.message||('ব্যর্থ ('+res.status+')'))}</span>`; return; }
-    $('devConnResult').innerHTML = '<span style="color:var(--green)">✅ সংযোগ সফল হয়েছে</span>';
-    addLog('🔌 Dev Studio: GitHub connection saved & tested','devstudio','purple');
+    await workerFetch('/devstudio/github', { action:'testConnection', branch });
+    $('devConnResult').innerHTML = '<span style="color:var(--green)">✅ সংযোগ সফল হয়েছে (Worker → GitHub)</span>';
+    addLog('🔌 Dev Studio: GitHub connection tested via Worker','devstudio','purple');
     showToast('✅ GitHub সংযুক্ত হয়েছে!','success');
-  } catch(e) { $('devConnResult').innerHTML = '<span style="color:var(--red)">❌ নেটওয়ার্ক সমস্যা</span>'; }
-}
-function devSaveApiKeys() {
-  devLs('wha_dev_gemini_key', v('devGeminiKey'));
-  devLs('wha_dev_groq_key', v('devGroqKey'));
-  showToast('✅ AI Key সেভ হয়েছে','success');
+  } catch(e) { $('devConnResult').innerHTML = `<span style="color:var(--red)">❌ ${devEsc(e.message)}</span>`; }
 }
 function devSaveTargetPaths() {
   const up=v('devPathUser'), ap=v('devPathAdmin');
@@ -3589,44 +3853,31 @@ function devSaveTargetPaths() {
   showToast('✅ File Path সেভ হয়েছে — এখন দুটো সাইটই আলাদাভাবে টার্গেট করা যাবে','success');
 }
 function devCheckConfigured(key) {
-  if (!devLs('wha_dev_gh_token')||!devLs('wha_dev_gh_owner')||!devLs('wha_dev_gh_repo')) { showToast('আগে Dev Settings-এ GitHub সংযোগ করুন','error'); return false; }
+  if (!getWorkerUrl()) { showToast('আগে Settings-এ Cloudflare Worker URL বসান','error'); return false; }
   if (!S.dev.targets[key].path) { showToast(`${S.dev.targets[key].label}-এর জন্য File Path সেট করা নেই — Dev Settings-এ যান`,'error'); return false; }
   return true;
 }
 
-function devGhHeaders(){ return { 'Authorization':'token '+devLs('wha_dev_gh_token'), 'Accept':'application/vnd.github+json' }; }
-function devGhBase(){ return `https://api.github.com/repos/${devLs('wha_dev_gh_owner')}/${devLs('wha_dev_gh_repo')}`; }
 function devB64Encode(str){ return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,(m,p1)=>String.fromCharCode('0x'+p1))); }
 function devB64Decode(str){ return decodeURIComponent(atob(str.replace(/\n/g,'')).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join('')); }
 async function devGhGetFile(path) {
   const branch = devLs('wha_dev_gh_branch')||'main';
-  const res = await fetch(`${devGhBase()}/contents/${path.split('/').map(encodeURIComponent).join('/')}?ref=${encodeURIComponent(branch)}`, { headers: devGhHeaders() });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'GitHub ফাইল রিড ব্যর্থ');
-  return { content: devB64Decode(data.content), sha: data.sha };
+  const result = await workerFetch('/devstudio/github', { action:'getFile', path, branch });
+  return { content: result.content, sha: result.sha };
 }
 async function devGhPutFile(path, content, sha, message) {
   const branch = devLs('wha_dev_gh_branch')||'main';
-  const res = await fetch(`${devGhBase()}/contents/${path.split('/').map(encodeURIComponent).join('/')}`, {
-    method:'PUT', headers: Object.assign({'Content-Type':'application/json'}, devGhHeaders()),
-    body: JSON.stringify({ message, content: devB64Encode(content), sha, branch }),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'GitHub পুশ ব্যর্থ');
-  return { commitSha: data.commit && data.commit.sha };
+  const result = await workerFetch('/devstudio/github', { action:'putFile', path, branch, sha, content, message });
+  return { commitSha: result.commitSha };
 }
 async function devGhGetCommits(path, per_page=5) {
   const branch = devLs('wha_dev_gh_branch')||'main';
-  const res = await fetch(`${devGhBase()}/commits?path=${encodeURIComponent(path)}&sha=${encodeURIComponent(branch)}&per_page=${per_page}`, { headers: devGhHeaders() });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Commit history লোড ব্যর্থ');
-  return data.map(c=>({ sha:c.sha, message:c.commit.message, author:c.commit.author?c.commit.author.name:'', date:c.commit.author?c.commit.author.date:'' }));
+  const result = await workerFetch('/devstudio/github', { action:'getCommits', path, branch });
+  return result.commits || [];
 }
 async function devGhGetFileAtCommit(path, sha) {
-  const res = await fetch(`${devGhBase()}/contents/${path.split('/').map(encodeURIComponent).join('/')}?ref=${sha}`, { headers: devGhHeaders() });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'পুরনো ভার্সন লোড ব্যর্থ');
-  return { content: devB64Decode(data.content) };
+  const result = await workerFetch('/devstudio/github', { action:'getFileAtCommit', path, sha });
+  return { content: result.content };
 }
 
 function devBuildSystemPrompt(fileName) {
@@ -3669,28 +3920,18 @@ function devParseAiJson(text) {
   try { return JSON.parse(cleaned.slice(s,e+1)); } catch(err) { return null; }
 }
 async function devCallGemini(sys, user, image) {
-  const key = devLs('wha_dev_gemini_key'); if (!key) throw new Error('Gemini API Key দিন Dev Settings-এ');
-  const parts = [{ text: sys+'\n\n'+user }];
-  if (image) parts.push({ inline_data:{ mime_type:image.mimeType, data:image.base64 } });
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ contents:[{parts}], generationConfig:{temperature:0.15} }),
-  });
-  const data = await res.json();
-  if (!res.ok) { const msg=(data.error&&data.error.message)||'Gemini ব্যর্থ'; const err=new Error(msg); err.isQuota = res.status===429||/quota/i.test(msg); throw err; }
-  const cand = data.candidates && data.candidates[0];
-  if (!cand) throw new Error('Gemini থেকে উত্তর আসেনি');
-  return (cand.content && cand.content.parts || []).map(p=>p.text||'').join('');
+  if (!getWorkerUrl()) throw new Error('আগে Settings-এ Cloudflare Worker URL বসান');
+  const body = { provider:'gemini', systemPrompt: sys, userPrompt: user };
+  if (image) body.image = image;
+  const result = await workerFetch('/devstudio/ai', body);
+  if (!result.ok) { const err = new Error(result.error || 'Gemini ব্যর্থ'); err.isQuota = !!result.isQuota; throw err; }
+  return result.text || '';
 }
 async function devCallGroq(sys, user) {
-  const key = devLs('wha_dev_groq_key'); if (!key) throw new Error('Groq API Key দিন Dev Settings-এ');
-  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-    body: JSON.stringify({ model:'llama-3.3-70b-versatile', messages:[{role:'system',content:sys},{role:'user',content:user}], temperature:0.15 }),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error((data.error&&data.error.message)||'Groq ব্যর্থ');
-  return (data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content)||'';
+  if (!getWorkerUrl()) throw new Error('আগে Settings-এ Cloudflare Worker URL বসান');
+  const result = await workerFetch('/devstudio/ai', { provider:'groq', systemPrompt: sys, userPrompt: user });
+  if (!result.ok) throw new Error(result.error || 'Groq ব্যর্থ');
+  return result.text || '';
 }
 
 const DEV_SMALL_FILE_CHARS=6000, DEV_CHUNK_LINES=45, DEV_CONTEXT_WINDOW=18, DEV_MAX_CONTEXT_CHARS=9000;
@@ -3779,11 +4020,11 @@ async function devGenerateChanges() {
     try { rawText = useGemini ? await devCallGemini(sysPrompt,userPrompt,S.dev.pendingImage) : await devCallGroq(sysPrompt,userPrompt); }
     catch(aiErr) {
       if (useGemini && aiErr.isQuota) {
-        if (!S.dev.pendingImage && devLs('wha_dev_groq_key')) {
+        if (!S.dev.pendingImage) {
           showToast('⚠️ Gemini quota আটকে — Groq দিয়ে চেষ্টা হচ্ছে','warn');
           btn.innerHTML='<i class="ti ti-loader spin-ico"></i> Groq দিয়ে চেষ্টা হচ্ছে...';
           rawText = await devCallGroq(sysPrompt,userPrompt);
-        } else { throw new Error('Gemini quota সমস্যা — Dev Settings-এ Groq Key যোগ করুন বা নতুন Gemini Key ব্যবহার করুন।'); }
+        } else { throw new Error('Gemini quota সমস্যা — একটু পরে আবার চেষ্টা করুন, অথবা ছবি ছাড়া রিট্রাই করুন (তখন Groq fallback ব্যবহার হবে)।'); }
       } else { throw aiErr; }
     }
     const aiRes = devParseAiJson(rawText);
@@ -3978,7 +4219,7 @@ async function devLoadCommits() {
   const key = S.dev.historyTarget;
   const target = S.dev.targets[key];
   const el = $('devCommitsList');
-  if (!devLs('wha_dev_gh_token')||!devLs('wha_dev_gh_owner')||!devLs('wha_dev_gh_repo')) { el.innerHTML='<div style="padding:24px;text-align:center;color:var(--text3)">আগে Dev Settings-এ GitHub সংযোগ করুন</div>'; return; }
+  if (!getWorkerUrl()) { el.innerHTML='<div style="padding:24px;text-align:center;color:var(--text3)">আগে Settings-এ Cloudflare Worker URL বসান</div>'; return; }
   if (!target.path) { el.innerHTML=`<div style="padding:24px;text-align:center;color:var(--text3)">${target.label}-এর জন্য File Path সেট করা নেই</div>`; return; }
   el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text3)"><i class="ti ti-loader spin-ico"></i> লোড হচ্ছে...</div>';
   try {
