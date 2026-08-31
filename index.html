@@ -1015,7 +1015,7 @@ await setDoc(doc(db, 'users', newUser.uid), {
           <div class="card">
             <div class="card-title"><i class="ti ti-bell-ringing"></i> OneSignal Push Notifications</div>
             <div class="alert info"><i class="ti ti-info-circle"></i> এটা সেট করলে অ্যাডমিন প্যানেল থেকে যেকোনো action (Task Reject, Withdrawal Processing/Sent, Deposit Confirm/Reject, Job Approve/Reject, KYC Approve/Reject ইত্যাদি) এর সাথে সাথেই ইউজারের ফোনে <strong>আসল push notification</strong> (heads-up পপআপ + সাউন্ড) পাঠানো হবে — শুধু in-app notification list-এ না।</div>
-            <div class="alert warn"><i class="ti ti-shield-lock"></i> <strong>REST API Key এখন এই ব্রাউজারে থাকে না</strong> — Cloudflare Worker-এ <code>wrangler secret put ONESIGNAL_REST_KEY</code> দিয়ে সেট করা থাকে, Worker-ই OneSignal-কে কল করে। এখানে শুধু App ID (পাবলিক, secret না) আর নিচে Settings-এ Worker URL বসাতে হবে — দেখো <code>cf-worker/README.md</code>।</div>
+            <div class="alert warn"><i class="ti ti-shield-lock"></i> <strong>Spark plan (no backend):</strong> এই App ID পাবলিক, secret না — এখানে রাখা নিরাপদ। কিন্তু আসল push popup পাঠাতে REST API Key লাগে, যেটা ব্যাকএন্ড ছাড়া কোথাও নিরাপদে রাখা যায় না, তাই এই প্যানেল সরাসরি push পাঠায় না। এডহক ব্রডকাস্ট OneSignal Dashboard থেকে সরাসরি পাঠান; নিয়মিত ইভেন্ট-পুশের জন্য OneSignal Journeys সেট করুন (কোড ছাড়া, ট্যাগ-ট্রিগারড)।</div>
             <div class="field"><label>OneSignal App ID</label><input type="text" id="osAppId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" value="93de5a5d-7a31-487f-9549-4e3c41144f39"></div>
             <div class="lf-hint" style="margin-top:-8px;margin-bottom:12px">এই App ID টা পাবলিক (secret না) এবং তোমার Android অ্যাপে (MainActivity.java, OneSignal.initWithContext) যেটা বসানো আছে সেটাই এখানে আগে থেকে বসানো আছে। ভিন্ন App ID ব্যবহার করলে দুটো জায়গায় মিলছে কিনা নিশ্চিত করো।</div>
             <button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="saveOneSignalConfig()"><i class="ti ti-device-floppy"></i> Save Configuration</button>
@@ -1268,6 +1268,9 @@ if (window.Capacitor?.Plugins?.OneSignal) {
                   <div class="provider-opt active" id="devProvGemini" onclick="devSetProvider('gemini')">✨ Gemini <span style="font-weight:500;opacity:.7">(টেক্সট + ছবি)</span></div>
                   <div class="provider-opt" id="devProvGroq" onclick="devSetProvider('groq')">⚡ Groq <span style="font-weight:500;opacity:.7">(দ্রুত, শুধু টেক্সট)</span></div>
                 </div>
+                <div class="alert warn" style="margin-top:12px"><i class="ti ti-shield-lock"></i> API Key এই সেশনেই থাকবে (sessionStorage) — কোথাও সেভ হয় না।</div>
+                <div class="field" style="margin-top:8px"><label>Gemini API Key (this session)</label><input type="password" id="devGeminiKey" placeholder="AIza..." onchange="setAiKey('gemini', this.value)"></div>
+                <div class="field"><label>Groq API Key (this session)</label><input type="password" id="devGroqKey" placeholder="gsk_..." onchange="setAiKey('groq', this.value)"></div>
               </div>
               <div class="card">
                 <div class="card-title"><i class="ti ti-message-2"></i> Change Request</div>
@@ -1331,9 +1334,10 @@ if (window.Capacitor?.Plugins?.OneSignal) {
           <div class="two-col">
             <div>
               <div class="card">
-                <div class="card-title"><i class="ti ti-brand-github"></i> GitHub Connection (via Cloudflare Worker)</div>
-                <div class="alert info"><i class="ti ti-shield-lock"></i> GitHub PAT এবং Gemini/Groq API Key এখন এই ব্রাউজারে থাকে না — Cloudflare Worker-এ secret হিসেবে সেট করা থাকে (<code>wrangler secret put GITHUB_PAT</code> ইত্যাদি, দেখো <code>cf-worker/README.md</code>), আর repo owner/repo Worker-এর নিজস্ব config-এ (<code>wrangler.toml</code>) বসানো থাকে। এখানে শুধু Worker-এর URL আর branch বসাও।</div>
-                <div class="field"><label>Cloudflare Worker URL</label><input type="text" id="devWorkerUrl" placeholder="https://workhive-admin-worker.your-subdomain.workers.dev" onchange="saveWorkerUrl(this.value)"></div>
+                <div class="card-title"><i class="ti ti-brand-github"></i> GitHub Connection (session-only, no backend)</div>
+                <div class="alert warn"><i class="ti ti-shield-lock"></i> এখানে কোনো ব্যাকএন্ড নেই, তাই GitHub Token এখন প্রতি সেশনে টাইপ করতে হবে — এটি <code>sessionStorage</code>-এ থাকে, কখনো Firestore/ফাইলে সেভ হয় না, এবং ট্যাব বন্ধ করলে মুছে যায়। শুধু প্রয়োজনীয় রিপোতে সীমাবদ্ধ একটি fine-grained Personal Access Token ব্যবহার করুন।</div>
+                <div class="field"><label>Repo Owner/Name</label><input type="text" id="devGhRepo" placeholder="yourname/your-repo" onchange="devLs('wha_dev_gh_repo', this.value)"></div>
+                <div class="field"><label>GitHub Personal Access Token (this session only)</label><input type="password" id="devGhToken" placeholder="ghp_..." onchange="setGithubToken(this.value)"></div>
                 <div class="field"><label>Branch</label><input type="text" id="devGhBranch" placeholder="main" value="main"></div>
                 <button class="btn btn-primary" style="width:100%;margin-top:6px" onclick="devSaveGhSettings()"><i class="ti ti-device-floppy"></i> Save &amp; Test Connection</button>
                 <div class="lf-hint" style="margin-top:8px" id="devConnResult"></div>
@@ -1609,8 +1613,8 @@ window.fbAdminSignIn = function (email, pass) {
 window.fbAdminSignOut = function () {
   return signOut(auth);
 };
-// Used by the Cloudflare Worker fetch helper (workerFetch()) to attach
-// Authorization: Bearer <firebase-id-token> to every privileged request.
+// Spark-plan migration: no backend, so this is currently unused (kept in case
+// a future feature needs a Firebase ID token client-side; harmless as-is).
 window.fbGetIdToken = function () {
   return auth.currentUser ? auth.currentUser.getIdToken() : Promise.resolve(null);
 };
@@ -1785,41 +1789,23 @@ function $(id) { return document.getElementById(id); }
 function v(id) { return ($(id)||{}).value?.trim()||''; }
 function ls(k,val) { if(val!==undefined) { localStorage.setItem(k,val); return; } return localStorage.getItem(k)||''; }
 
-// ===== CLOUDFLARE WORKER (privileged-action backend) =====
-// Every secret-dependent call (OneSignal push, GitHub PAT, Gemini/Groq AI, permanent
-// account deletion) now goes through this single helper instead of hitting the raw
-// third-party API directly — the Worker holds the actual secrets, this admin panel
-// never sees them. See cf-worker/README.md for deploy steps.
-function getWorkerUrl() { return (ls('wha_worker_url') || '').replace(/\/$/, ''); }
-function saveWorkerUrl(url) { ls('wha_worker_url', (url||'').trim().replace(/\/$/, '')); devUpdateGhStatusPill(); }
-async function workerFetch(path, body) {
-  const workerUrl = getWorkerUrl();
-  if (!workerUrl) { throw new Error('Cloudflare Worker URL configured নেই — Settings-এ গিয়ে বসান'); }
-  if (!window.fbGetIdToken) throw new Error('Firebase not ready');
-  const idToken = await window.fbGetIdToken();
-  if (!idToken) throw new Error('আবার লগইন করুন — ID token পাওয়া যায়নি');
-  const res = await fetch(workerUrl + path, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + idToken },
-    body: JSON.stringify(body || {}),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok || data.ok === false) throw new Error(data.error || ('Worker request failed (' + res.status + ')'));
-  return data;
-}
+// ===== SPARK PLAN — SESSION-ONLY ADMIN SECRETS (no backend) =====
+// Spark-plan migration: no backend exists anymore. GitHub / AI calls go straight
+// from this admin browser tab to GitHub / Gemini / Groq using a token the admin
+// types in each session. The token lives ONLY in sessionStorage — never written
+// to Firestore, localStorage, or the file itself — and is cleared on tab close.
+// This screen is already gated behind isAnyAdmin() login, so only a logged-in
+// admin's own browser ever holds it.
+function getGithubToken() { return sessionStorage.getItem('wha_gh_token') || ''; }
+function setGithubToken(t) { if (t) sessionStorage.setItem('wha_gh_token', t); else sessionStorage.removeItem('wha_gh_token'); devUpdateGhStatusPill(); }
+function getAiKey(provider) { return sessionStorage.getItem('wha_ai_key_' + provider) || ''; }
+function setAiKey(provider, k) { if (k) sessionStorage.setItem('wha_ai_key_' + provider, k); }
 function fmtAmt(n) { return '$'+(parseFloat(n)||0).toFixed(2); }
 
 // ===== AI PROXY (Groq + Gemini via Cloudflare Worker) — used by the small "AI দিয়ে লিখুন" compose buttons =====
-const AI_PROXY_URL = 'https://workhive-ai-proxy.omor-faruk-sojol-2.workers.dev';
 async function callAIProxy(prompt, systemPrompt = '', provider = 'groq') {
-  const res = await fetch(AI_PROXY_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ provider, prompt, systemPrompt }),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok || !data.ok) throw new Error(data.error || 'AI request failed');
-  return data.text || '';
+  // Reuses the same session-only key as Dev Studio — set it once in Dev Settings.
+  return provider === 'gemini' ? devCallGemini(systemPrompt, prompt, null) : devCallGroq(systemPrompt, prompt);
 }
 async function aiComposeInto(fieldId, instruction, btn) {
   const el = $(fieldId); if (!el) return;
@@ -1985,24 +1971,20 @@ function setOsConnected(ok) {
   if (sd) sd.style.background = ok ? 'var(--green)' : 'var(--red)';
   if (ss) ss.textContent = ok ? 'Configured' : 'Not configured';
 }
+// Spark-plan migration: sending an OneSignal push requires the REST API key,
+// and there is no safe place to hold a real secret without a backend. The
+// in-app notification (Firestore, via notifyUser()) always fires regardless.
+// For an actual phone popup:
+//  1) One-off broadcasts — send directly from the OneSignal Dashboard → Messages → New Push (no code).
+//  2) Event-triggered pushes (job approved, withdrawal sent, etc.) — build a
+//     OneSignal Journey in the dashboard, triggered off a tag. index.html can
+//     set that tag itself whenever a new Firestore notification arrives for
+//     the signed-in user (see index.html's listenUserNotifications callback).
 async function sendPushNotification(uid, title, message) {
-  const appId = S.os.appId || ls('wha_os_appid');
-  if (!appId || !uid || !getWorkerUrl()) return;
-  try {
-    const result = await workerFetch('/push/send', { appId, uid, title, message });
-    if (result.data && result.data.errors) console.warn('OneSignal push not delivered:', result.data.errors);
-  } catch (e) { console.warn('OneSignal push failed:', e); }
+  // Intentionally a no-op here — the in-app notification via notifyUser() already covers this.
 }
-async function testOneSignalBroadcastPush() {
-  const appId = S.os.appId || ls('wha_os_appid');
-  if (!appId) { showToast('আগে OneSignal App ID configure করুন', 'error'); return; }
-  if (!getWorkerUrl()) { showToast('আগে Settings-এ Cloudflare Worker URL বসান', 'error'); return; }
-  try {
-    const result = await workerFetch('/push/broadcast', { appId, title: '🐝 WorkHive Test Push', message: 'এটা একটা টেস্ট পুশ নোটিফিকেশন — সব সাবস্ক্রাইবড ডিভাইসে যাবে।' });
-    const d = result.data || {};
-    const recipients = d.id ? (d.recipients ?? (d.errors ? 0 : '')) : 0;
-    showToast(d.id ? `✅ Test push sent${recipients!==''?` to ${recipients} device(s)`:''}` : '❌ ' + (d.errors ? JSON.stringify(d.errors) : 'Failed'), d.id ? 'success' : 'error');
-  } catch (e) { showToast('❌ ' + e.message, 'error'); }
+function testOneSignalBroadcastPush() {
+  showToast('একবার-মাত্র ব্রডকাস্ট পাঠাতে OneSignal Dashboard → Messages → New Push ব্যবহার করুন।', 'info');
 }
 
 // ===== NOTIFY USER =====
@@ -2356,18 +2338,25 @@ async function toggleBan(id) {
 function confirmDeletePermanently(id) {
   const u = findUser(id); if (!u) { showToast('User not found','error'); return; }
   if (u.status !== 'banned') { showToast('আগে ইউজারকে Ban করতে হবে, তারপর স্থায়ীভাবে ডিলিট করা যাবে','error'); return; }
-  if (!getWorkerUrl()) { showToast('আগে Settings-এ Cloudflare Worker URL বসান — দেখো cf-worker/README.md','error'); return; }
-  const warning = `${u.name} (${u.email}) স্থায়ীভাবে মুছে ফেলা হবে — ফেরানো যাবে না।\nBalance: ${fmtAmt(u.balance)}\n\nFirebase Auth অ্যাকাউন্ট ও Firestore ডেটা মুছে যাবে। এই ইউজারের পোস্ট করা জব ও সাবমিশন archive করে রাখা হবে (মুছে যাবে না)।\n\nনিশ্চিত?`;
+  const warning = `${u.name} (${u.email}) স্থায়ীভাবে নিষ্ক্রিয় করা হবে — ফেরানো যাবে না।\nBalance: ${fmtAmt(u.balance)}\n\nSpark plan-এ কোনো ব্যাকএন্ড না থাকায় Firebase Auth অ্যাকাউন্টটি প্রযুক্তিগতভাবে থেকেই যাবে, কিন্তু Firestore-এ deleted flag সেট হবে এবং Security Rules তাকে সম্পূর্ণ ব্লক করে দেবে — সে আর লগইন করে কিছুই করতে পারবে না।\n\nনিশ্চিত?`;
   if (!confirm(warning)) return;
   reallyDeletePermanently(id);
 }
 async function reallyDeletePermanently(id) {
   const u = findUser(id); if (!u) return;
-  showToast('⏳ Deleting permanently...', 'info');
+  const fb = window._fb; if (!fb) { showToast('Firebase not ready','error'); return; }
+  showToast('⏳ নিষ্ক্রিয় করা হচ্ছে...', 'info');
   try {
-    const result = await workerFetch('/admin/delete-user', { uid: id });
-    addLog(`🗑️ Account permanently deleted: ${u.name} — was banned (${result.summary?.jobsArchived||0} jobs, ${result.summary?.submissionsArchived||0} submissions archived)`,'user','red');
-    showToast(`🗑️ ${u.name}'s account permanently deleted`,'success');
+    await fb.updateDoc(fb.doc(fb.db,'users',id), {
+      deleted: true,
+      deletedAt: fb.serverTimestamp(),
+      // Scrub personal fields while keeping the doc for referential integrity
+      // (job history, refund ledger, referral tree) — adjust to taste.
+      name: 'Deleted User', email: '', phone: '', kycFullName: '', kycIdNumber: '',
+      kycFrontUrl: '', kycBackUrl: '',
+    });
+    addLog(`🗑️ Account soft-deleted (Spark plan — Auth record persists but is fully blocked): ${u.name}`,'user','red');
+    showToast(`🗑️ ${u.name}'s account permanently deactivated`,'success');
     S.users = S.users.filter(x => x.id !== id);
     renderUsers(); updateStats(); updateBadges(); renderThirdGen();
   } catch(e) { console.error(e); showToast('❌ ' + e.message, 'error'); }
@@ -3755,7 +3744,7 @@ function devLs(k,val){ if(val!==undefined){localStorage.setItem(k,val);return;} 
 function devInit() {
   if (S.dev.devInited) { devRenderSubNav(); devRenderTargetRow(); devUpdateGhStatusPill(); return; }
   S.dev.devInited = true;
-  $('devWorkerUrl').value = getWorkerUrl();
+  $('devGhRepo').value = devGhRepo();
   $('devGhBranch').value = devLs('wha_dev_gh_branch') || 'main';
   S.dev.targets.user.path = devLs('wha_dev_path_user') || '';
   S.dev.targets.admin.path = devLs('wha_dev_path_admin') || '';
@@ -3768,9 +3757,9 @@ function devInit() {
 }
 
 function devUpdateGhStatusPill() {
-  const ok = !!getWorkerUrl();
+  const ok = !!getGithubToken();
   const pill = $('qmDevGhStatus');
-  if (pill) { pill.textContent = ok ? '🟢 Worker Connected' : 'Worker Not Configured'; pill.className = 'qm-status-pill ' + (ok?'ok':'off'); }
+  if (pill) { pill.textContent = ok ? '🟢 GitHub Connected (this session)' : 'Not Connected'; pill.className = 'qm-status-pill ' + (ok?'ok':'off'); }
 }
 
 function devRenderSubNav() {
@@ -3835,13 +3824,15 @@ function devTogglePw(id) { const i=$(id); if(i) i.type = i.type==='password'?'te
 
 async function devSaveGhSettings() {
   const branch=v('devGhBranch')||'main';
+  const repo=v('devGhRepo')||'';
   devLs('wha_dev_gh_branch', branch);
+  devLs('wha_dev_gh_repo', repo);
   devUpdateGhStatusPill();
   $('devConnResult').textContent = '⏳ টেস্ট করা হচ্ছে...';
   try {
-    await workerFetch('/devstudio/github', { action:'testConnection', branch });
-    $('devConnResult').innerHTML = '<span style="color:var(--green)">✅ সংযোগ সফল হয়েছে (Worker → GitHub)</span>';
-    addLog('🔌 Dev Studio: GitHub connection tested via Worker','devstudio','purple');
+    await devGhApi(`?ref=${branch}`);
+    $('devConnResult').innerHTML = '<span style="color:var(--green)">✅ সংযোগ সফল হয়েছে (ব্রাউজার → GitHub সরাসরি)</span>';
+    addLog('🔌 Dev Studio: GitHub connection tested (direct, no backend)','devstudio','purple');
     showToast('✅ GitHub সংযুক্ত হয়েছে!','success');
   } catch(e) { $('devConnResult').innerHTML = `<span style="color:var(--red)">❌ ${devEsc(e.message)}</span>`; }
 }
@@ -3853,31 +3844,49 @@ function devSaveTargetPaths() {
   showToast('✅ File Path সেভ হয়েছে — এখন দুটো সাইটই আলাদাভাবে টার্গেট করা যাবে','success');
 }
 function devCheckConfigured(key) {
-  if (!getWorkerUrl()) { showToast('আগে Settings-এ Cloudflare Worker URL বসান','error'); return false; }
+  if (!getGithubToken() || !devGhRepo()) { showToast('আগে Dev Settings-এ GitHub Token ও Repo বসান','error'); return false; }
   if (!S.dev.targets[key].path) { showToast(`${S.dev.targets[key].label}-এর জন্য File Path সেট করা নেই — Dev Settings-এ যান`,'error'); return false; }
   return true;
 }
 
 function devB64Encode(str){ return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,(m,p1)=>String.fromCharCode('0x'+p1))); }
 function devB64Decode(str){ return decodeURIComponent(atob(str.replace(/\n/g,'')).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join('')); }
+function devGhRepo() { return devLs('wha_dev_gh_repo') || ''; }
+async function devGhApi(path, opts) {
+  const token = getGithubToken();
+  if (!token) throw new Error('আগে GitHub Token বসান (Dev Settings)');
+  const repo = devGhRepo();
+  if (!repo) throw new Error('আগে Repo Owner/Name বসান (Dev Settings)');
+  const res = await fetch(`https://api.github.com/repos/${repo}${path}`, {
+    ...opts,
+    headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json', ...(opts && opts.headers || {}) },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.message || ('GitHub request failed (' + res.status + ')'));
+  return data;
+}
 async function devGhGetFile(path) {
   const branch = devLs('wha_dev_gh_branch')||'main';
-  const result = await workerFetch('/devstudio/github', { action:'getFile', path, branch });
-  return { content: result.content, sha: result.sha };
+  const data = await devGhApi(`/contents/${encodeURIComponent(path)}?ref=${branch}`);
+  return { content: devB64Decode(data.content), sha: data.sha };
 }
 async function devGhPutFile(path, content, sha, message) {
   const branch = devLs('wha_dev_gh_branch')||'main';
-  const result = await workerFetch('/devstudio/github', { action:'putFile', path, branch, sha, content, message });
-  return { commitSha: result.commitSha };
+  const data = await devGhApi(`/contents/${encodeURIComponent(path)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, content: devB64Encode(content), sha, branch }),
+  });
+  return { commitSha: data.commit && data.commit.sha };
 }
 async function devGhGetCommits(path, per_page=5) {
   const branch = devLs('wha_dev_gh_branch')||'main';
-  const result = await workerFetch('/devstudio/github', { action:'getCommits', path, branch });
-  return result.commits || [];
+  const data = await devGhApi(`/commits?path=${encodeURIComponent(path)}&sha=${branch}&per_page=${per_page}`);
+  return (data || []).map(c => ({ sha: c.sha, message: c.commit.message, author: c.commit.author.name, date: c.commit.author.date }));
 }
 async function devGhGetFileAtCommit(path, sha) {
-  const result = await workerFetch('/devstudio/github', { action:'getFileAtCommit', path, sha });
-  return { content: result.content };
+  const data = await devGhApi(`/contents/${encodeURIComponent(path)}?ref=${sha}`);
+  return { content: devB64Decode(data.content) };
 }
 
 function devBuildSystemPrompt(fileName) {
@@ -3920,18 +3929,29 @@ function devParseAiJson(text) {
   try { return JSON.parse(cleaned.slice(s,e+1)); } catch(err) { return null; }
 }
 async function devCallGemini(sys, user, image) {
-  if (!getWorkerUrl()) throw new Error('আগে Settings-এ Cloudflare Worker URL বসান');
-  const body = { provider:'gemini', systemPrompt: sys, userPrompt: user };
-  if (image) body.image = image;
-  const result = await workerFetch('/devstudio/ai', body);
-  if (!result.ok) { const err = new Error(result.error || 'Gemini ব্যর্থ'); err.isQuota = !!result.isQuota; throw err; }
-  return result.text || '';
+  const key = getAiKey('gemini');
+  if (!key) throw new Error('আগে Dev Settings-এ Gemini API Key বসান');
+  const parts = [{ text: sys + '\n\n' + user }];
+  if (image) parts.push({ inline_data: { mime_type: image.mimeType, data: image.base64 } });
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contents: [{ parts }] }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { const err = new Error(data.error?.message || 'Gemini ব্যর্থ'); err.isQuota = res.status === 429; throw err; }
+  return (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) || '';
 }
 async function devCallGroq(sys, user) {
-  if (!getWorkerUrl()) throw new Error('আগে Settings-এ Cloudflare Worker URL বসান');
-  const result = await workerFetch('/devstudio/ai', { provider:'groq', systemPrompt: sys, userPrompt: user });
-  if (!result.ok) throw new Error(result.error || 'Groq ব্যর্থ');
-  return result.text || '';
+  const key = getAiKey('groq');
+  if (!key) throw new Error('আগে Dev Settings-এ Groq API Key বসান');
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+    body: JSON.stringify({ model: 'llama-3.3-70b-versatile', messages: [{ role: 'system', content: sys }, { role: 'user', content: user }] }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error?.message || 'Groq ব্যর্থ');
+  return (data.choices && data.choices[0]?.message?.content) || '';
 }
 
 const DEV_SMALL_FILE_CHARS=6000, DEV_CHUNK_LINES=45, DEV_CONTEXT_WINDOW=18, DEV_MAX_CONTEXT_CHARS=9000;
@@ -4219,7 +4239,7 @@ async function devLoadCommits() {
   const key = S.dev.historyTarget;
   const target = S.dev.targets[key];
   const el = $('devCommitsList');
-  if (!getWorkerUrl()) { el.innerHTML='<div style="padding:24px;text-align:center;color:var(--text3)">আগে Settings-এ Cloudflare Worker URL বসান</div>'; return; }
+  if (!getGithubToken() || !devGhRepo()) { el.innerHTML='<div style="padding:24px;text-align:center;color:var(--text3)">আগে Dev Settings-এ GitHub Token ও Repo বসান</div>'; return; }
   if (!target.path) { el.innerHTML=`<div style="padding:24px;text-align:center;color:var(--text3)">${target.label}-এর জন্য File Path সেট করা নেই</div>`; return; }
   el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text3)"><i class="ti ti-loader spin-ico"></i> লোড হচ্ছে...</div>';
   try {
