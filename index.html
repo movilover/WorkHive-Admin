@@ -2487,7 +2487,7 @@ function renderJobs() {
       </div>`:''}
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin:14px 0 10px">
         <div style="flex:1;margin-right:14px">
-          <div style="font-size:15px;font-weight:800;margin-bottom:6px">${j.title||'Untitled'}</div>
+          <div style="font-size:15px;font-weight:800;margin-bottom:6px">${j.isFeatured ? '<span title="Featured — pinned to top of user feed" style="color:var(--green);margin-right:5px">📌</span>' : ''}${j.title||'Untitled'}</div>
           <div style="font-size:12px;color:var(--text2);display:flex;flex-wrap:wrap;gap:10px">
             <span><i class="ti ti-category" style="font-size:13px;vertical-align:-1px"></i> ${j.category||'—'}${j.subcategory?' · '+j.subcategory:''}</span>
             <span><i class="ti ti-users" style="font-size:13px;vertical-align:-1px"></i> ${isDaily?'Unlimited (repeatable)':( (j.limit||0)+' workers')}</span>
@@ -2513,6 +2513,7 @@ function renderJobs() {
           <button class="btn btn-message" onclick="openReject('job','${j.id}','${(j.title||'').replace(/'/g,"\\'")}')"><i class="ti ti-message-circle-2"></i> Reject with Reason</button>
         </div>`:j.status==='approved'?`<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <div class="alert success" style="flex:1;margin-bottom:0;min-width:180px"><i class="ti ti-circle-check"></i> Live — Workers can see and complete this job.</div>
+        <button class="btn ${j.isFeatured?'btn-warning':'btn-ghost'} btn-sm" title="${j.isFeatured?'Unfeature — remove from top of feed':'Feature this job — pin to top of user feed'}" onclick="toggleJobFeatured('${j.id}',${!!j.isFeatured})"><i class="ti ti-pin"></i> ${j.isFeatured?'Unfeature':'Feature'}</button>
         ${isAdminJob?`<button class="btn btn-warning btn-sm" onclick="editJob('${j.id}')"><i class="ti ti-edit"></i> Edit</button>`:''}
         <button class="btn btn-message btn-sm" title="সমস্যা পাওয়া গেলে লাইভ জব বন্ধ করুন — ইতিমধ্যে সম্পন্ন worker-দের পেমেন্ট অক্ষত থাকবে, বাকি স্লটের বাজেট আংশিক ফেরত যাবে" onclick="openReject('job','${j.id}','${(j.title||'').replace(/'/g,"\\'")}')"><i class="ti ti-alert-triangle"></i> Reject (Problem Found)</button>
         <button class="btn btn-danger btn-sm" onclick="deleteJob('${j.id}','${(j.title||'').replace(/'/g,"\\'")}')"><i class="ti ti-trash"></i> Remove</button>
@@ -2540,6 +2541,21 @@ async function approveJob(id) {
   addAdminNotif('✅ Job Approved',`"${j.title}" is now live for workers.`,'success');
   notifyUser(j.postedBy,'✅ Job Approved!',`Your job "${j.title}" has been approved and is now live for workers.`);
   showToast('✅ Job approved and published!','success');
+}
+
+const MAX_FEATURED_JOBS = 5;
+async function toggleJobFeatured(id, currentState) {
+  const j = S.jobs.find(x=>x.id===id); if (!j) return;
+  const fb = window._fb; if (!fb) { showToast('Firebase not ready','error'); return; }
+  if (!currentState) {
+    const activeFeatured = S.jobs.filter(x=>x.isFeatured && x.status==='approved').length;
+    if (activeFeatured >= MAX_FEATURED_JOBS) { showToast(`⚠️ সর্বোচ্চ ${MAX_FEATURED_JOBS}টা জব একসাথে Feature করা যাবে — আগে একটা Unfeature করুন`,'error'); return; }
+  }
+  try {
+    await fb.updateDoc(fb.doc(fb.db,'jobs',id), { isFeatured: !currentState });
+    addLog(`${!currentState?'📌 Featured':'📌 Unfeatured'}: "${j.title}"`,'job',!currentState?'green':'amber');
+    showToast(!currentState ? `📌 "${j.title}" এখন Feed-এর উপরে দেখাবে` : `📌 "${j.title}" আর pinned নেই`, 'success');
+  } catch(e) { console.error(e); showToast('❌ Update failed — check Firestore permissions','error'); }
 }
 
 async function deleteJob(id, title) {
