@@ -1734,7 +1734,21 @@ async function doLogin() {
     if (!$('shakeStyle')) { const s=document.createElement('style');s.id='shakeStyle';s.textContent='@keyframes shake{0%,100%{transform:none}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}';document.head.appendChild(s); }
   }
 }
-function doLogout() { if (!confirm('Logout?')) return; sessionStorage.removeItem('wh_tok'); if (window.fbAdminSignOut) window.fbAdminSignOut().catch(()=>{}); location.reload(); }
+function doLogout() {
+  if (!confirm('Logout?')) return;
+  sessionStorage.removeItem('wh_tok');
+  // Security cleanup: purge every AI Dev Studio session-only secret and reset
+  // in-memory patch/preview state before reload — nothing here should survive
+  // past logout, even briefly, on a shared device.
+  sessionStorage.removeItem('wha_gh_token');
+  Object.keys(sessionStorage).forEach(k => { if (k.startsWith('wha_ai_key_')) sessionStorage.removeItem(k); });
+  S.dev.pendingImage = null;
+  ['user','admin'].forEach(k => {
+    if (S.dev.targets[k]) Object.assign(S.dev.targets[k], { content:'', sha:'', patches:[], previewContent:'', summary:'' });
+  });
+  if (window.fbAdminSignOut) window.fbAdminSignOut().catch(()=>{});
+  location.reload();
+}
 function togglePass() { const i=$('loginPass'); i.type=i.type==='password'?'text':'password'; }
 function toggleFbPass() { const i=$('loginFbPass'); if(i) i.type=i.type==='password'?'text':'password'; }
 document.addEventListener('keydown', e => { if (e.key==='Enter') { if ($('loginScreen').style.display!=='none') doLogin(); } if (e.key==='Escape') document.querySelectorAll('.modal-overlay.show').forEach(m=>m.classList.remove('show')); });
