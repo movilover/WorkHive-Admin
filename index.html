@@ -659,6 +659,12 @@ tr.dup-row td{background:rgba(239,68,68,0.03)}
             <div class="qm-text"><div class="qm-label">Broadcast</div><div class="qm-sub">সব ইউজারকে মেসেজ পাঠান</div></div>
             <i class="ti ti-chevron-right qm-chev"></i>
           </div>
+          <div class="qm-row" onclick="goScreen('cpanetworks')">
+            <div class="qm-icon" style="background:rgba(0,188,212,.1);color:var(--cyan)"><i class="ti ti-brand-cashapp"></i></div>
+            <div class="qm-text"><div class="qm-label">CPA Networks</div><div class="qm-sub">CPALead, Monlix, CPAGrip, AdGate — Offerwall পরিচালনা করুন</div></div>
+            <span class="qm-status-pill" id="qmCpaStatus">Loading…</span>
+            <i class="ti ti-chevron-right qm-chev"></i>
+          </div>
           <div class="qm-row" onclick="goScreen('notifications')">
             <div class="qm-icon" style="background:var(--red-bg);color:var(--red)"><i class="ti ti-bell"></i></div>
             <div class="qm-text"><div class="qm-label">Notifications</div><div class="qm-sub">এডমিন নোটিফিকেশন দেখুন</div></div>
@@ -1123,6 +1129,88 @@ if (window.Capacitor?.Plugins?.OneSignal) {
       </div>
 
       <!-- ===== SETTINGS ===== -->
+      <!-- ═══════════════════════════════ CPA NETWORKS ══════════════════════ -->
+      <div class="screen" id="screen-cpanetworks">
+        <div class="sec-hd">
+          <h2><button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')" style="margin-right:6px"><i class="ti ti-arrow-left"></i></button><i class="ti ti-brand-cashapp" style="color:var(--cyan)"></i> CPA Networks &amp; Offerwalls</h2>
+        </div>
+
+        <!-- Tab bar -->
+        <div style="display:flex;gap:6px;margin-bottom:18px;overflow-x:auto;padding-bottom:4px">
+          <button class="btn btn-primary btn-sm" id="cpaTab-config"   onclick="cpaTabSwitch('config')">⚙️ Config</button>
+          <button class="btn btn-ghost  btn-sm" id="cpaTab-import"   onclick="cpaTabSwitch('import')">📥 Import Tasks</button>
+          <button class="btn btn-ghost  btn-sm" id="cpaTab-tasks"    onclick="cpaTabSwitch('tasks')">📋 Imported Tasks</button>
+          <button class="btn btn-ghost  btn-sm" id="cpaTab-postbacks" onclick="cpaTabSwitch('postbacks')">🔔 Postbacks</button>
+        </div>
+
+        <!-- Tab: Config -->
+        <div id="cpaSec-config">
+          <div id="cpaNetworkCards"></div>
+          <div style="margin-top:18px;background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:16px">
+            <div class="card-title" style="margin-bottom:12px">🔗 Postback URL Format</div>
+            <div style="font-size:11.5px;color:var(--text2);line-height:1.9;font-family:monospace;background:var(--bg4);border-radius:10px;padding:12px;word-break:break-all" id="postbackUrlDisplay">
+              Configure your domain below, then copy the postback URL for each network.
+            </div>
+            <div class="field" style="margin-top:12px">
+              <label>Your Site Domain (e.g. https://workhive.app)</label>
+              <input type="text" id="cpaSiteDomain" placeholder="https://yoursite.com" oninput="cpaUpdatePostbackUrls()">
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Import Tasks -->
+        <div id="cpaSec-import" style="display:none">
+          <div class="card" style="margin-bottom:14px">
+            <div class="card-title">📥 Fetch Live Offers</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+              <div class="field" style="flex:1;min-width:160px;margin-bottom:0">
+                <label>Network</label>
+                <select id="cpaFetchNetwork">
+                  <option value="cpalead">CPALead</option>
+                  <option value="monlix">Monlix</option>
+                  <option value="cpagrip">CPAGrip</option>
+                  <option value="adgate">AdGate Media</option>
+                  <option value="offertoro">OfferToro</option>
+                  <option value="ayet">Ayet Studios</option>
+                </select>
+              </div>
+              <div class="field" style="flex:1;min-width:120px;margin-bottom:0">
+                <label>Country (optional)</label>
+                <input type="text" id="cpaFetchCountry" placeholder="US, BD, GB…">
+              </div>
+              <button class="btn btn-primary" onclick="cpaFetchOffers()"><i class="ti ti-refresh"></i> Fetch Offers</button>
+            </div>
+          </div>
+          <div id="cpaFetchResults"></div>
+        </div>
+
+        <!-- Tab: Imported Tasks -->
+        <div id="cpaSec-tasks" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <input type="text" id="cpaTaskSearch" placeholder="🔍 Search imported tasks…" oninput="renderCpaTaskList()" style="flex:1;max-width:280px;padding:8px 13px;border-radius:20px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-size:12px;outline:none">
+            <select id="cpaTaskNetFilter" onchange="renderCpaTaskList()" style="padding:8px 12px;border-radius:12px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-size:12px">
+              <option value="">All Networks</option>
+              <option value="cpalead">CPALead</option>
+              <option value="monlix">Monlix</option>
+              <option value="cpagrip">CPAGrip</option>
+              <option value="adgate">AdGate</option>
+              <option value="offertoro">OfferToro</option>
+              <option value="ayet">Ayet</option>
+            </select>
+          </div>
+          <div id="cpaTaskList"></div>
+        </div>
+
+        <!-- Tab: Postbacks -->
+        <div id="cpaSec-postbacks" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div style="font-size:13px;font-weight:700">Recent Postback Completions</div>
+            <button class="btn btn-ghost btn-sm" onclick="loadCpaPostbacks()"><i class="ti ti-refresh"></i> Refresh</button>
+          </div>
+          <div id="cpaPostbackList"></div>
+        </div>
+      </div>
+
       <div class="screen" id="screen-settings">
         <div class="sec-hd">
           <h2><button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')" style="margin-right:6px"><i class="ti ti-arrow-left"></i></button><i class="ti ti-settings"></i> Site Settings</h2>
@@ -1385,6 +1473,47 @@ if (window.Capacitor?.Plugins?.OneSignal) {
 </div><!-- adminShell -->
 
 <!-- ===== MODALS ===== -->
+
+<div class="modal-overlay" id="cpaEditTaskModal">
+  <div class="modal-box" style="max-width:560px">
+    <div class="modal-hd">
+      <div><div class="modal-title">✏️ Edit CPA Task</div><div class="modal-sub" id="cpaEditTaskSub"></div></div>
+      <div class="modal-close" onclick="closeModal('cpaEditTaskModal')"><i class="ti ti-x"></i></div>
+    </div>
+    <div style="overflow-y:auto;max-height:65vh;padding:0 2px">
+      <input type="hidden" id="cpaEditTaskId">
+      <div class="field"><label>Title</label><input type="text" id="cpaEditTitle"></div>
+      <div class="field"><label>Description</label><textarea id="cpaEditDesc" rows="3"></textarea></div>
+      <div class="field"><label>Category</label><input type="text" id="cpaEditCategory"></div>
+      <div class="field"><label>Target Country (comma-separated, blank = Global)</label><input type="text" id="cpaEditCountry" placeholder="US, BD, GB"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="field"><label>Raw API Payout ($)</label><input type="number" id="cpaEditRawPayout" step="0.01" readonly style="opacity:.6"></div>
+        <div class="field"><label>Custom User Payout ($) <span style="color:var(--green)">★</span></label><input type="number" id="cpaEditCustomPayout" step="0.01" min="0.01"></div>
+      </div>
+      <div style="background:var(--gold-dim);border:1px solid rgba(255,179,0,.2);border-radius:12px;padding:10px 13px;font-size:11.5px;color:var(--gold);margin-bottom:14px" id="cpaEditProfitLabel">Profit margin: —</div>
+      <div class="field"><label>Max Slots (how many users can complete)</label><input type="number" id="cpaEditSlots" min="1"></div>
+      <div class="field"><label>Task Type</label>
+        <select id="cpaEditType">
+          <option value="cpa_offer">CPA Offer</option>
+          <option value="cpa_survey">Survey</option>
+          <option value="cpa_install">App Install</option>
+          <option value="cpa_signup">Sign Up</option>
+          <option value="cpa_video">Video</option>
+        </select>
+      </div>
+      <div class="field"><label>Requirements / Instructions</label><textarea id="cpaEditRequirements" rows="3" placeholder="What the user needs to do…"></textarea></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <label style="font-size:13px;font-weight:700">Status</label>
+        <label class="toggle-switch"><input type="checkbox" id="cpaEditActive"><span class="toggle-slider"></span></label>
+        <span id="cpaEditStatusLabel" style="font-size:12px;color:var(--text2)">Draft</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;padding-top:14px">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('cpaEditTaskModal')">Cancel</button>
+      <button class="btn btn-primary" style="flex:1" onclick="saveCpaTaskEdit()"><i class="ti ti-device-floppy"></i> Save Changes</button>
+    </div>
+  </div>
+</div>
 
 <div class="modal-overlay" id="userDetailModal">
   <div class="modal-box" style="max-width:580px">
@@ -1775,7 +1904,7 @@ function initAdmin() {
   updatePjTypeUI();
   renderStatusTabs('withdrawTabs','wd'); renderStatusTabs('depositTabs','dep'); renderStatusTabs('taskTabs','task');
   renderJobSrcTabs();
-  waitFb().then(() => { loadUsers(); listenJobs(); listenDeposits(); listenWithdrawals(); listenTasks(); listenMethods(); listenSettings(); listenCategories(); initSupportInbox(); });
+  waitFb().then(() => { loadUsers(); listenJobs(); listenDeposits(); listenWithdrawals(); listenTasks(); listenMethods(); listenSettings(); listenCategories(); initSupportInbox(); loadCpaNetworks(); });
   const t = ls('wha_tg_token'), ch = ls('wha_tg_chat');
   if (t && ch) { S.tg = {token:t,chatId:ch,connected:true}; setTimeout(() => { setTgConnected(true); const ti=$('tgToken');if(ti)ti.value=t; const ci=$('tgChatId');if(ci)ci.value=ch; }, 200); }
   const oa = ls('wha_os_appid');
@@ -1915,6 +2044,470 @@ async function testCloudinaryUpload() {
 
 // ===== NAVIGATION =====
 const pageNames = { dashboard:'Dashboard', users:'User Management', kyc:'KYC Review', thirdgen:'Third Generation', jobs:'Job Approvals', categories:'Categories & Subcategories', tasks:'Task Submissions', deposits:'Deposits', withdrawals:'Withdrawals', 'payment-methods':'Payment Methods', telegram:'Telegram Bot', broadcast:'Broadcast', notifications:'Notifications', settings:'Site Settings', logs:'Activity Logs', devstudio:'AI Dev Studio', support:'Support Inbox' };
+// ═══════════════════════════════════════════════════════════════════════════
+// CPA NETWORKS ENGINE
+// ═══════════════════════════════════════════════════════════════════════════
+
+const CPA_NETWORKS = [
+  { id: 'cpalead',   name: 'CPALead',      icon: '🅰️', color: '#e53935',
+    fields: [{ key:'publisherId', label:'Publisher ID' }, { key:'apiKey', label:'API Key' }],
+    offerUrl: (cfg, country) => `https://www.cpalead.com/dashboard/reports/campaign_json.php?id=${cfg.publisherId}${country?'&country='+country:''}`,
+    postbackParam: '{subid}',
+  },
+  { id: 'monlix',    name: 'Monlix',       icon: '🟣', color: '#7b1fa2',
+    fields: [{ key:'appId', label:'App ID' }, { key:'apiKey', label:'API Key' }],
+    offerUrl: (cfg, country) => `https://serve.monlix.com/api/v1/offers?appid=${cfg.appId}&apikey=${cfg.apiKey}&user_id=PREVIEW${country?'&country='+country:''}`,
+    postbackParam: '{userid}',
+  },
+  { id: 'cpagrip',   name: 'CPAGrip',      icon: '💜', color: '#6a1b9a',
+    fields: [{ key:'publisherId', label:'Publisher ID' }, { key:'apiKey', label:'API Key' }],
+    offerUrl: (cfg, country) => `https://www.cpagrip.com/common/offer_feed_json.php?user_id=${cfg.publisherId}&pubkey=${cfg.apiKey}&cat=0${country?'&country_code='+country:''}`,
+    postbackParam: '{subid}',
+  },
+  { id: 'adgate',    name: 'AdGate Media', icon: '🔵', color: '#1565c0',
+    fields: [{ key:'apiKey', label:'API Key / Publisher ID' }],
+    offerUrl: (cfg, country) => `https://adgatemedia.com/api/v1/offers/?key=${cfg.apiKey}&subid=PREVIEW${country?'&country='+country:''}`,
+    postbackParam: '{user_id}',
+  },
+  { id: 'offertoro', name: 'OfferToro',    icon: '🟠', color: '#e65100',
+    fields: [{ key:'userId', label:'User ID' }, { key:'secretKey', label:'Secret Key' }],
+    offerUrl: (cfg, country) => `https://www.offertoro.com/ifr/show/${cfg.userId}/PREVIEW/9999${country?'?country='+country:''}`,
+    postbackParam: '{userid}',
+  },
+  { id: 'ayet',      name: 'Ayet Studios', icon: '🟢', color: '#2e7d32',
+    fields: [{ key:'placementId', label:'Placement ID' }, { key:'apiToken', label:'API Token' }],
+    offerUrl: (cfg, country) => `https://www.ayet.com/api/offerwall?token=${cfg.apiToken}&placement_id=${cfg.placementId}&user_id=PREVIEW${country?'&country='+country:''}`,
+    postbackParam: '{user_id}',
+  },
+];
+
+// In-memory CPA state
+S.cpa = S.cpa || {
+  networks: {},       // { [networkId]: { ...configFields, enabled: bool, postbackSecret: '' } }
+  fetchedOffers: [],  // raw offers from last fetch
+  importedTasks: [],  // cpaTasks from Firestore
+  postbacks: [],      // cpaPostbacks from Firestore
+};
+
+// ── Tab switch ───────────────────────────────────────────────────────────────
+function cpaTabSwitch(tab) {
+  ['config','import','tasks','postbacks'].forEach(t => {
+    document.getElementById('cpaSec-' + t).style.display = t === tab ? '' : 'none';
+    const btn = document.getElementById('cpaTab-' + t);
+    if (btn) { btn.className = t === tab ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm'; }
+  });
+  if (tab === 'tasks') renderCpaTaskList();
+  if (tab === 'postbacks') loadCpaPostbacks();
+  if (tab === 'config') renderCpaNetworkCards();
+}
+
+// ── Config tab ───────────────────────────────────────────────────────────────
+function renderCpaNetworkCards() {
+  const container = document.getElementById('cpaNetworkCards'); if (!container) return;
+  container.innerHTML = CPA_NETWORKS.map(net => {
+    const cfg = S.cpa.networks[net.id] || {};
+    const enabled = cfg.enabled || false;
+    const fieldsHtml = net.fields.map(f =>
+      `<div class="field" style="margin-bottom:8px">
+        <label style="font-size:11px">${f.label}</label>
+        <input type="${f.key.toLowerCase().includes('key')||f.key.toLowerCase().includes('token')?'password':'text'}"
+          id="cpaCfg_${net.id}_${f.key}" value="${escHtml(cfg[f.key]||'')}"
+          placeholder="Enter ${f.label}" style="font-size:12px">
+      </div>`
+    ).join('');
+    return `<div style="background:var(--card);border:1px solid ${enabled?net.color+'66':'var(--border)'};border-radius:18px;padding:16px;margin-bottom:12px;transition:border-color .2s">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:38px;height:38px;border-radius:12px;background:${net.color}22;border:1px solid ${net.color}44;display:flex;align-items:center;justify-content:center;font-size:18px">${net.icon}</div>
+          <div><div style="font-weight:800;font-size:14px">${net.name}</div><div style="font-size:10.5px;color:var(--text3)">${net.id}</div></div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" ${enabled?'checked':''} onchange="cpaToggleNetwork('${net.id}',this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      ${fieldsHtml}
+      <div class="field" style="margin-bottom:8px">
+        <label style="font-size:11px">Postback Secret Token <span style="color:var(--text3)">(সেট করলে postback.html verify করবে)</span></label>
+        <input type="password" id="cpaCfg_${net.id}_postbackSecret" value="${escHtml(cfg.postbackSecret||'')}" placeholder="Random secret string">
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn btn-ghost btn-sm" style="flex:1" onclick="cpaSaveNetwork('${net.id}')"><i class="ti ti-device-floppy"></i> Save</button>
+        <button class="btn btn-ghost btn-sm" onclick="cpaTestFetch('${net.id}')"><i class="ti ti-wifi"></i> Test</button>
+      </div>
+    </div>`;
+  }).join('');
+  cpaUpdatePostbackUrls();
+}
+
+async function cpaToggleNetwork(networkId, enabled) {
+  S.cpa.networks[networkId] = S.cpa.networks[networkId] || {};
+  S.cpa.networks[networkId].enabled = enabled;
+  await cpaSaveNetwork(networkId, true);
+  const pill = document.getElementById('qmCpaStatus');
+  const activeCount = Object.values(S.cpa.networks).filter(n=>n.enabled).length;
+  if (pill) pill.textContent = activeCount + ' Active';
+}
+
+async function cpaSaveNetwork(networkId, silent = false) {
+  const net = CPA_NETWORKS.find(n => n.id === networkId); if (!net) return;
+  const cfg = S.cpa.networks[networkId] || {};
+  const data = { enabled: cfg.enabled || false, updatedAt: new Date().toISOString() };
+  net.fields.forEach(f => {
+    const el = document.getElementById(`cpaCfg_${networkId}_${f.key}`);
+    if (el) data[f.key] = el.value.trim();
+  });
+  const secretEl = document.getElementById(`cpaCfg_${networkId}_postbackSecret`);
+  if (secretEl) data.postbackSecret = secretEl.value.trim();
+  S.cpa.networks[networkId] = data;
+  const fb = window._fb; if (!fb) return;
+  try {
+    await fb.setDoc(fb.doc(fb.db, 'cpaNetworks', networkId), data);
+    if (!silent) showToast(`✅ ${net.name} saved`, 'success');
+    addLog(`CPA Network saved: ${net.name}`, 'settings', 'cyan');
+  } catch (e) { showToast('❌ Save failed: ' + e.message, 'error'); }
+}
+
+function cpaUpdatePostbackUrls() {
+  const domain = (document.getElementById('cpaSiteDomain')?.value || '').trim().replace(/\/+$/, '') || 'https://yoursite.com';
+  const display = document.getElementById('postbackUrlDisplay'); if (!display) return;
+  display.innerHTML = CPA_NETWORKS.map(net => {
+    const cfg = S.cpa.networks[net.id] || {};
+    const secret = cfg.postbackSecret ? `&secret=${cfg.postbackSecret}` : '&secret=YOUR_SECRET';
+    const url = `${domain}/postback.html?network=${net.id}&uid=${net.postbackParam}&tid={transaction_id}&amount={payout}${secret}`;
+    return `<div style="margin-bottom:10px">
+      <div style="font-size:10px;font-weight:800;color:var(--text3);margin-bottom:3px">${net.icon} ${net.name}</div>
+      <div style="font-size:10.5px;color:var(--cyan);background:var(--bg4);padding:7px 10px;border-radius:8px;cursor:pointer;word-break:break-all" onclick="navigator.clipboard.writeText('${url}').then(()=>showToast('Copied!','success'))">${url}</div>
+    </div>`;
+  }).join('');
+}
+
+async function cpaTestFetch(networkId) {
+  showToast('🔄 Testing ' + networkId + '…', 'info');
+  document.getElementById('cpaFetchNetwork').value = networkId;
+  cpaTabSwitch('import');
+  await cpaFetchOffers(networkId);
+}
+
+// ── Fetch offers tab ─────────────────────────────────────────────────────────
+async function cpaFetchOffers(networkId) {
+  const netId   = networkId || document.getElementById('cpaFetchNetwork')?.value;
+  const country = document.getElementById('cpaFetchCountry')?.value.trim().toUpperCase() || '';
+  const net = CPA_NETWORKS.find(n => n.id === netId);
+  const cfg = S.cpa.networks[netId] || {};
+  const container = document.getElementById('cpaFetchResults');
+  if (!net) { showToast('Unknown network', 'error'); return; }
+  if (!cfg.enabled) { showToast(`⚠️ ${net.name} is disabled — enable it in Config first`, 'warn'); }
+  if (container) container.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text3)"><div style="font-size:28px;margin-bottom:8px">⏳</div>Fetching from ${net.name}…</div>`;
+
+  const url = net.offerUrl(cfg, country);
+  let offers = [];
+  try {
+    // Most CPA APIs block direct browser fetch (CORS). We use a CORS proxy
+    // for admin previewing only — never for postback/crediting.
+    const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
+    const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(15000) });
+    const json = await res.json();
+    const raw = typeof json.contents === 'string' ? JSON.parse(json.contents) : json.contents;
+
+    // Normalize each network's response to a common shape
+    offers = cpaParseOffers(netId, raw);
+    S.cpa.fetchedOffers = offers;
+    renderCpaFetchedOffers(netId, offers);
+  } catch (e) {
+    if (container) container.innerHTML = `<div class="alert" style="background:var(--red-dim);border-color:var(--red)">
+      <b>❌ Fetch failed:</b> ${e.message}<br>
+      <span style="font-size:11px;color:var(--text3)">This may be due to CORS restrictions. The actual offer URLs work correctly when embedded in your offerwall page or fetched server-side. You can still manually add tasks below.</span>
+      <br><br><button class="btn btn-ghost btn-sm" onclick="cpaShowManualAdd('${netId}')">+ Add Task Manually</button>
+    </div>`;
+  }
+}
+
+function cpaParseOffers(netId, raw) {
+  if (!raw) return [];
+  if (netId === 'cpalead') {
+    const arr = Array.isArray(raw) ? raw : Object.values(raw);
+    return arr.map(o => ({ offerId: String(o.id||o.campaign_id||''), title: o.name||o.title||'Untitled', description: o.description||o.desc||'', category: o.category||'CPA', rawPayout: parseFloat(o.payout||o.amount||0), country: o.country||o.countries||'Global', network: 'cpalead', thumbnail: o.thumbnail||o.image||'', offerUrl: o.link||o.url||'' }));
+  }
+  if (netId === 'monlix') {
+    const arr = raw.offers || raw.data || (Array.isArray(raw) ? raw : []);
+    return arr.map(o => ({ offerId: String(o.id||o.offer_id||''), title: o.title||o.name||'Untitled', description: o.description||'', category: o.category||'CPA', rawPayout: parseFloat(o.points||o.reward||o.payout||0)/100, country: o.country||'Global', network: 'monlix', thumbnail: o.image||'', offerUrl: o.url||'' }));
+  }
+  if (netId === 'cpagrip') {
+    const arr = raw.offers || (Array.isArray(raw) ? raw : []);
+    return arr.map(o => ({ offerId: String(o.offer_id||o.id||''), title: o.offer_name||o.title||'Untitled', description: o.offer_desc||'', category: o.category||'CPA', rawPayout: parseFloat(o.payout||0), country: o.country_code||'Global', network: 'cpagrip', thumbnail: o.picture||'', offerUrl: o.offer_url||'' }));
+  }
+  // AdGate / OfferToro / Ayet — generic fallback
+  const arr = raw.offers || raw.data || raw.result || (Array.isArray(raw) ? raw : []);
+  return arr.map(o => ({ offerId: String(o.id||o.offer_id||o.offerid||Math.random()), title: o.title||o.name||'Untitled', description: o.description||o.desc||'', category: o.category||o.type||'CPA', rawPayout: parseFloat(o.payout||o.amount||o.reward||0), country: o.country||o.countries||'Global', network: netId, thumbnail: o.thumbnail||o.image||o.icon||'', offerUrl: o.url||o.link||'' }));
+}
+
+function renderCpaFetchedOffers(netId, offers) {
+  const container = document.getElementById('cpaFetchResults'); if (!container) return;
+  if (!offers.length) { container.innerHTML = `<div style="text-align:center;color:var(--text3);padding:24px">No offers returned from ${netId}.</div>`; return; }
+  const net = CPA_NETWORKS.find(n => n.id === netId);
+  container.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:700">${net?.icon||''} ${offers.length} Offers Fetched from ${net?.name||netId}</div>
+      <button class="btn btn-primary btn-sm" onclick="cpaImportAll()"><i class="ti ti-download"></i> Import All</button>
+    </div>
+    <div id="cpaOfferGrid">
+      ${offers.map((o, idx) => `
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:13px;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start">
+          ${o.thumbnail ? `<img src="${escHtml(o.thumbnail)}" style="width:48px;height:48px;border-radius:10px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">` : `<div style="width:48px;height:48px;border-radius:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🎯</div>`}
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:800;margin-bottom:3px">${escHtml(o.title)}</div>
+            <div style="font-size:11px;color:var(--text2);margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(o.description||'—')}</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <span style="font-size:11px;background:var(--green-dim);color:var(--green);padding:2px 8px;border-radius:8px;font-weight:800">Raw: $${o.rawPayout.toFixed(4)}</span>
+              <span style="font-size:11px;background:var(--bg3);color:var(--text3);padding:2px 8px;border-radius:8px">${escHtml(o.category)}</span>
+              <span style="font-size:11px;background:var(--bg3);color:var(--text3);padding:2px 8px;border-radius:8px">${escHtml(String(o.country))}</span>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+            <input type="number" placeholder="User $" step="0.01" min="0.01" id="cpaPayout_${idx}" value="${(o.rawPayout * 0.6).toFixed(2)}" style="width:70px;padding:5px 8px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-size:12px;font-weight:800">
+            <button class="btn btn-primary btn-sm" onclick="cpaImportSingle(${idx})"><i class="ti ti-download"></i></button>
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+
+async function cpaImportSingle(idx) {
+  const offer = S.cpa.fetchedOffers[idx]; if (!offer) return;
+  const customPayout = parseFloat(document.getElementById(`cpaPayout_${idx}`)?.value || offer.rawPayout * 0.6);
+  await cpaDoImport([{ ...offer, customPayout }]);
+}
+async function cpaImportAll() {
+  const offers = S.cpa.fetchedOffers.map((o, idx) => ({
+    ...o,
+    customPayout: parseFloat(document.getElementById(`cpaPayout_${idx}`)?.value || o.rawPayout * 0.6),
+  }));
+  await cpaDoImport(offers);
+}
+
+async function cpaDoImport(offers) {
+  const fb = window._fb; if (!fb) return;
+  let ok = 0, skip = 0;
+  for (const o of offers) {
+    if (!o.title || o.customPayout <= 0) { skip++; continue; }
+    const doc = {
+      offerId: o.offerId, network: o.network, title: o.title,
+      description: o.description || '', category: o.category || 'CPA',
+      rawPayout: o.rawPayout, customPayout: o.customPayout,
+      country: String(o.country || 'Global'), type: 'cpa_offer',
+      offerUrl: o.offerUrl || '', thumbnail: o.thumbnail || '',
+      requirements: '', limit: 500, filled: 0,
+      status: 'active', importedAt: fb.serverTimestamp ? fb.serverTimestamp() : new Date(),
+    };
+    try {
+      // Use offerId as doc ID if available (idempotent reimport)
+      const docId = o.network + '_' + (o.offerId || Date.now());
+      await fb.setDoc(fb.doc(fb.db, 'cpaTasks', docId), doc, { merge: true });
+      ok++;
+    } catch (e) { console.error('Import error:', e); skip++; }
+  }
+  showToast(`✅ Imported ${ok} tasks${skip ? ', skipped ' + skip : ''}`, 'success');
+  addLog(`CPA: Imported ${ok} offers`, 'cpa', 'cyan');
+  cpaTabSwitch('tasks');
+}
+
+function cpaShowManualAdd(netId) {
+  S.cpa.fetchedOffers = [{ offerId: '', title: '', description: '', category: 'CPA', rawPayout: 0, customPayout: 0, country: 'Global', network: netId, thumbnail: '', offerUrl: '', requirements: '' }];
+  renderCpaFetchedOffers(netId, S.cpa.fetchedOffers);
+}
+
+// ── Imported tasks tab ────────────────────────────────────────────────────────
+async function loadCpaTasks() {
+  const fb = window._fb; if (!fb) return;
+  try {
+    const snap = await fb.getDocs(fb.collection(fb.db, 'cpaTasks'));
+    S.cpa.importedTasks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderCpaTaskList();
+    const pill = document.getElementById('qmCpaStatus');
+    if (pill) {
+      const activeCount = Object.values(S.cpa.networks).filter(n=>n.enabled).length;
+      pill.textContent = activeCount + ' Active';
+    }
+  } catch (e) { console.warn('CPA tasks load error:', e); }
+}
+
+function renderCpaTaskList() {
+  const container = document.getElementById('cpaTaskList'); if (!container) return;
+  const search = document.getElementById('cpaTaskSearch')?.value.toLowerCase() || '';
+  const netFilter = document.getElementById('cpaTaskNetFilter')?.value || '';
+  let tasks = S.cpa.importedTasks;
+  if (search) tasks = tasks.filter(t => (t.title||'').toLowerCase().includes(search) || (t.description||'').toLowerCase().includes(search));
+  if (netFilter) tasks = tasks.filter(t => t.network === netFilter);
+  if (!tasks.length) { container.innerHTML = `<div style="text-align:center;color:var(--text3);padding:32px">কোনো imported task নেই। Import Tasks tab থেকে offers import করুন।</div>`; return; }
+  const NET_COLORS = { cpalead:'#e53935', monlix:'#7b1fa2', cpagrip:'#6a1b9a', adgate:'#1565c0', offertoro:'#e65100', ayet:'#2e7d32' };
+  container.innerHTML = tasks.map(t => `
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:13px;margin-bottom:10px;display:flex;gap:12px;align-items:center">
+      <div style="width:40px;height:40px;border-radius:10px;background:${NET_COLORS[t.network]||'var(--bg3)'}22;border:1px solid ${NET_COLORS[t.network]||'var(--border)'}44;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${CPA_NETWORKS.find(n=>n.id===t.network)?.icon||'🎯'}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:800;margin-bottom:3px">${escHtml(t.title||'Untitled')}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <span style="font-size:10.5px;background:var(--green-dim);color:var(--green);padding:2px 7px;border-radius:7px;font-weight:800">User: $${(t.customPayout||0).toFixed(2)}</span>
+          <span style="font-size:10.5px;background:var(--bg3);color:var(--text3);padding:2px 7px;border-radius:7px">Raw: $${(t.rawPayout||0).toFixed(4)}</span>
+          <span style="font-size:10.5px;background:var(--bg3);color:var(--text3);padding:2px 7px;border-radius:7px">${escHtml(t.network||'')}</span>
+          <span style="font-size:10.5px;padding:2px 7px;border-radius:7px;font-weight:800;background:${t.status==='active'?'var(--green-dim)':'var(--red-dim)'};color:${t.status==='active'?'var(--green)':'var(--red)'}">${t.status||'draft'}</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button class="btn btn-ghost btn-sm" onclick="cpaOpenEdit('${t.id}')"><i class="ti ti-edit"></i></button>
+        <button class="btn btn-ghost btn-sm" onclick="cpaDeleteTask('${t.id}')" style="color:var(--red)"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>`).join('');
+}
+
+function cpaOpenEdit(taskId) {
+  const task = S.cpa.importedTasks.find(t => t.id === taskId); if (!task) return;
+  document.getElementById('cpaEditTaskId').value = taskId;
+  document.getElementById('cpaEditTaskSub').textContent = (task.network||'').toUpperCase() + ' · Offer ID: ' + (task.offerId||taskId);
+  document.getElementById('cpaEditTitle').value = task.title || '';
+  document.getElementById('cpaEditDesc').value = task.description || '';
+  document.getElementById('cpaEditCategory').value = task.category || 'CPA';
+  document.getElementById('cpaEditCountry').value = task.country || 'Global';
+  document.getElementById('cpaEditRawPayout').value = (task.rawPayout||0).toFixed(4);
+  document.getElementById('cpaEditCustomPayout').value = (task.customPayout||0).toFixed(2);
+  document.getElementById('cpaEditSlots').value = task.limit || 500;
+  document.getElementById('cpaEditType').value = task.type || 'cpa_offer';
+  document.getElementById('cpaEditRequirements').value = task.requirements || '';
+  const active = document.getElementById('cpaEditActive');
+  active.checked = task.status === 'active';
+  document.getElementById('cpaEditStatusLabel').textContent = active.checked ? 'Active' : 'Draft';
+  active.onchange = () => { document.getElementById('cpaEditStatusLabel').textContent = active.checked ? 'Active' : 'Draft'; };
+  document.getElementById('cpaEditCustomPayout').oninput = cpaUpdateProfitLabel;
+  cpaUpdateProfitLabel();
+  openModal('cpaEditTaskModal');
+}
+
+function cpaUpdateProfitLabel() {
+  const raw = parseFloat(document.getElementById('cpaEditRawPayout')?.value || 0);
+  const custom = parseFloat(document.getElementById('cpaEditCustomPayout')?.value || 0);
+  const lbl = document.getElementById('cpaEditProfitLabel');
+  if (!lbl) return;
+  if (raw <= 0) { lbl.textContent = ''; return; }
+  const profit = raw - custom;
+  const margin = raw > 0 ? (profit / raw * 100).toFixed(1) : 0;
+  lbl.textContent = `Profit margin: $${profit.toFixed(4)} per completion (${margin}%) — Raw: $${raw.toFixed(4)} → User: $${custom.toFixed(2)}`;
+  lbl.style.color = profit < 0 ? 'var(--red)' : 'var(--gold)';
+}
+
+async function saveCpaTaskEdit() {
+  const fb = window._fb; if (!fb) return;
+  const taskId = document.getElementById('cpaEditTaskId').value;
+  const customPayout = parseFloat(document.getElementById('cpaEditCustomPayout').value);
+  if (isNaN(customPayout) || customPayout <= 0) { showToast('❌ Custom payout must be > 0', 'error'); return; }
+  const updates = {
+    title: document.getElementById('cpaEditTitle').value.trim(),
+    description: document.getElementById('cpaEditDesc').value.trim(),
+    category: document.getElementById('cpaEditCategory').value.trim() || 'CPA',
+    country: document.getElementById('cpaEditCountry').value.trim() || 'Global',
+    customPayout,
+    limit: parseInt(document.getElementById('cpaEditSlots').value || 500),
+    type: document.getElementById('cpaEditType').value,
+    requirements: document.getElementById('cpaEditRequirements').value.trim(),
+    status: document.getElementById('cpaEditActive').checked ? 'active' : 'draft',
+    updatedAt: fb.serverTimestamp ? fb.serverTimestamp() : new Date(),
+  };
+  try {
+    await fb.updateDoc(fb.doc(fb.db, 'cpaTasks', taskId), updates);
+    const idx = S.cpa.importedTasks.findIndex(t => t.id === taskId);
+    if (idx >= 0) S.cpa.importedTasks[idx] = { ...S.cpa.importedTasks[idx], ...updates };
+    renderCpaTaskList();
+    closeModal('cpaEditTaskModal');
+    showToast('✅ Task updated', 'success');
+    addLog(`CPA task edited: ${updates.title}`, 'cpa', 'cyan');
+  } catch (e) { showToast('❌ Save failed: ' + e.message, 'error'); }
+}
+
+async function cpaDeleteTask(taskId) {
+  if (!confirm('Delete this CPA task? This cannot be undone.')) return;
+  const fb = window._fb; if (!fb) return;
+  try {
+    await fb.deleteDoc(fb.doc(fb.db, 'cpaTasks', taskId));
+    S.cpa.importedTasks = S.cpa.importedTasks.filter(t => t.id !== taskId);
+    renderCpaTaskList();
+    showToast('🗑️ Task deleted', 'success');
+  } catch (e) { showToast('❌ Delete failed: ' + e.message, 'error'); }
+}
+
+// ── Postbacks tab ─────────────────────────────────────────────────────────────
+async function loadCpaPostbacks() {
+  const fb = window._fb; if (!fb) return;
+  const container = document.getElementById('cpaPostbackList'); if (!container) return;
+  container.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text3)">⏳ Loading…</div>';
+  try {
+    const snap = await fb.getDocs(
+      fb.query(fb.collection(fb.db, 'cpaPostbacks'), fb.orderBy('receivedAt', 'desc'), fb.limit(50))
+    );
+    S.cpa.postbacks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderCpaPostbacks();
+  } catch (e) { container.innerHTML = `<div style="color:var(--red);padding:16px">❌ Load failed: ${e.message}</div>`; }
+}
+
+function renderCpaPostbacks() {
+  const container = document.getElementById('cpaPostbackList'); if (!container) return;
+  const pbs = S.cpa.postbacks;
+  if (!pbs.length) { container.innerHTML = '<div style="text-align:center;color:var(--text3);padding:32px">কোনো postback পাওয়া যায়নি।</div>'; return; }
+  const STATUS_COLORS = { pending:'var(--gold)', credited:'var(--green)', failed:'var(--red)', manual:'var(--blue)' };
+  container.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead><tr style="border-bottom:2px solid var(--border)">
+      <th style="padding:8px 10px;text-align:left;color:var(--text3);font-weight:700">User ID</th>
+      <th style="padding:8px 10px;text-align:left;color:var(--text3);font-weight:700">Network</th>
+      <th style="padding:8px 10px;text-align:right;color:var(--text3);font-weight:700">Amount</th>
+      <th style="padding:8px 10px;text-align:center;color:var(--text3);font-weight:700">Status</th>
+      <th style="padding:8px 10px;text-align:right;color:var(--text3);font-weight:700">Action</th>
+    </tr></thead>
+    <tbody>
+      ${pbs.map(pb => `<tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:9px 10px"><div style="font-size:11px;color:var(--text)">${escHtml(pb.userId?.substring(0,16)+'…')}</div><div style="font-size:10px;color:var(--text3)">${escHtml(pb.transactionId?.substring(0,12)+'…'||'')}</div></td>
+        <td style="padding:9px 10px"><span style="font-size:11px;font-weight:700;text-transform:uppercase">${escHtml(pb.network||'')}</span></td>
+        <td style="padding:9px 10px;text-align:right;font-weight:800;color:var(--green)">$${(pb.amount||0).toFixed(2)}</td>
+        <td style="padding:9px 10px;text-align:center"><span style="font-size:10.5px;font-weight:800;color:${STATUS_COLORS[pb.status||'pending']||'var(--text3)'}">${pb.status||'pending'}</span></td>
+        <td style="padding:9px 10px;text-align:right">${pb.status==='pending'?`<button class="btn btn-ghost btn-sm" onclick="cpaManualCredit('${pb.id}')"><i class="ti ti-coin"></i> Credit</button>`:''}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+async function cpaManualCredit(pbId) {
+  const pb = S.cpa.postbacks.find(p => p.id === pbId); if (!pb) return;
+  if (!confirm(`Manually credit $${pb.amount.toFixed(2)} to user ${pb.userId}?`)) return;
+  const fb = window._fb; if (!fb) return;
+  const batch = fb.batch ? fb.batch(fb.db) : null;
+  try {
+    const userRef = fb.doc(fb.db, 'users', pb.userId);
+    const pbRef = fb.doc(fb.db, 'cpaPostbacks', pbId);
+    if (batch) {
+      batch.update(userRef, { balance: fb.increment(pb.amount), totalEarned: fb.increment(pb.amount), tasksCompleted: fb.increment(1), approvedTasks: fb.increment(1) });
+      batch.update(pbRef, { status: 'credited', creditedAt: fb.serverTimestamp(), creditedBy: 'admin_manual' });
+      await batch.commit();
+    } else {
+      await fb.updateDoc(userRef, { balance: fb.increment(pb.amount), totalEarned: fb.increment(pb.amount) });
+      await fb.updateDoc(pbRef, { status: 'credited', creditedAt: fb.serverTimestamp(), creditedBy: 'admin_manual' });
+    }
+    pb.status = 'credited';
+    renderCpaPostbacks();
+    showToast(`✅ $${pb.amount.toFixed(2)} credited to ${pb.userId}`, 'success');
+    addLog(`CPA manual credit: $${pb.amount} → ${pb.userId}`, 'cpa', 'green');
+  } catch (e) { showToast('❌ Credit failed: ' + e.message, 'error'); }
+}
+
+// ── Load CPA networks config from Firestore on admin init ─────────────────────
+async function loadCpaNetworks() {
+  const fb = window._fb; if (!fb) return;
+  try {
+    for (const net of CPA_NETWORKS) {
+      const snap = await fb.getDoc(fb.doc(fb.db, 'cpaNetworks', net.id));
+      if (snap.exists && snap.exists()) S.cpa.networks[net.id] = snap.data();
+    }
+    const activeCount = Object.values(S.cpa.networks).filter(n=>n.enabled).length;
+    const pill = document.getElementById('qmCpaStatus');
+    if (pill) pill.textContent = activeCount + ' Active';
+  } catch (e) { console.warn('CPA networks load:', e); }
+}
+
 function goScreen(name) {
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   const sc = $('screen-'+name); if(sc) sc.classList.add('active');
@@ -1924,6 +2517,7 @@ function goScreen(name) {
   if (name==='categories') renderCategoriesGrid();
   if (name==='support') initSupportInbox();
   if (name==='devstudio') devInit();
+  if (name==='cpanetworks') { cpaTabSwitch('config'); renderCpaNetworkCards(); loadCpaTasks(); }
 }
 function goPushSettings() {
   goScreen('telegram');
