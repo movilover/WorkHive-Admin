@@ -1059,22 +1059,77 @@ if (window.Capacitor?.Plugins?.OneSignal) {
         <div class="sec-hd">
           <h2><button class="btn btn-ghost btn-sm" onclick="goScreen('dashboard')" style="margin-right:6px"><i class="ti ti-arrow-left"></i></button><i class="ti ti-speakerphone"></i> Broadcast Message</h2>
         </div>
-        <div class="two-col">
-          <div class="card">
-            <div class="card-title"><i class="ti ti-pencil"></i> Compose</div>
-            <div class="field"><label>Target Audience</label>
-              <select id="bcTarget"><option value="all">All Users</option><option value="kyc_verified">KYC Verified</option><option value="kyc_pending">KYC Pending</option></select>
+
+        <!-- Sub-tabs -->
+        <div style="display:flex;gap:6px;margin-bottom:16px">
+          <button class="btn btn-primary btn-sm" id="bcTab-notification" onclick="bcTabSwitch('notification')">📱 In-App</button>
+          <button class="btn btn-ghost  btn-sm" id="bcTab-email"        onclick="bcTabSwitch('email')">📧 Email Broadcast</button>
+        </div>
+
+        <!-- In-App / Telegram tab -->
+        <div id="bcSec-notification">
+          <div class="two-col">
+            <div class="card">
+              <div class="card-title"><i class="ti ti-pencil"></i> Compose</div>
+              <div class="field"><label>Target Audience</label>
+                <select id="bcTarget"><option value="all">All Users</option><option value="kyc_verified">KYC Verified</option><option value="kyc_pending">KYC Pending</option></select>
+              </div>
+              <div class="field"><label>Channel</label>
+                <select id="bcChannel"><option value="notification">In-App Notification</option><option value="telegram">Telegram</option><option value="both">Notification + Telegram</option></select>
+              </div>
+              <div class="field"><label>Title</label><input type="text" id="bcTitle" placeholder="e.g. New Tasks Available!"></div>
+              <div class="field"><label>Message</label><textarea id="bcBody" placeholder="Write your message…"></textarea><button type="button" class="btn btn-ghost btn-xs" style="margin-top:6px" onclick="aiComposeInto('bcBody','Write a short, friendly broadcast announcement in Bangla for all users of a micro-task earning app, about: ' + (v('bcTitle')||'an update'), this)"><i class="ti ti-sparkles"></i> AI দিয়ে মেসেজ লিখুন</button></div>
+              <button class="btn btn-primary" style="width:100%" onclick="sendBroadcast()"><i class="ti ti-speakerphone"></i> Send Broadcast</button>
             </div>
-            <div class="field"><label>Channel</label>
-              <select id="bcChannel"><option value="notification">In-App Notification</option><option value="telegram">Telegram</option><option value="email">Email (EmailJS)</option><option value="both">Notification + Telegram</option><option value="all_channels">Notification + Telegram + Email</option></select>
+            <div class="card">
+              <div class="card-title"><i class="ti ti-history"></i> Broadcast History</div>
+              <div id="bcHistory"><div style="color:var(--text3);font-size:13px;text-align:center;padding:24px">No broadcasts yet</div></div>
             </div>
-            <div class="field"><label>Title</label><input type="text" id="bcTitle" placeholder="e.g. New Tasks Available!"></div>
-            <div class="field"><label>Message</label><textarea id="bcBody" placeholder="Write your message…"></textarea><button type="button" class="btn btn-ghost btn-xs" style="margin-top:6px" onclick="aiComposeInto('bcBody','Write a short, friendly broadcast announcement in Bangla for all users of a micro-task earning app, about: ' + (v('bcTitle')||'an update'), this)"><i class="ti ti-sparkles"></i> AI দিয়ে মেসেজ লিখুন</button></div>
-            <button class="btn btn-primary" style="width:100%" onclick="sendBroadcast()"><i class="ti ti-speakerphone"></i> Send Broadcast</button>
           </div>
-          <div class="card">
-            <div class="card-title"><i class="ti ti-history"></i> Broadcast History</div>
-            <div id="bcHistory"><div style="color:var(--text3);font-size:13px;text-align:center;padding:24px">No broadcasts yet</div></div>
+        </div>
+
+        <!-- Email Broadcast tab -->
+        <div id="bcSec-email" style="display:none">
+          <div class="two-col">
+            <div class="card">
+              <div class="card-title">📧 HTML Email Composer</div>
+              <div class="field"><label>Subject</label><input type="text" id="emailBcSubject" placeholder="e.g. 🎉 New features on WorkHive!"></div>
+              <div class="field"><label>Target Audience</label>
+                <select id="emailBcTarget">
+                  <option value="all">All Users (with email)</option>
+                  <option value="kyc_verified">KYC Verified Only</option>
+                  <option value="active">Active Workers (completed ≥1 task)</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>HTML Email Body <span style="font-size:10px;color:var(--text3)">— paste a full HTML template or write inline</span></label>
+                <textarea id="emailBcBody" rows="12" placeholder="&lt;h1&gt;Hello {{name}}!&lt;/h1&gt;&lt;p&gt;Your message here...&lt;/p&gt;" style="font-family:monospace;font-size:12px;resize:vertical" oninput="emailBcUpdatePreview()"></textarea>
+                <div style="display:flex;gap:8px;margin-top:6px">
+                  <button class="btn btn-ghost btn-xs" onclick="emailBcInsertTemplate()">📄 Insert Template</button>
+                  <button class="btn btn-ghost btn-xs" onclick="aiComposeInto('emailBcBody','Write a professional HTML email newsletter (full HTML with inline styles, dark theme, WorkHive branding) for a micro-task platform about: ' + (document.getElementById(\'emailBcSubject\')?.value||\'an update\'), this)"><i class="ti ti-sparkles"></i> AI Generate</button>
+                </div>
+              </div>
+              <div class="field">
+                <label>Live Preview</label>
+                <div style="border:1px solid var(--border);border-radius:12px;overflow:hidden;height:280px">
+                  <iframe id="emailBcPreviewFrame" style="width:100%;height:100%;border:none;background:#fff"></iframe>
+                </div>
+              </div>
+              <!-- Progress bar -->
+              <div id="emailBcProgressWrap" style="display:none;margin-bottom:12px">
+                <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:6px">
+                  <span>Sending…</span><span id="emailBcProgressLabel">0 / 0</span>
+                </div>
+                <div style="height:7px;background:var(--bg3);border-radius:5px;overflow:hidden">
+                  <div id="emailBcProgressBar" style="height:100%;background:var(--green);border-radius:5px;width:0%;transition:width .3s"></div>
+                </div>
+              </div>
+              <button class="btn btn-primary" style="width:100%" id="emailBcSendBtn" onclick="sendEmailBroadcast()"><i class="ti ti-send"></i> Send to All Users</button>
+            </div>
+            <div class="card">
+              <div class="card-title"><i class="ti ti-history"></i> Email Broadcast History</div>
+              <div id="emailBcHistory"><div style="color:var(--text3);font-size:13px;text-align:center;padding:24px">No email broadcasts yet</div></div>
+            </div>
           </div>
         </div>
       </div>
@@ -1268,10 +1323,32 @@ if (window.Capacitor?.Plugins?.OneSignal) {
               <div class="alert warn"><i class="ti ti-alert-triangle"></i> Cloudinary Dashboard → Settings → Upload → এই preset-এ file size limit, allowed formats, folder restriction অবশ্যই সেট করে রাখো, যাতে কেউ misuse করতে না পারে। Unsigned preset পাবলিক হওয়ার জন্যই ডিজাইন করা — এটা একটা secret না, তাই এখানে সরাসরি রাখা নিরাপদ।</div>
               <div class="field"><label>Cloud Name</label><input type="text" id="setCloudinaryCloudName" placeholder="e.g. paqs4n2j"></div>
               <div class="field"><label>Unsigned Upload Preset</label><input type="text" id="setCloudinaryPreset" placeholder="e.g. ml_default"></div>
-              <div class="field-group-title" style="font-size:11px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 8px">📧 EmailJS Settings</div>
+              <div class="card-title" style="margin-top:18px">📧 EmailJS — Auth Emails</div>
+              <div class="setting-row" style="margin-bottom:10px">
+                <div>
+                  <div class="setting-label">Use EmailJS for Auth Emails</div>
+                  <div class="setting-sub">বন্ধ করলে Forgot Password ও Account Verification উভয়ই Firebase-এর নিজস্ব ইমেইল লিংক ব্যবহার করবে — কোনো OTP কোড ছাড়াই।</div>
+                </div>
+                <label class="toggle"><input type="checkbox" id="setEmailjsAuthEnabled"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+              </div>
               <div class="field"><label>Service ID</label><input type="text" id="setEmailjsServiceId" placeholder="service_xxxxxxx"></div>
-              <div class="field"><label>Template ID</label><input type="text" id="setEmailjsTemplateId" placeholder="template_xxxxxxx"></div>
               <div class="field"><label>Public Key</label><input type="text" id="setEmailjsPublicKey" placeholder="xxxxxxxxxxxxxxxx"></div>
+              <div class="field">
+                <label>Template ID — Forgot Password (OTP)</label>
+                <div style="display:flex;gap:8px">
+                  <input type="text" id="setEmailjsTemplateId" placeholder="template_xxxxxxx" style="flex:1">
+                  <button class="btn btn-ghost btn-sm" onclick="emailjsTestSend('forgot')">📤 Test</button>
+                </div>
+                <div class="field-sub" style="font-size:10px;color:var(--text3);margin-top:4px">Variables: to_email, to_name, otp_code, expires_minutes, site_name</div>
+              </div>
+              <div class="field">
+                <label>Template ID — Account Verification (OTP)</label>
+                <div style="display:flex;gap:8px">
+                  <input type="text" id="setEmailjsVerifyTemplateId" placeholder="template_xxxxxxx" style="flex:1">
+                  <button class="btn btn-ghost btn-sm" onclick="emailjsTestSend('verify')">📤 Test</button>
+                </div>
+                <div class="field-sub" style="font-size:10px;color:var(--text3);margin-top:4px">Variables: to_email, to_name, otp_code, expires_minutes, site_name</div>
+              </div>
               <button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> Save Media Settings</button>
               <button class="btn btn-ghost" style="width:100%" onclick="testCloudinaryUpload()"><i class="ti ti-upload"></i> Test Upload</button>
               <div class="lf-hint" id="cloudinaryTestResult" style="margin-top:8px"></div>
@@ -1490,7 +1567,7 @@ if (window.Capacitor?.Plugins?.OneSignal) {
         <div class="field"><label>Raw API Payout ($)</label><input type="number" id="cpaEditRawPayout" step="0.01" readonly style="opacity:.6"></div>
         <div class="field"><label>Custom User Payout ($) <span style="color:var(--green)">★</span></label><input type="number" id="cpaEditCustomPayout" step="0.01" min="0.01"></div>
       </div>
-      <div style="background:var(--gold-dim);border:1px solid rgba(255,179,0,.2);border-radius:12px;padding:10px 13px;font-size:11.5px;color:var(--gold);margin-bottom:14px" id="cpaEditProfitLabel">Profit margin: —</div>
+      <div style="background:var(--amber-bg);border:1px solid rgba(255,179,0,.2);border-radius:12px;padding:10px 13px;font-size:11.5px;color:var(--amber);margin-bottom:14px" id="cpaEditProfitLabel">Profit margin: —</div>
       <div class="field"><label>Max Slots (how many users can complete)</label><input type="number" id="cpaEditSlots" min="1"></div>
       <div class="field"><label>Task Type</label>
         <select id="cpaEditType">
@@ -1504,7 +1581,7 @@ if (window.Capacitor?.Plugins?.OneSignal) {
       <div class="field"><label>Requirements / Instructions</label><textarea id="cpaEditRequirements" rows="3" placeholder="What the user needs to do…"></textarea></div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
         <label style="font-size:13px;font-weight:700">Status</label>
-        <label class="toggle-switch"><input type="checkbox" id="cpaEditActive"><span class="toggle-slider"></span></label>
+        <label class="toggle"><input type="checkbox" id="cpaEditActive"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
         <span id="cpaEditStatusLabel" style="font-size:12px;color:var(--text2)">Draft</span>
       </div>
     </div>
@@ -1794,7 +1871,7 @@ const S = {
   categories: [], _editCatId: null, _catSubCount: 0,
   tg: { token: '', chatId: '', connected: false },
   os: { appId: '', restKey: '', connected: false },
-  bcHistory: [],
+  bcHistory: [], emailBcHistory: [],
   dupGroups: [], dupUserIds: new Set(),
   settings: { name: 'WorkHive', minWd: 5, minDep: 1, fee: 5, refGen1: 0.5, refGen2: 0.25, refGen3: 0.10,
     supportEmail: 'support@workhive.app', supportHours: '9 AM – 11 PM', supportResponse: 'Within 12 hours',
@@ -2115,15 +2192,15 @@ function renderCpaNetworkCards() {
           placeholder="Enter ${f.label}" style="font-size:12px">
       </div>`
     ).join('');
-    return `<div style="background:var(--card);border:1px solid ${enabled?net.color+'66':'var(--border)'};border-radius:18px;padding:16px;margin-bottom:12px;transition:border-color .2s">
+    return `<div style="background:var(--bg2);border:1px solid ${enabled?net.color+'66':'var(--border)'};border-radius:18px;padding:16px;margin-bottom:12px;transition:border-color .2s">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
         <div style="display:flex;align-items:center;gap:10px">
           <div style="width:38px;height:38px;border-radius:12px;background:${net.color}22;border:1px solid ${net.color}44;display:flex;align-items:center;justify-content:center;font-size:18px">${net.icon}</div>
           <div><div style="font-weight:800;font-size:14px">${net.name}</div><div style="font-size:10.5px;color:var(--text3)">${net.id}</div></div>
         </div>
-        <label class="toggle-switch">
+        <label class="toggle">
           <input type="checkbox" ${enabled?'checked':''} onchange="cpaToggleNetwork('${net.id}',this.checked)">
-          <span class="toggle-slider"></span>
+          <div class="toggle-track"></div><div class="toggle-thumb"></div>
         </label>
       </div>
       ${fieldsHtml}
@@ -2144,9 +2221,20 @@ async function cpaToggleNetwork(networkId, enabled) {
   S.cpa.networks[networkId] = S.cpa.networks[networkId] || {};
   S.cpa.networks[networkId].enabled = enabled;
   await cpaSaveNetwork(networkId, true);
+  // Cascade: update all tasks for this network
+  const fb = window._fb;
+  if (fb) {
+    try {
+      const snap = await fb.getDocs(fb.query(fb.collection(fb.db, 'cpaTasks'), fb.where('network', '==', networkId)));
+      for (const d of snap.docs) {
+        await fb.updateDoc(d.ref, { networkEnabled: enabled, status: enabled ? 'active' : 'inactive' }).catch(() => {});
+      }
+    } catch (e) { console.warn('Network cascade error:', e); }
+  }
   const pill = document.getElementById('qmCpaStatus');
   const activeCount = Object.values(S.cpa.networks).filter(n=>n.enabled).length;
   if (pill) pill.textContent = activeCount + ' Active';
+  showToast(enabled ? `✅ ${networkId} enabled — tasks now live` : `⏸️ ${networkId} disabled — tasks hidden`, 'success');
 }
 
 async function cpaSaveNetwork(networkId, silent = false) {
@@ -2177,7 +2265,7 @@ function cpaUpdatePostbackUrls() {
     const url = `${domain}/postback.html?network=${net.id}&uid=${net.postbackParam}&tid={transaction_id}&amount={payout}${secret}`;
     return `<div style="margin-bottom:10px">
       <div style="font-size:10px;font-weight:800;color:var(--text3);margin-bottom:3px">${net.icon} ${net.name}</div>
-      <div style="font-size:10.5px;color:var(--cyan);background:var(--bg4);padding:7px 10px;border-radius:8px;cursor:pointer;word-break:break-all" onclick="navigator.clipboard.writeText('${url}').then(()=>showToast('Copied!','success'))">${url}</div>
+      <div style="font-size:10.5px;color:var(--teal);background:var(--bg4);padding:7px 10px;border-radius:8px;cursor:pointer;word-break:break-all" onclick="navigator.clipboard.writeText('${url}').then(()=>showToast('Copied!','success'))">${url}</div>
     </div>`;
   }).join('');
 }
@@ -2215,7 +2303,7 @@ async function cpaFetchOffers(networkId) {
     S.cpa.fetchedOffers = offers;
     renderCpaFetchedOffers(netId, offers);
   } catch (e) {
-    if (container) container.innerHTML = `<div class="alert" style="background:var(--red-dim);border-color:var(--red)">
+    if (container) container.innerHTML = `<div class="alert" style="background:var(--red-bg);border-color:var(--red)">
       <b>❌ Fetch failed:</b> ${e.message}<br>
       <span style="font-size:11px;color:var(--text3)">This may be due to CORS restrictions. The actual offer URLs work correctly when embedded in your offerwall page or fetched server-side. You can still manually add tasks below.</span>
       <br><br><button class="btn btn-ghost btn-sm" onclick="cpaShowManualAdd('${netId}')">+ Add Task Manually</button>
@@ -2253,13 +2341,13 @@ function renderCpaFetchedOffers(netId, offers) {
     </div>
     <div id="cpaOfferGrid">
       ${offers.map((o, idx) => `
-        <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:13px;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start">
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:13px;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start">
           ${o.thumbnail ? `<img src="${escHtml(o.thumbnail)}" style="width:48px;height:48px;border-radius:10px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">` : `<div style="width:48px;height:48px;border-radius:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🎯</div>`}
           <div style="flex:1;min-width:0">
             <div style="font-size:13px;font-weight:800;margin-bottom:3px">${escHtml(o.title)}</div>
             <div style="font-size:11px;color:var(--text2);margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(o.description||'—')}</div>
             <div style="display:flex;gap:6px;flex-wrap:wrap">
-              <span style="font-size:11px;background:var(--green-dim);color:var(--green);padding:2px 8px;border-radius:8px;font-weight:800">Raw: $${o.rawPayout.toFixed(4)}</span>
+              <span style="font-size:11px;background:var(--green-bg);color:var(--green);padding:2px 8px;border-radius:8px;font-weight:800">Raw: $${o.rawPayout.toFixed(4)}</span>
               <span style="font-size:11px;background:var(--bg3);color:var(--text3);padding:2px 8px;border-radius:8px">${escHtml(o.category)}</span>
               <span style="font-size:11px;background:var(--bg3);color:var(--text3);padding:2px 8px;border-radius:8px">${escHtml(String(o.country))}</span>
             </div>
@@ -2290,24 +2378,33 @@ async function cpaDoImport(offers) {
   let ok = 0, skip = 0;
   for (const o of offers) {
     if (!o.title || o.customPayout <= 0) { skip++; continue; }
+    // expiresAt = 30 days from now (ensures tasks aren't immediately expired)
+    const expiresAt = new Date(); expiresAt.setDate(expiresAt.getDate() + 30);
     const doc = {
-      offerId: o.offerId, network: o.network, title: o.title,
+      offerId: o.offerId || '', network: o.network, title: o.title,
       description: o.description || '', category: o.category || 'CPA',
       rawPayout: o.rawPayout, customPayout: o.customPayout,
       country: String(o.country || 'Global'), type: 'cpa_offer',
       offerUrl: o.offerUrl || '', thumbnail: o.thumbnail || '',
       requirements: '', limit: 500, filled: 0,
-      status: 'active', importedAt: fb.serverTimestamp ? fb.serverTimestamp() : new Date(),
+      // status must be 'active' for listenCpaTasks query to pick it up
+      status: 'active',
+      // networkEnabled mirrors the network's enabled toggle
+      networkEnabled: (S.cpa.networks[o.network] || {}).enabled !== false,
+      expiresAt: expiresAt,
+      expiryDays: 30,
+      importedAt: fb.serverTimestamp ? fb.serverTimestamp() : new Date(),
+      postedByAdmin: true, postedById: 'admin',
     };
     try {
-      // Use offerId as doc ID if available (idempotent reimport)
-      const docId = o.network + '_' + (o.offerId || Date.now());
+      const docId = o.network + '_' + (o.offerId || String(Date.now()));
       await fb.setDoc(fb.doc(fb.db, 'cpaTasks', docId), doc, { merge: true });
       ok++;
     } catch (e) { console.error('Import error:', e); skip++; }
   }
   showToast(`✅ Imported ${ok} tasks${skip ? ', skipped ' + skip : ''}`, 'success');
   addLog(`CPA: Imported ${ok} offers`, 'cpa', 'cyan');
+  await loadCpaTasks();
   cpaTabSwitch('tasks');
 }
 
@@ -2341,22 +2438,37 @@ function renderCpaTaskList() {
   if (!tasks.length) { container.innerHTML = `<div style="text-align:center;color:var(--text3);padding:32px">কোনো imported task নেই। Import Tasks tab থেকে offers import করুন।</div>`; return; }
   const NET_COLORS = { cpalead:'#e53935', monlix:'#7b1fa2', cpagrip:'#6a1b9a', adgate:'#1565c0', offertoro:'#e65100', ayet:'#2e7d32' };
   container.innerHTML = tasks.map(t => `
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:13px;margin-bottom:10px;display:flex;gap:12px;align-items:center">
+    <div style="background:var(--bg2);border:1px solid ${t.status==='active'?'var(--border)':'rgba(255,82,82,.2)'};border-radius:14px;padding:13px;margin-bottom:10px;display:flex;gap:12px;align-items:center;opacity:${t.status==='active'?1:0.7}">
       <div style="width:40px;height:40px;border-radius:10px;background:${NET_COLORS[t.network]||'var(--bg3)'}22;border:1px solid ${NET_COLORS[t.network]||'var(--border)'}44;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${CPA_NETWORKS.find(n=>n.id===t.network)?.icon||'🎯'}</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:800;margin-bottom:3px">${escHtml(t.title||'Untitled')}</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <span style="font-size:10.5px;background:var(--green-dim);color:var(--green);padding:2px 7px;border-radius:7px;font-weight:800">User: $${(t.customPayout||0).toFixed(2)}</span>
+          <span style="font-size:10.5px;background:var(--green-bg);color:var(--green);padding:2px 7px;border-radius:7px;font-weight:800">User: $${(t.customPayout||0).toFixed(2)}</span>
           <span style="font-size:10.5px;background:var(--bg3);color:var(--text3);padding:2px 7px;border-radius:7px">Raw: $${(t.rawPayout||0).toFixed(4)}</span>
           <span style="font-size:10.5px;background:var(--bg3);color:var(--text3);padding:2px 7px;border-radius:7px">${escHtml(t.network||'')}</span>
-          <span style="font-size:10.5px;padding:2px 7px;border-radius:7px;font-weight:800;background:${t.status==='active'?'var(--green-dim)':'var(--red-dim)'};color:${t.status==='active'?'var(--green)':'var(--red)'}">${t.status||'draft'}</span>
         </div>
       </div>
-      <div style="display:flex;gap:6px;flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <label class="toggle" title="${t.status==='active'?'Active — click to deactivate':'Inactive — click to activate'}">
+          <input type="checkbox" ${t.status==='active'?'checked':''} onchange="cpaToggleTaskStatus('${t.id}',this.checked)">
+          <div class="toggle-track"></div><div class="toggle-thumb"></div>
+        </label>
         <button class="btn btn-ghost btn-sm" onclick="cpaOpenEdit('${t.id}')"><i class="ti ti-edit"></i></button>
         <button class="btn btn-ghost btn-sm" onclick="cpaDeleteTask('${t.id}')" style="color:var(--red)"><i class="ti ti-trash"></i></button>
       </div>
     </div>`).join('');
+}
+
+async function cpaToggleTaskStatus(taskId, active) {
+  const fb = window._fb; if (!fb) return;
+  const status = active ? 'active' : 'inactive';
+  try {
+    await fb.updateDoc(fb.doc(fb.db, 'cpaTasks', taskId), { status });
+    const task = S.cpa.importedTasks.find(t => t.id === taskId);
+    if (task) task.status = status;
+    renderCpaTaskList();
+    showToast(active ? '✅ Task is now live' : '⏸️ Task hidden from feed', 'success');
+  } catch (e) { showToast('❌ Toggle failed: ' + e.message, 'error'); }
 }
 
 function cpaOpenEdit(taskId) {
@@ -2390,7 +2502,7 @@ function cpaUpdateProfitLabel() {
   const profit = raw - custom;
   const margin = raw > 0 ? (profit / raw * 100).toFixed(1) : 0;
   lbl.textContent = `Profit margin: $${profit.toFixed(4)} per completion (${margin}%) — Raw: $${raw.toFixed(4)} → User: $${custom.toFixed(2)}`;
-  lbl.style.color = profit < 0 ? 'var(--red)' : 'var(--gold)';
+  lbl.style.color = profit < 0 ? 'var(--red)' : 'var(--amber)';
 }
 
 async function saveCpaTaskEdit() {
@@ -2450,7 +2562,7 @@ function renderCpaPostbacks() {
   const container = document.getElementById('cpaPostbackList'); if (!container) return;
   const pbs = S.cpa.postbacks;
   if (!pbs.length) { container.innerHTML = '<div style="text-align:center;color:var(--text3);padding:32px">কোনো postback পাওয়া যায়নি।</div>'; return; }
-  const STATUS_COLORS = { pending:'var(--gold)', credited:'var(--green)', failed:'var(--red)', manual:'var(--blue)' };
+  const STATUS_COLORS = { pending:'var(--amber)', credited:'var(--green)', failed:'var(--red)', manual:'var(--blue)' };
   container.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:12px">
     <thead><tr style="border-bottom:2px solid var(--border)">
       <th style="padding:8px 10px;text-align:left;color:var(--text3);font-weight:700">User ID</th>
@@ -3961,6 +4073,8 @@ function listenSettings() {
       if ($('setEmailjsServiceId')) $('setEmailjsServiceId').value = s.emailjsServiceId||'';
       if ($('setEmailjsTemplateId')) $('setEmailjsTemplateId').value = s.emailjsTemplateId||'';
       if ($('setEmailjsPublicKey')) $('setEmailjsPublicKey').value = s.emailjsPublicKey||'';
+      if ($('setEmailjsVerifyTemplateId')) $('setEmailjsVerifyTemplateId').value = s.emailjsVerifyTemplateId||'';
+      if ($('setEmailjsAuthEnabled')) $('setEmailjsAuthEnabled').checked = !!s.emailjsAuthEnabled;
       if ($('setBannerMsg')) $('setBannerMsg').value = s.banner||'';
       if ($('setBannerType')) $('setBannerType').value = s.bannerType||'info';
       if ($('toggleSpin')) $('toggleSpin').checked = s.spinEnabled!==false;
@@ -4075,6 +4189,202 @@ function sendTgEvent(eid,vars={}) {
 }
 
 // ===== BROADCAST =====
+// ═══════════════════════════════════════════════════════════════════════════
+// B3 — EMAIL BROADCAST ENGINE
+// ═══════════════════════════════════════════════════════════════════════════
+
+function bcTabSwitch(tab) {
+  ['notification','email'].forEach(t => {
+    document.getElementById('bcSec-' + t).style.display = t === tab ? '' : 'none';
+    const btn = document.getElementById('bcTab-' + t);
+    if (btn) btn.className = t === tab ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm';
+  });
+  if (tab === 'email') { emailBcUpdatePreview(); loadEmailBcHistory(); }
+}
+
+function emailBcUpdatePreview() {
+  const html = document.getElementById('emailBcBody')?.value || '';
+  const frame = document.getElementById('emailBcPreviewFrame');
+  if (!frame) return;
+  try {
+    const doc = frame.contentDocument || frame.contentWindow.document;
+    doc.open(); doc.write(html || '<p style="color:#888;text-align:center;padding:40px">HTML preview appears here…</p>'); doc.close();
+  } catch (e) {}
+}
+
+function emailBcInsertTemplate() {
+  const ta = document.getElementById('emailBcBody'); if (!ta) return;
+  ta.value = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<style>
+  body{background:#080808;color:#eee;font-family:'Segoe UI',sans-serif;margin:0;padding:0}
+  .wrap{max-width:600px;margin:0 auto;background:#111;border-radius:16px;overflow:hidden;border:1px solid #1c1c1c}
+  .header{background:linear-gradient(135deg,#0f1710,#0a0a0a);padding:32px 24px;text-align:center;border-bottom:1px solid #1c1c1c}
+  .logo{font-size:24px;font-weight:900;color:#00E676}
+  .body{padding:28px 24px}
+  h1{font-size:22px;font-weight:800;margin:0 0 12px;color:#fff}
+  p{font-size:14px;color:#888;line-height:1.7;margin:0 0 16px}
+  .btn{display:inline-block;background:#00E676;color:#001a0a;font-weight:800;padding:12px 28px;border-radius:20px;text-decoration:none;font-size:14px}
+  .footer{padding:16px 24px;text-align:center;font-size:11px;color:#444;border-top:1px solid #1c1c1c}
+</style></head>
+<body><div class="wrap">
+  <div class="header"><div class="logo">WorkHive</div></div>
+  <div class="body">
+    <h1>Hello {{name}}! 👋</h1>
+    <p>Your message goes here. Keep it short and friendly.</p>
+    <p><a href="https://workhive.app" class="btn">Open WorkHive →</a></p>
+  </div>
+  <div class="footer">You received this because you're a WorkHive member. © 2026 WorkHive</div>
+</div></body></html>`;
+  emailBcUpdatePreview();
+}
+
+let _emailBcSending = false;
+
+async function sendEmailBroadcast() {
+  if (_emailBcSending) return;
+  const subject = document.getElementById('emailBcSubject')?.value.trim();
+  const htmlBody = document.getElementById('emailBcBody')?.value.trim();
+  const target = document.getElementById('emailBcTarget')?.value || 'all';
+  if (!subject) { showToast('❌ Subject is required', 'error'); return; }
+  if (!htmlBody) { showToast('❌ Email body is required', 'error'); return; }
+  if (!S.settings.emailjsServiceId || !S.settings.emailjsPublicKey) {
+    showToast('❌ EmailJS not configured — go to Settings → EmailJS to set up first', 'error'); return;
+  }
+  if (!confirm(`Send "${subject}" to all ${target} users? This cannot be undone.`)) return;
+
+  // Filter users
+  let targets = S.users.filter(u => u.email);
+  if (target === 'kyc_verified') targets = targets.filter(u => u.kycStatus === 'verified' || u.kyc === true);
+  if (target === 'active') targets = targets.filter(u => (u.tasksCompleted || 0) >= 1);
+
+  _emailBcSending = true;
+  const sendBtn = document.getElementById('emailBcSendBtn');
+  if (sendBtn) sendBtn.disabled = true;
+  const progressWrap = document.getElementById('emailBcProgressWrap');
+  const progressBar = document.getElementById('emailBcProgressBar');
+  const progressLabel = document.getElementById('emailBcProgressLabel');
+  if (progressWrap) progressWrap.style.display = 'block';
+
+  let sent = 0, failed = 0;
+  const total = targets.length;
+
+  // Ensure EmailJS is initialised
+  await loadEmailJsAdminSdk();
+
+  for (let i = 0; i < targets.length; i++) {
+    const u = targets[i];
+    // Replace {{name}} placeholder
+    const personalised = htmlBody.replace(/\{\{name\}\}/g, u.name || u.username || 'User');
+    try {
+      await sendAdminEmailJS({
+        to_email: u.email,
+        to_name: u.name || u.username || 'User',
+        subject,
+        html_body: personalised,
+        broadcast_title: subject,
+        broadcast_body: personalised,
+        site_name: S.settings.siteName || 'WorkHive',
+      });
+      sent++;
+    } catch (e) { failed++; console.warn('Email failed to', u.email, e); }
+
+    // Update progress
+    const pct = Math.round(((i + 1) / total) * 100);
+    if (progressBar) progressBar.style.width = pct + '%';
+    if (progressLabel) progressLabel.textContent = `${i + 1} / ${total}`;
+
+    // Rate limit: ~4/sec (250ms delay after every email)
+    await new Promise(r => setTimeout(r, 250));
+  }
+
+  _emailBcSending = false;
+  if (sendBtn) sendBtn.disabled = false;
+  if (progressWrap) progressWrap.style.display = 'none';
+
+  // Save to history
+  const historyEntry = {
+    subject, target, total, sent, failed,
+    sentAt: new Date().toISOString(),
+    sentBy: 'admin',
+  };
+  const fb = window._fb;
+  if (fb) {
+    await fb.addDoc(fb.collection(fb.db, 'emailBroadcastHistory'), historyEntry).catch(() => {});
+  }
+  S.emailBcHistory = S.emailBcHistory || [];
+  S.emailBcHistory.unshift(historyEntry);
+  renderEmailBcHistory();
+
+  addLog(`📧 Email Broadcast: "${subject}" → ${sent} sent, ${failed} failed`, 'broadcast', 'green');
+  showToast(`✅ Sent ${sent}/${total} emails${failed ? ` (${failed} failed)` : ''}`, 'success');
+}
+
+async function loadEmailBcHistory() {
+  const fb = window._fb; if (!fb) return;
+  const container = document.getElementById('emailBcHistory'); if (!container) return;
+  try {
+    const snap = await fb.getDocs(
+      fb.query(fb.collection(fb.db, 'emailBroadcastHistory'), fb.orderBy('sentAt', 'desc'), fb.limit(20))
+    );
+    S.emailBcHistory = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderEmailBcHistory();
+  } catch (e) { console.warn('Email broadcast history load error:', e); }
+}
+
+function renderEmailBcHistory() {
+  const container = document.getElementById('emailBcHistory'); if (!container) return;
+  const history = S.emailBcHistory || [];
+  if (!history.length) { container.innerHTML = '<div style="color:var(--text3);font-size:13px;text-align:center;padding:24px">No email broadcasts yet</div>'; return; }
+  container.innerHTML = history.map(h => `
+    <div style="padding:12px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px">${escHtml(h.subject||'')}</div>
+      <div style="font-size:11px;color:var(--text3);display:flex;gap:10px;flex-wrap:wrap">
+        <span>👥 ${h.target}</span>
+        <span>✅ ${h.sent||0} sent</span>
+        ${h.failed ? `<span style="color:var(--red)">❌ ${h.failed} failed</span>` : ''}
+        <span>📅 ${h.sentAt ? new Date(h.sentAt).toLocaleString() : '—'}</span>
+      </div>
+    </div>`).join('');
+}
+
+async function loadEmailJsAdminSdk() {
+  if (window.emailjs) return;
+  await new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js';
+    s.onload = () => { emailjs.init(S.settings.emailjsPublicKey || ''); res(); };
+    s.onerror = rej;
+    document.head.appendChild(s);
+  });
+}
+
+async function emailjsTestSend(type) {
+  const serviceId = v('setEmailjsServiceId') || S.settings.emailjsServiceId;
+  const publicKey = v('setEmailjsPublicKey') || S.settings.emailjsPublicKey;
+  const templateId = type === 'verify'
+    ? (v('setEmailjsVerifyTemplateId') || S.settings.emailjsVerifyTemplateId)
+    : (v('setEmailjsTemplateId') || S.settings.emailjsTemplateId);
+  if (!serviceId || !publicKey || !templateId) {
+    showToast('❌ Service ID, Public Key এবং Template ID সব দিন', 'error'); return;
+  }
+  const testEmail = prompt('Test email address:');
+  if (!testEmail) return;
+  showToast('⏳ Test email পাঠানো হচ্ছে…', 'info');
+  try {
+    if (!_adminEmailJsReady || !window.emailjs) { await loadEmailJsAdminSdk(); }
+    window.emailjs.init(publicKey);
+    const res = await window.emailjs.send(serviceId, templateId, {
+      to_email: testEmail, to_name: 'Test User',
+      otp_code: '123456', expires_minutes: '3',
+      site_name: S.settings.siteName || 'WorkHive',
+      broadcast_title: 'Test Email', broadcast_body: 'This is a test email from WorkHive Admin.',
+      subject: type === 'verify' ? 'Test — Account Verification OTP' : 'Test — Forgot Password OTP',
+    });
+    showToast(`✅ Test email sent to ${testEmail} (status: ${res.status})`, 'success');
+  } catch (e) { showToast('❌ Send failed: ' + (e?.text || e?.message || JSON.stringify(e)), 'error'); }
+}
+
 async function sendBroadcast() {
   const target=v('bcTarget')||document.getElementById('bcTarget').value;
   const channel=v('bcChannel')||document.getElementById('bcChannel').value;
@@ -4151,6 +4461,8 @@ async function saveSettings() {
     emailjsServiceId: v('setEmailjsServiceId'),
     emailjsTemplateId: v('setEmailjsTemplateId'),
     emailjsPublicKey: v('setEmailjsPublicKey'),
+    emailjsVerifyTemplateId: v('setEmailjsVerifyTemplateId'),
+    emailjsAuthEnabled: !!$('setEmailjsAuthEnabled')?.checked,
   });
   const fb=window._fb; if(!fb){showToast('Firebase not ready','error');return;}
   try{
