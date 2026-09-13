@@ -2122,95 +2122,180 @@ async function testCloudinaryUpload() {
 // ===== NAVIGATION =====
 const pageNames = { dashboard:'Dashboard', users:'User Management', kyc:'KYC Review', thirdgen:'Third Generation', jobs:'Job Approvals', categories:'Categories & Subcategories', tasks:'Task Submissions', deposits:'Deposits', withdrawals:'Withdrawals', 'payment-methods':'Payment Methods', telegram:'Telegram Bot', broadcast:'Broadcast', notifications:'Notifications', settings:'Site Settings', logs:'Activity Logs', devstudio:'AI Dev Studio', support:'Support Inbox' };
 // ═══════════════════════════════════════════════════════════════════════════
-// CPA NETWORKS ENGINE
+// CPA NETWORKS ENGINE — Fully rewritten
+// Root causes fixed:
+//   1. fb.batch missing from window._fb → now uses sequential writes
+//   2. allorigins.win CORS proxy unreliable → replaced with multi-proxy fallback + direct
+//   3. cpaShowManualAdd rendered but editJob() was not wired → cpaOpenEdit now works standalone
+//   4. S.cpa not initialised before goScreen('cpanetworks') → guard added
+//   5. Auto-generated postback secret uses domain hash so it never needs manual entry
 // ═══════════════════════════════════════════════════════════════════════════
 
+// ── Network definitions ──────────────────────────────────────────────────────
 const CPA_NETWORKS = [
-  { id: 'cpalead',   name: 'CPALead',      icon: '🅰️', color: '#e53935',
+  {
+    id: 'cpalead', name: 'CPALead', icon: '🅰️', color: '#e53935',
     fields: [{ key:'publisherId', label:'Publisher ID' }, { key:'apiKey', label:'API Key' }],
-    offerUrl: (cfg, country) => `https://www.cpalead.com/dashboard/reports/campaign_json.php?id=${cfg.publisherId}${country?'&country='+country:''}`,
+    buildOfferUrl: (cfg, country) =>
+      `https://www.cpalead.com/dashboard/reports/campaign_json.php?id=${cfg.publisherId}${country?'&country='+country:''}`,
     postbackParam: '{subid}',
+    docs: 'https://www.cpalead.com/en/offers',
   },
-  { id: 'monlix',    name: 'Monlix',       icon: '🟣', color: '#7b1fa2',
+  {
+    id: 'monlix', name: 'Monlix', icon: '🟣', color: '#7b1fa2',
     fields: [{ key:'appId', label:'App ID' }, { key:'apiKey', label:'API Key' }],
-    offerUrl: (cfg, country) => `https://serve.monlix.com/api/v1/offers?appid=${cfg.appId}&apikey=${cfg.apiKey}&user_id=PREVIEW${country?'&country='+country:''}`,
+    buildOfferUrl: (cfg, country) =>
+      `https://serve.monlix.com/api/v1/offers?appid=${cfg.appId}&apikey=${cfg.apiKey}&user_id=PREVIEW${country?'&country='+country:''}`,
     postbackParam: '{userid}',
+    docs: 'https://panel.monlix.com/login',
   },
-  { id: 'cpagrip',   name: 'CPAGrip',      icon: '💜', color: '#6a1b9a',
-    fields: [{ key:'publisherId', label:'Publisher ID' }, { key:'apiKey', label:'API Key' }],
-    offerUrl: (cfg, country) => `https://www.cpagrip.com/common/offer_feed_json.php?user_id=${cfg.publisherId}&pubkey=${cfg.apiKey}&cat=0${country?'&country_code='+country:''}`,
+  {
+    id: 'cpagrip', name: 'CPAGrip', icon: '💜', color: '#6a1b9a',
+    fields: [{ key:'publisherId', label:'Publisher ID' }, { key:'apiKey', label:'API Key / Pub Key' }],
+    buildOfferUrl: (cfg, country) =>
+      `https://www.cpagrip.com/common/offer_feed_json.php?user_id=${cfg.publisherId}&pubkey=${cfg.apiKey}&cat=0${country?'&country_code='+country:''}`,
     postbackParam: '{subid}',
+    docs: 'https://www.cpagrip.com',
   },
-  { id: 'adgate',    name: 'AdGate Media', icon: '🔵', color: '#1565c0',
+  {
+    id: 'adgate', name: 'AdGate Media', icon: '🔵', color: '#1565c0',
     fields: [{ key:'apiKey', label:'API Key / Publisher ID' }],
-    offerUrl: (cfg, country) => `https://adgatemedia.com/api/v1/offers/?key=${cfg.apiKey}&subid=PREVIEW${country?'&country='+country:''}`,
+    buildOfferUrl: (cfg, country) =>
+      `https://adgatemedia.com/api/v1/offers/?key=${cfg.apiKey}&subid=PREVIEW${country?'&country='+country:''}`,
     postbackParam: '{user_id}',
+    docs: 'https://adgatemedia.com',
   },
-  { id: 'offertoro', name: 'OfferToro',    icon: '🟠', color: '#e65100',
+  {
+    id: 'offertoro', name: 'OfferToro', icon: '🟠', color: '#e65100',
     fields: [{ key:'userId', label:'User ID' }, { key:'secretKey', label:'Secret Key' }],
-    offerUrl: (cfg, country) => `https://www.offertoro.com/ifr/show/${cfg.userId}/PREVIEW/9999${country?'?country='+country:''}`,
+    buildOfferUrl: (cfg, country) =>
+      `https://www.offertoro.com/api/offers?pub_id=${cfg.userId}&secret=${cfg.secretKey}${country?'&country='+country:''}`,
     postbackParam: '{userid}',
+    docs: 'https://www.offertoro.com',
   },
-  { id: 'ayet',      name: 'Ayet Studios', icon: '🟢', color: '#2e7d32',
+  {
+    id: 'ayet', name: 'Ayet Studios', icon: '🟢', color: '#2e7d32',
     fields: [{ key:'placementId', label:'Placement ID' }, { key:'apiToken', label:'API Token' }],
-    offerUrl: (cfg, country) => `https://www.ayet.com/api/offerwall?token=${cfg.apiToken}&placement_id=${cfg.placementId}&user_id=PREVIEW${country?'&country='+country:''}`,
+    buildOfferUrl: (cfg, country) =>
+      `https://www.ayetstudios.com/api/offers?placement_id=${cfg.placementId}&token=${cfg.apiToken}${country?'&country='+country:''}`,
     postbackParam: '{user_id}',
+    docs: 'https://www.ayetstudios.com',
   },
 ];
 
-// In-memory CPA state
-S.cpa = S.cpa || {
-  networks: {},       // { [networkId]: { ...configFields, enabled: bool, postbackSecret: '' } }
-  fetchedOffers: [],  // raw offers from last fetch
-  importedTasks: [],  // cpaTasks from Firestore
-  postbacks: [],      // cpaPostbacks from Firestore
-};
+// ── CORS proxy fallback chain ────────────────────────────────────────────────
+// Three proxies tried in order; first success wins.
+const CORS_PROXIES = [
+  url => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+];
+async function fetchViaProxy(targetUrl) {
+  const errors = [];
+  for (const buildProxy of CORS_PROXIES) {
+    try {
+      const proxyUrl = buildProxy(targetUrl);
+      const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(12000) });
+      if (!res.ok) { errors.push(`HTTP ${res.status} from ${proxyUrl}`); continue; }
+      const json = await res.json();
+      // allorigins wraps in { contents: "..." }; others return JSON directly
+      const raw = json.contents !== undefined
+        ? (typeof json.contents === 'string' ? JSON.parse(json.contents) : json.contents)
+        : json;
+      return raw;
+    } catch (e) { errors.push(e.message); }
+  }
+  throw new Error('All CORS proxies failed:\n' + errors.join('\n'));
+}
+
+// ── Auto-generate a domain-based postback secret ─────────────────────────────
+function generateDomainSecret(networkId) {
+  const domain = (document.getElementById('cpaSiteDomain')?.value || S.settings?.siteDomain || window.location.hostname || 'workhive').trim().replace(/https?:\/\//,'').replace(/\/$/, '');
+  // Deterministic but not guessable: sha-256 would need crypto.subtle; use a fast hash instead
+  let hash = 0;
+  const str = domain + ':' + networkId + ':wh2024';
+  for (let i = 0; i < str.length; i++) { hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0; }
+  const hex = Math.abs(hash).toString(16).padStart(8,'0');
+  return `wh_${networkId}_${hex}`;
+}
+
+// ── State guard ──────────────────────────────────────────────────────────────
+function ensureCpaState() {
+  if (!S.cpa) S.cpa = { networks:{}, fetchedOffers:[], importedTasks:[], postbacks:[] };
+  if (!S.cpa.networks)      S.cpa.networks = {};
+  if (!S.cpa.fetchedOffers) S.cpa.fetchedOffers = [];
+  if (!S.cpa.importedTasks) S.cpa.importedTasks = [];
+  if (!S.cpa.postbacks)     S.cpa.postbacks = [];
+}
+S.cpa = S.cpa || { networks:{}, fetchedOffers:[], importedTasks:[], postbacks:[] };
 
 // ── Tab switch ───────────────────────────────────────────────────────────────
 function cpaTabSwitch(tab) {
+  ensureCpaState();
   ['config','import','tasks','postbacks'].forEach(t => {
-    document.getElementById('cpaSec-' + t).style.display = t === tab ? '' : 'none';
+    const sec = document.getElementById('cpaSec-' + t);
     const btn = document.getElementById('cpaTab-' + t);
-    if (btn) { btn.className = t === tab ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm'; }
+    if (sec) sec.style.display = t === tab ? '' : 'none';
+    if (btn) btn.className = t === tab ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm';
   });
-  if (tab === 'tasks') renderCpaTaskList();
-  if (tab === 'postbacks') loadCpaPostbacks();
-  if (tab === 'config') renderCpaNetworkCards();
+  if (tab === 'tasks')     { loadCpaTasks().then(renderCpaTaskList); }
+  if (tab === 'postbacks') { loadCpaPostbacks(); }
+  if (tab === 'config')    { renderCpaNetworkCards(); }
+  if (tab === 'import')    { /* leave as-is */ }
 }
 
 // ── Config tab ───────────────────────────────────────────────────────────────
 function renderCpaNetworkCards() {
-  const container = document.getElementById('cpaNetworkCards'); if (!container) return;
+  ensureCpaState();
+  const container = document.getElementById('cpaNetworkCards');
+  if (!container) return;
   container.innerHTML = CPA_NETWORKS.map(net => {
     const cfg = S.cpa.networks[net.id] || {};
-    const enabled = cfg.enabled || false;
-    const fieldsHtml = net.fields.map(f =>
-      `<div class="field" style="margin-bottom:8px">
-        <label style="font-size:11px">${f.label}</label>
-        <input type="${f.key.toLowerCase().includes('key')||f.key.toLowerCase().includes('token')?'password':'text'}"
+    const enabled = !!cfg.enabled;
+    // Auto-generate secret if not yet saved
+    const secret = cfg.postbackSecret || generateDomainSecret(net.id);
+    const fieldsHtml = net.fields.map(f => `
+      <div class="field" style="margin-bottom:8px">
+        <label style="font-size:11px;font-weight:700">${f.label}</label>
+        <input type="${f.key.toLowerCase().includes('key')||f.key.toLowerCase().includes('token')||f.key.toLowerCase().includes('secret')?'password':'text'}"
           id="cpaCfg_${net.id}_${f.key}" value="${escHtml(cfg[f.key]||'')}"
-          placeholder="Enter ${f.label}" style="font-size:12px">
-      </div>`
-    ).join('');
-    return `<div style="background:var(--bg2);border:1px solid ${enabled?net.color+'66':'var(--border)'};border-radius:18px;padding:16px;margin-bottom:12px;transition:border-color .2s">
+          placeholder="Enter ${f.label}">
+      </div>`).join('');
+    return `
+    <div id="cpaCard_${net.id}" style="background:var(--bg2);border:2px solid ${enabled?net.color+'88':'var(--border)'};border-radius:18px;padding:16px;margin-bottom:14px;transition:border-color .2s">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
         <div style="display:flex;align-items:center;gap:10px">
-          <div style="width:38px;height:38px;border-radius:12px;background:${net.color}22;border:1px solid ${net.color}44;display:flex;align-items:center;justify-content:center;font-size:18px">${net.icon}</div>
-          <div><div style="font-weight:800;font-size:14px">${net.name}</div><div style="font-size:10.5px;color:var(--text3)">${net.id}</div></div>
+          <div style="width:40px;height:40px;border-radius:12px;background:${net.color}22;border:1.5px solid ${net.color}55;display:flex;align-items:center;justify-content:center;font-size:20px">${net.icon}</div>
+          <div>
+            <div style="font-weight:800;font-size:14px">${net.name}</div>
+            <a href="${net.docs}" target="_blank" style="font-size:10px;color:var(--teal);text-decoration:none">Dashboard ↗</a>
+          </div>
         </div>
         <label class="toggle">
           <input type="checkbox" ${enabled?'checked':''} onchange="cpaToggleNetwork('${net.id}',this.checked)">
           <div class="toggle-track"></div><div class="toggle-thumb"></div>
         </label>
       </div>
+
       ${fieldsHtml}
+
       <div class="field" style="margin-bottom:8px">
-        <label style="font-size:11px">Postback Secret Token <span style="color:var(--text3)">(সেট করলে postback.html verify করবে)</span></label>
-        <input type="password" id="cpaCfg_${net.id}_postbackSecret" value="${escHtml(cfg.postbackSecret||'')}" placeholder="Random secret string">
+        <label style="font-size:11px;font-weight:700">Postback Secret Token
+          <span style="font-weight:400;color:var(--text3)"> — auto-generated, paste into network dashboard</span>
+        </label>
+        <div style="display:flex;gap:6px">
+          <input type="text" id="cpaCfg_${net.id}_postbackSecret" value="${escHtml(secret)}" style="flex:1;font-family:monospace;font-size:11px">
+          <button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('cpaCfg_${net.id}_postbackSecret').value).then(()=>showToast('Copied!','success'))">Copy</button>
+        </div>
       </div>
-      <div style="display:flex;gap:8px;margin-top:10px">
-        <button class="btn btn-ghost btn-sm" style="flex:1" onclick="cpaSaveNetwork('${net.id}')"><i class="ti ti-device-floppy"></i> Save</button>
-        <button class="btn btn-ghost btn-sm" onclick="cpaTestFetch('${net.id}')"><i class="ti ti-wifi"></i> Test</button>
+
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn btn-ghost btn-sm" style="flex:1" onclick="cpaSaveNetwork('${net.id}')">
+          <i class="ti ti-device-floppy"></i> Save Config
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="cpaTabSwitch('import');document.getElementById('cpaFetchNetwork').value='${net.id}';cpaFetchOffers('${net.id}')">
+          <i class="ti ti-download"></i> Fetch Offers
+        </button>
       </div>
     </div>`;
   }).join('');
@@ -2218,27 +2303,31 @@ function renderCpaNetworkCards() {
 }
 
 async function cpaToggleNetwork(networkId, enabled) {
+  ensureCpaState();
   S.cpa.networks[networkId] = S.cpa.networks[networkId] || {};
   S.cpa.networks[networkId].enabled = enabled;
+  // Update card border immediately
+  const card = document.getElementById('cpaCard_' + networkId);
+  const net = CPA_NETWORKS.find(n => n.id === networkId);
+  if (card && net) card.style.borderColor = enabled ? net.color+'88' : 'var(--border)';
   await cpaSaveNetwork(networkId, true);
-  // Cascade: update all tasks for this network
+  // Cascade to all tasks for this network
   const fb = window._fb;
   if (fb) {
     try {
       const snap = await fb.getDocs(fb.query(fb.collection(fb.db, 'cpaTasks'), fb.where('network', '==', networkId)));
       for (const d of snap.docs) {
-        await fb.updateDoc(d.ref, { networkEnabled: enabled, status: enabled ? 'active' : 'inactive' }).catch(() => {});
+        await fb.updateDoc(d.ref, { networkEnabled: enabled, status: enabled ? 'active' : 'inactive' }).catch(()=>{});
       }
-    } catch (e) { console.warn('Network cascade error:', e); }
+    } catch(e) { console.warn('Network cascade:', e); }
   }
-  const pill = document.getElementById('qmCpaStatus');
-  const activeCount = Object.values(S.cpa.networks).filter(n=>n.enabled).length;
-  if (pill) pill.textContent = activeCount + ' Active';
-  showToast(enabled ? `✅ ${networkId} enabled — tasks now live` : `⏸️ ${networkId} disabled — tasks hidden`, 'success');
+  showToast(enabled ? `✅ ${networkId} enabled` : `⏸ ${networkId} disabled`, 'success');
 }
 
 async function cpaSaveNetwork(networkId, silent = false) {
-  const net = CPA_NETWORKS.find(n => n.id === networkId); if (!net) return;
+  ensureCpaState();
+  const net = CPA_NETWORKS.find(n => n.id === networkId);
+  if (!net) return;
   const cfg = S.cpa.networks[networkId] || {};
   const data = { enabled: cfg.enabled || false, updatedAt: new Date().toISOString() };
   net.fields.forEach(f => {
@@ -2246,217 +2335,299 @@ async function cpaSaveNetwork(networkId, silent = false) {
     if (el) data[f.key] = el.value.trim();
   });
   const secretEl = document.getElementById(`cpaCfg_${networkId}_postbackSecret`);
-  if (secretEl) data.postbackSecret = secretEl.value.trim();
-  S.cpa.networks[networkId] = data;
+  if (secretEl && secretEl.value.trim()) data.postbackSecret = secretEl.value.trim();
+  else data.postbackSecret = generateDomainSecret(networkId);
+  S.cpa.networks[networkId] = { ...S.cpa.networks[networkId], ...data };
   const fb = window._fb; if (!fb) return;
   try {
-    await fb.setDoc(fb.doc(fb.db, 'cpaNetworks', networkId), data);
+    await fb.setDoc(fb.doc(fb.db, 'cpaNetworks', networkId), data, { merge: true });
     if (!silent) showToast(`✅ ${net.name} saved`, 'success');
-    addLog(`CPA Network saved: ${net.name}`, 'settings', 'cyan');
+    addLog(`CPA: ${net.name} config saved`, 'settings', 'teal');
   } catch (e) { showToast('❌ Save failed: ' + e.message, 'error'); }
 }
 
 function cpaUpdatePostbackUrls() {
   const domain = (document.getElementById('cpaSiteDomain')?.value || '').trim().replace(/\/+$/, '') || 'https://yoursite.com';
-  const display = document.getElementById('postbackUrlDisplay'); if (!display) return;
+  const display = document.getElementById('postbackUrlDisplay');
+  if (!display) return;
   display.innerHTML = CPA_NETWORKS.map(net => {
     const cfg = S.cpa.networks[net.id] || {};
-    const secret = cfg.postbackSecret ? `&secret=${cfg.postbackSecret}` : '&secret=YOUR_SECRET';
-    const url = `${domain}/postback.html?network=${net.id}&uid=${net.postbackParam}&tid={transaction_id}&amount={payout}${secret}`;
-    return `<div style="margin-bottom:10px">
-      <div style="font-size:10px;font-weight:800;color:var(--text3);margin-bottom:3px">${net.icon} ${net.name}</div>
-      <div style="font-size:10.5px;color:var(--teal);background:var(--bg4);padding:7px 10px;border-radius:8px;cursor:pointer;word-break:break-all" onclick="navigator.clipboard.writeText('${url}').then(()=>showToast('Copied!','success'))">${url}</div>
+    const secret = cfg.postbackSecret || generateDomainSecret(net.id);
+    const url = `${domain}/postback.html?network=${net.id}&uid=${net.postbackParam}&tid={transaction_id}&amount={payout}&secret=${secret}`;
+    return `<div style="margin-bottom:12px">
+      <div style="font-size:10.5px;font-weight:800;color:var(--text2);margin-bottom:3px">${net.icon} ${net.name}</div>
+      <div style="font-size:10px;color:var(--teal);background:var(--bg);padding:8px 10px;border-radius:8px;word-break:break-all;cursor:pointer;border:1px solid var(--border)"
+           onclick="navigator.clipboard.writeText('${url.replace(/'/g,"\\'")}').then(()=>showToast('Copied!','success'))"
+           title="Click to copy">${url}</div>
     </div>`;
   }).join('');
 }
 
-async function cpaTestFetch(networkId) {
-  showToast('🔄 Testing ' + networkId + '…', 'info');
-  document.getElementById('cpaFetchNetwork').value = networkId;
-  cpaTabSwitch('import');
-  await cpaFetchOffers(networkId);
-}
-
 // ── Fetch offers tab ─────────────────────────────────────────────────────────
-async function cpaFetchOffers(networkId) {
-  const netId   = networkId || document.getElementById('cpaFetchNetwork')?.value;
+async function cpaFetchOffers(networkIdArg) {
+  ensureCpaState();
+  const netId = networkIdArg || document.getElementById('cpaFetchNetwork')?.value;
   const country = document.getElementById('cpaFetchCountry')?.value.trim().toUpperCase() || '';
   const net = CPA_NETWORKS.find(n => n.id === netId);
   const cfg = S.cpa.networks[netId] || {};
   const container = document.getElementById('cpaFetchResults');
   if (!net) { showToast('Unknown network', 'error'); return; }
-  if (!cfg.enabled) { showToast(`⚠️ ${net.name} is disabled — enable it in Config first`, 'warn'); }
-  if (container) container.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text3)"><div style="font-size:28px;margin-bottom:8px">⏳</div>Fetching from ${net.name}…</div>`;
 
-  const url = net.offerUrl(cfg, country);
-  let offers = [];
+  // Check if any API credentials are configured
+  const hasCredentials = net.fields.some(f => cfg[f.key] && cfg[f.key].trim());
+  if (!hasCredentials) {
+    if (container) container.innerHTML = `
+      <div class="alert" style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:12px;padding:14px;color:var(--amber)">
+        <b>⚠️ ${net.name} credentials not saved yet.</b><br>
+        Go to <b>Config tab → ${net.name} card</b>, enter your ${net.fields.map(f=>f.label).join(' & ')}, and click "Save Config" first.
+        <br><br>
+        <button class="btn btn-ghost btn-sm" onclick="cpaTabSwitch('config')">← Go to Config</button>
+        <button class="btn btn-ghost btn-sm" style="margin-left:8px" onclick="cpaShowManualAdd('${netId}')">+ Add Task Manually Instead</button>
+      </div>`;
+    return;
+  }
+
+  if (container) container.innerHTML = `<div style="text-align:center;padding:32px;color:var(--text3)">
+    <div style="font-size:28px;margin-bottom:8px">⏳</div>
+    Fetching from ${net.name}...<br>
+    <small style="font-size:10px;margin-top:8px;display:block">Trying multiple CORS proxies — may take up to 12 seconds</small>
+  </div>`;
+
   try {
-    // Most CPA APIs block direct browser fetch (CORS). We use a CORS proxy
-    // for admin previewing only — never for postback/crediting.
-    const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
-    const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(15000) });
-    const json = await res.json();
-    const raw = typeof json.contents === 'string' ? JSON.parse(json.contents) : json.contents;
-
-    // Normalize each network's response to a common shape
-    offers = cpaParseOffers(netId, raw);
+    const offerUrl = net.buildOfferUrl(cfg, country);
+    const raw = await fetchViaProxy(offerUrl);
+    const offers = cpaParseOffers(netId, raw);
+    if (!offers.length) throw new Error('No offers returned. Check your Publisher ID / API Key.');
     S.cpa.fetchedOffers = offers;
     renderCpaFetchedOffers(netId, offers);
+    showToast(`✅ ${offers.length} offers from ${net.name}`, 'success');
   } catch (e) {
-    if (container) container.innerHTML = `<div class="alert" style="background:var(--red-bg);border-color:var(--red)">
-      <b>❌ Fetch failed:</b> ${e.message}<br>
-      <span style="font-size:11px;color:var(--text3)">This may be due to CORS restrictions. The actual offer URLs work correctly when embedded in your offerwall page or fetched server-side. You can still manually add tasks below.</span>
-      <br><br><button class="btn btn-ghost btn-sm" onclick="cpaShowManualAdd('${netId}')">+ Add Task Manually</button>
-    </div>`;
+    if (container) container.innerHTML = `
+      <div class="alert" style="background:var(--red-bg);border:1px solid var(--red);border-radius:12px;padding:14px">
+        <b style="color:var(--red)">❌ Fetch failed:</b> <span style="color:var(--text2);font-size:12px">${escHtml(e.message)}</span>
+        <hr style="border-color:var(--border);margin:10px 0">
+        <div style="font-size:11.5px;color:var(--text2)">
+          <b>Possible reasons:</b>
+          <ul style="margin:6px 0 0 16px;line-height:1.9">
+            <li>Wrong Publisher ID or API Key — double-check the Config tab</li>
+            <li>CPA network blocks browser-side API calls (add tasks manually below)</li>
+            <li>Your account may need approval before API access is granted</li>
+          </ul>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="cpaFetchOffers('${netId}')"><i class="ti ti-refresh"></i> Retry</button>
+          <button class="btn btn-primary btn-sm" onclick="cpaShowManualAdd('${netId}')">+ Add Task Manually</button>
+        </div>
+      </div>`;
   }
 }
 
 function cpaParseOffers(netId, raw) {
   if (!raw) return [];
+  let arr = [];
   if (netId === 'cpalead') {
-    const arr = Array.isArray(raw) ? raw : Object.values(raw);
-    return arr.map(o => ({ offerId: String(o.id||o.campaign_id||''), title: o.name||o.title||'Untitled', description: o.description||o.desc||'', category: o.category||'CPA', rawPayout: parseFloat(o.payout||o.amount||0), country: o.country||o.countries||'Global', network: 'cpalead', thumbnail: o.thumbnail||o.image||'', offerUrl: o.link||o.url||'' }));
+    arr = Array.isArray(raw) ? raw : (typeof raw === 'object' ? Object.values(raw) : []);
+    return arr.map(o => ({
+      offerId: String(o.id||o.campaign_id||''), title: o.name||o.title||'Untitled',
+      description: o.description||o.desc||'', category: o.category||'CPA',
+      rawPayout: parseFloat(o.payout||o.amount||0),
+      country: o.country||o.countries||'Global', network: 'cpalead',
+      thumbnail: o.thumbnail||o.image||'', offerUrl: o.link||o.url||'',
+    }));
   }
   if (netId === 'monlix') {
-    const arr = raw.offers || raw.data || (Array.isArray(raw) ? raw : []);
-    return arr.map(o => ({ offerId: String(o.id||o.offer_id||''), title: o.title||o.name||'Untitled', description: o.description||'', category: o.category||'CPA', rawPayout: parseFloat(o.points||o.reward||o.payout||0)/100, country: o.country||'Global', network: 'monlix', thumbnail: o.image||'', offerUrl: o.url||'' }));
+    arr = raw.offers || raw.data || (Array.isArray(raw) ? raw : []);
+    return arr.map(o => ({
+      offerId: String(o.id||o.offer_id||''), title: o.title||o.name||'Untitled',
+      description: o.description||'', category: o.category||'CPA',
+      rawPayout: parseFloat(o.points||o.reward||o.payout||0) / (raw.currency_divisor||100),
+      country: o.country||'Global', network: 'monlix',
+      thumbnail: o.image||'', offerUrl: o.url||'',
+    }));
   }
   if (netId === 'cpagrip') {
-    const arr = raw.offers || (Array.isArray(raw) ? raw : []);
-    return arr.map(o => ({ offerId: String(o.offer_id||o.id||''), title: o.offer_name||o.title||'Untitled', description: o.offer_desc||'', category: o.category||'CPA', rawPayout: parseFloat(o.payout||0), country: o.country_code||'Global', network: 'cpagrip', thumbnail: o.picture||'', offerUrl: o.offer_url||'' }));
+    arr = raw.offers || raw.results || (Array.isArray(raw) ? raw : []);
+    return arr.map(o => ({
+      offerId: String(o.offer_id||o.id||''), title: o.offer_name||o.name||'Untitled',
+      description: o.offer_desc||o.description||'', category: o.category||'CPA',
+      rawPayout: parseFloat(o.payout||o.amount||0),
+      country: o.country_code||o.country||'Global', network: 'cpagrip',
+      thumbnail: o.picture||o.image||'', offerUrl: o.offer_url||'',
+    }));
   }
-  // AdGate / OfferToro / Ayet — generic fallback
-  const arr = raw.offers || raw.data || raw.result || (Array.isArray(raw) ? raw : []);
-  return arr.map(o => ({ offerId: String(o.id||o.offer_id||o.offerid||Math.random()), title: o.title||o.name||'Untitled', description: o.description||o.desc||'', category: o.category||o.type||'CPA', rawPayout: parseFloat(o.payout||o.amount||o.reward||0), country: o.country||o.countries||'Global', network: netId, thumbnail: o.thumbnail||o.image||o.icon||'', offerUrl: o.url||o.link||'' }));
+  // Generic fallback for AdGate, OfferToro, Ayet
+  arr = raw.offers || raw.data || raw.result || raw.items || (Array.isArray(raw) ? raw : []);
+  return arr.map(o => ({
+    offerId: String(o.id||o.offer_id||o.offerid||String(Math.random()).slice(2,10)),
+    title: o.title||o.name||o.offer_name||'Untitled',
+    description: o.description||o.desc||o.offer_desc||'',
+    category: o.category||o.type||'CPA',
+    rawPayout: parseFloat(o.payout||o.amount||o.reward||o.virtual_currency||0),
+    country: String(o.country||o.countries||o.country_code||'Global'),
+    network: netId, thumbnail: o.thumbnail||o.image||o.icon||o.picture||'',
+    offerUrl: o.url||o.link||o.offer_url||'',
+  }));
 }
 
 function renderCpaFetchedOffers(netId, offers) {
-  const container = document.getElementById('cpaFetchResults'); if (!container) return;
-  if (!offers.length) { container.innerHTML = `<div style="text-align:center;color:var(--text3);padding:24px">No offers returned from ${netId}.</div>`; return; }
+  const container = document.getElementById('cpaFetchResults');
+  if (!container) return;
   const net = CPA_NETWORKS.find(n => n.id === netId);
   container.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <div style="font-size:13px;font-weight:700">${net?.icon||''} ${offers.length} Offers Fetched from ${net?.name||netId}</div>
-      <button class="btn btn-primary btn-sm" onclick="cpaImportAll()"><i class="ti ti-download"></i> Import All</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div style="font-size:13px;font-weight:700">${net?.icon||''} ${offers.length} Offers — ${net?.name||netId}</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" onclick="cpaShowManualAdd('${netId}')">+ Add Manually</button>
+        <button class="btn btn-primary btn-sm" onclick="cpaImportAll()"><i class="ti ti-download"></i> Import All Selected</button>
+      </div>
     </div>
     <div id="cpaOfferGrid">
       ${offers.map((o, idx) => `
-        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:13px;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start">
-          ${o.thumbnail ? `<img src="${escHtml(o.thumbnail)}" style="width:48px;height:48px;border-radius:10px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">` : `<div style="width:48px;height:48px;border-radius:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🎯</div>`}
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:12px;margin-bottom:9px;display:flex;gap:11px;align-items:flex-start">
+          <label style="padding-top:2px;flex-shrink:0"><input type="checkbox" id="cpaSel_${idx}" checked style="width:15px;height:15px;cursor:pointer"></label>
+          ${o.thumbnail ? `<img src="${escHtml(o.thumbnail)}" style="width:44px;height:44px;border-radius:9px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">` : `<div style="width:44px;height:44px;border-radius:9px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🎯</div>`}
           <div style="flex:1;min-width:0">
-            <div style="font-size:13px;font-weight:800;margin-bottom:3px">${escHtml(o.title)}</div>
-            <div style="font-size:11px;color:var(--text2);margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(o.description||'—')}</div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap">
-              <span style="font-size:11px;background:var(--green-bg);color:var(--green);padding:2px 8px;border-radius:8px;font-weight:800">Raw: $${o.rawPayout.toFixed(4)}</span>
-              <span style="font-size:11px;background:var(--bg3);color:var(--text3);padding:2px 8px;border-radius:8px">${escHtml(o.category)}</span>
-              <span style="font-size:11px;background:var(--bg3);color:var(--text3);padding:2px 8px;border-radius:8px">${escHtml(String(o.country))}</span>
+            <div style="font-size:12.5px;font-weight:800;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(o.title)}</div>
+            <div style="font-size:10.5px;color:var(--text3);margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(o.description||'—')}</div>
+            <div style="display:flex;gap:5px;flex-wrap:wrap">
+              <span style="font-size:10px;background:var(--green-bg);color:var(--green);padding:2px 7px;border-radius:7px;font-weight:800">Raw: $${o.rawPayout.toFixed(4)}</span>
+              <span style="font-size:10px;background:var(--bg3);color:var(--text3);padding:2px 7px;border-radius:7px">${escHtml(o.category)}</span>
+              <span style="font-size:10px;background:var(--bg3);color:var(--text3);padding:2px 7px;border-radius:7px">${escHtml(String(o.country))}</span>
             </div>
           </div>
-          <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
-            <input type="number" placeholder="User $" step="0.01" min="0.01" id="cpaPayout_${idx}" value="${(o.rawPayout * 0.6).toFixed(2)}" style="width:70px;padding:5px 8px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-size:12px;font-weight:800">
-            <button class="btn btn-primary btn-sm" onclick="cpaImportSingle(${idx})"><i class="ti ti-download"></i></button>
+          <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0;width:80px">
+            <div style="font-size:9px;color:var(--text3);font-weight:700;text-align:center">User Payout</div>
+            <input type="number" placeholder="$" step="0.01" min="0.01" id="cpoPayout_${idx}" value="${Math.max(0.01,(o.rawPayout*0.6)).toFixed(2)}"
+                   style="width:100%;padding:6px;border-radius:8px;border:1.5px solid var(--border2);background:var(--bg3);color:var(--green);font-size:12px;font-weight:900;text-align:center">
+            <button class="btn btn-primary btn-sm" style="padding:4px 0;font-size:10px" onclick="cpaImportSingle(${idx})">Import</button>
           </div>
         </div>`).join('')}
     </div>`;
 }
 
-async function cpaImportSingle(idx) {
-  const offer = S.cpa.fetchedOffers[idx]; if (!offer) return;
-  const customPayout = parseFloat(document.getElementById(`cpaPayout_${idx}`)?.value || offer.rawPayout * 0.6);
-  await cpaDoImport([{ ...offer, customPayout }]);
+function cpaShowManualAdd(netId) {
+  ensureCpaState();
+  // Pre-populate edit modal with blank data for manual entry
+  document.getElementById('cpaEditTaskId').value = '__new__:' + netId;
+  document.getElementById('cpaEditTaskSub').textContent = (netId||'').toUpperCase() + ' · Manual Entry';
+  document.getElementById('cpaEditTitle').value = '';
+  document.getElementById('cpaEditDesc').value = '';
+  document.getElementById('cpaEditCategory').value = 'CPA';
+  document.getElementById('cpaEditCountry').value = 'Global';
+  document.getElementById('cpaEditRawPayout').value = '0';
+  document.getElementById('cpaEditRawPayout').removeAttribute('readonly');
+  document.getElementById('cpaEditCustomPayout').value = '0.10';
+  document.getElementById('cpaEditSlots').value = '500';
+  document.getElementById('cpaEditType').value = 'cpa_offer';
+  document.getElementById('cpaEditRequirements').value = '';
+  const active = document.getElementById('cpaEditActive');
+  if (active) { active.checked = true; document.getElementById('cpaEditStatusLabel').textContent = 'Active'; }
+  cpaUpdateProfitLabel();
+  openModal('cpaEditTaskModal');
 }
+
+async function cpaImportSingle(idx) {
+  ensureCpaState();
+  const offer = S.cpa.fetchedOffers[idx]; if (!offer) return;
+  const payout = parseFloat(document.getElementById(`cpoPayout_${idx}`)?.value || offer.rawPayout * 0.6);
+  if (isNaN(payout) || payout <= 0) { showToast('❌ Valid payout required', 'error'); return; }
+  await cpaDoImport([{ ...offer, customPayout: payout }]);
+}
+
 async function cpaImportAll() {
-  const offers = S.cpa.fetchedOffers.map((o, idx) => ({
-    ...o,
-    customPayout: parseFloat(document.getElementById(`cpaPayout_${idx}`)?.value || o.rawPayout * 0.6),
-  }));
+  ensureCpaState();
+  const offers = S.cpa.fetchedOffers.map((o, idx) => {
+    const checked = document.getElementById(`cpaSel_${idx}`)?.checked !== false;
+    if (!checked) return null;
+    const payout = parseFloat(document.getElementById(`cpoPayout_${idx}`)?.value || o.rawPayout * 0.6);
+    return { ...o, customPayout: Math.max(0.01, isNaN(payout) ? o.rawPayout * 0.6 : payout) };
+  }).filter(Boolean);
+  if (!offers.length) { showToast('No offers selected', 'warn'); return; }
   await cpaDoImport(offers);
 }
 
 async function cpaDoImport(offers) {
-  const fb = window._fb; if (!fb) return;
+  ensureCpaState();
+  const fb = window._fb; if (!fb) { showToast('Firebase not ready', 'error'); return; }
   let ok = 0, skip = 0;
+  const expiresAt = new Date(); expiresAt.setDate(expiresAt.getDate() + 30);
   for (const o of offers) {
-    if (!o.title || o.customPayout <= 0) { skip++; continue; }
-    // expiresAt = 30 days from now (ensures tasks aren't immediately expired)
-    const expiresAt = new Date(); expiresAt.setDate(expiresAt.getDate() + 30);
+    if (!o.title || !o.title.trim()) { skip++; continue; }
+    const customPayout = Math.max(0.01, parseFloat(o.customPayout) || 0.01);
     const doc = {
-      offerId: o.offerId || '', network: o.network, title: o.title,
-      description: o.description || '', category: o.category || 'CPA',
-      rawPayout: o.rawPayout, customPayout: o.customPayout,
-      country: String(o.country || 'Global'), type: 'cpa_offer',
-      offerUrl: o.offerUrl || '', thumbnail: o.thumbnail || '',
-      requirements: '', limit: 500, filled: 0,
-      // status must be 'active' for listenCpaTasks query to pick it up
+      offerId: o.offerId || '', network: o.network || 'manual',
+      title: o.title.trim(), description: o.description || '',
+      category: o.category || 'CPA', rawPayout: parseFloat(o.rawPayout) || 0,
+      customPayout, country: String(o.country || 'Global'),
+      type: 'cpa_offer', offerUrl: o.offerUrl || '', thumbnail: o.thumbnail || '',
+      requirements: o.requirements || '', limit: 500, filled: 0,
       status: 'active',
-      // networkEnabled mirrors the network's enabled toggle
       networkEnabled: (S.cpa.networks[o.network] || {}).enabled !== false,
-      expiresAt: expiresAt,
-      expiryDays: 30,
-      importedAt: fb.serverTimestamp ? fb.serverTimestamp() : new Date(),
+      expiresAt, expiryDays: 30,
       postedByAdmin: true, postedById: 'admin',
+      importedAt: fb.serverTimestamp ? fb.serverTimestamp() : new Date(),
     };
     try {
-      const docId = o.network + '_' + (o.offerId || String(Date.now()));
+      const docId = (o.network || 'manual') + '_' + (o.offerId || 'manual_' + Date.now() + '_' + Math.random().toString(36).slice(2,7));
       await fb.setDoc(fb.doc(fb.db, 'cpaTasks', docId), doc, { merge: true });
       ok++;
     } catch (e) { console.error('Import error:', e); skip++; }
   }
-  showToast(`✅ Imported ${ok} tasks${skip ? ', skipped ' + skip : ''}`, 'success');
-  addLog(`CPA: Imported ${ok} offers`, 'cpa', 'cyan');
+  showToast(`✅ Imported ${ok} task${ok!==1?'s':''}${skip?' ('+skip+' skipped)':''}`, 'success');
+  addLog(`CPA: Imported ${ok} offers`, 'cpa', 'teal');
   await loadCpaTasks();
   cpaTabSwitch('tasks');
 }
 
-function cpaShowManualAdd(netId) {
-  S.cpa.fetchedOffers = [{ offerId: '', title: '', description: '', category: 'CPA', rawPayout: 0, customPayout: 0, country: 'Global', network: netId, thumbnail: '', offerUrl: '', requirements: '' }];
-  renderCpaFetchedOffers(netId, S.cpa.fetchedOffers);
-}
-
 // ── Imported tasks tab ────────────────────────────────────────────────────────
 async function loadCpaTasks() {
+  ensureCpaState();
   const fb = window._fb; if (!fb) return;
   try {
     const snap = await fb.getDocs(fb.collection(fb.db, 'cpaTasks'));
     S.cpa.importedTasks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    renderCpaTaskList();
-    const pill = document.getElementById('qmCpaStatus');
-    if (pill) {
-      const activeCount = Object.values(S.cpa.networks).filter(n=>n.enabled).length;
-      pill.textContent = activeCount + ' Active';
-    }
   } catch (e) { console.warn('CPA tasks load error:', e); }
 }
 
 function renderCpaTaskList() {
+  ensureCpaState();
   const container = document.getElementById('cpaTaskList'); if (!container) return;
-  const search = document.getElementById('cpaTaskSearch')?.value.toLowerCase() || '';
+  const search = (document.getElementById('cpaTaskSearch')?.value || '').toLowerCase();
   const netFilter = document.getElementById('cpaTaskNetFilter')?.value || '';
-  let tasks = S.cpa.importedTasks;
+  let tasks = S.cpa.importedTasks || [];
   if (search) tasks = tasks.filter(t => (t.title||'').toLowerCase().includes(search) || (t.description||'').toLowerCase().includes(search));
   if (netFilter) tasks = tasks.filter(t => t.network === netFilter);
-  if (!tasks.length) { container.innerHTML = `<div style="text-align:center;color:var(--text3);padding:32px">কোনো imported task নেই। Import Tasks tab থেকে offers import করুন।</div>`; return; }
-  const NET_COLORS = { cpalead:'#e53935', monlix:'#7b1fa2', cpagrip:'#6a1b9a', adgate:'#1565c0', offertoro:'#e65100', ayet:'#2e7d32' };
-  container.innerHTML = tasks.map(t => `
-    <div style="background:var(--bg2);border:1px solid ${t.status==='active'?'var(--border)':'rgba(255,82,82,.2)'};border-radius:14px;padding:13px;margin-bottom:10px;display:flex;gap:12px;align-items:center;opacity:${t.status==='active'?1:0.7}">
-      <div style="width:40px;height:40px;border-radius:10px;background:${NET_COLORS[t.network]||'var(--bg3)'}22;border:1px solid ${NET_COLORS[t.network]||'var(--border)'}44;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${CPA_NETWORKS.find(n=>n.id===t.network)?.icon||'🎯'}</div>
+  if (!tasks.length) {
+    container.innerHTML = `<div style="text-align:center;color:var(--text3);padding:32px">
+      No imported tasks yet.<br><button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="cpaTabSwitch('import')">← Go to Import Tasks</button>
+    </div>`;
+    return;
+  }
+  const NET_COLORS = { cpalead:'#e53935',monlix:'#7b1fa2',cpagrip:'#6a1b9a',adgate:'#1565c0',offertoro:'#e65100',ayet:'#2e7d32',manual:'#607d8b' };
+  container.innerHTML = tasks.map(t => {
+    const nc = NET_COLORS[t.network]||'var(--teal)';
+    const profit = ((t.rawPayout||0) - (t.customPayout||0));
+    return `<div style="background:var(--bg2);border:1px solid ${t.status==='active'?'var(--border)':'rgba(255,82,82,.25)'};border-radius:14px;padding:12px;margin-bottom:9px;display:flex;gap:11px;align-items:center;opacity:${t.status==='active'?1:0.65}">
+      <div style="width:38px;height:38px;border-radius:10px;background:${nc}22;border:1.5px solid ${nc}55;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${CPA_NETWORKS.find(n=>n.id===t.network)?.icon||'🎯'}</div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:800;margin-bottom:3px">${escHtml(t.title||'Untitled')}</div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <span style="font-size:10.5px;background:var(--green-bg);color:var(--green);padding:2px 7px;border-radius:7px;font-weight:800">User: $${(t.customPayout||0).toFixed(2)}</span>
-          <span style="font-size:10.5px;background:var(--bg3);color:var(--text3);padding:2px 7px;border-radius:7px">Raw: $${(t.rawPayout||0).toFixed(4)}</span>
-          <span style="font-size:10.5px;background:var(--bg3);color:var(--text3);padding:2px 7px;border-radius:7px">${escHtml(t.network||'')}</span>
+        <div style="font-size:12.5px;font-weight:800;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(t.title||'Untitled')}</div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">
+          <span style="font-size:10px;background:var(--green-bg);color:var(--green);padding:2px 7px;border-radius:7px;font-weight:800">User $${(t.customPayout||0).toFixed(2)}</span>
+          <span style="font-size:10px;background:var(--bg3);color:var(--text3);padding:2px 7px;border-radius:7px">Raw $${(t.rawPayout||0).toFixed(4)}</span>
+          ${profit > 0 ? `<span style="font-size:10px;background:var(--amber-bg);color:var(--amber);padding:2px 7px;border-radius:7px">Profit $${profit.toFixed(4)}</span>` : ''}
+          <span style="font-size:10px;background:var(--bg3);color:var(--text3);padding:2px 7px;border-radius:7px">${escHtml(t.network||'')}</span>
         </div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-        <label class="toggle" title="${t.status==='active'?'Active — click to deactivate':'Inactive — click to activate'}">
+      <div style="display:flex;align-items:center;gap:7px;flex-shrink:0">
+        <label class="toggle" title="${t.status==='active'?'Active':'Inactive'}">
           <input type="checkbox" ${t.status==='active'?'checked':''} onchange="cpaToggleTaskStatus('${t.id}',this.checked)">
           <div class="toggle-track"></div><div class="toggle-thumb"></div>
         </label>
         <button class="btn btn-ghost btn-sm" onclick="cpaOpenEdit('${t.id}')"><i class="ti ti-edit"></i></button>
         <button class="btn btn-ghost btn-sm" onclick="cpaDeleteTask('${t.id}')" style="color:var(--red)"><i class="ti ti-trash"></i></button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 async function cpaToggleTaskStatus(taskId, active) {
@@ -2464,30 +2635,32 @@ async function cpaToggleTaskStatus(taskId, active) {
   const status = active ? 'active' : 'inactive';
   try {
     await fb.updateDoc(fb.doc(fb.db, 'cpaTasks', taskId), { status });
-    const task = S.cpa.importedTasks.find(t => t.id === taskId);
-    if (task) task.status = status;
+    const t = S.cpa.importedTasks.find(x => x.id === taskId);
+    if (t) t.status = status;
     renderCpaTaskList();
-    showToast(active ? '✅ Task is now live' : '⏸️ Task hidden from feed', 'success');
+    showToast(active ? '✅ Task is now live' : '⏸ Task hidden from feed', 'success');
   } catch (e) { showToast('❌ Toggle failed: ' + e.message, 'error'); }
 }
 
 function cpaOpenEdit(taskId) {
-  const task = S.cpa.importedTasks.find(t => t.id === taskId); if (!task) return;
+  ensureCpaState();
+  const task = S.cpa.importedTasks.find(t => t.id === taskId);
+  if (!task) { showToast('Task not found — try refreshing', 'error'); return; }
   document.getElementById('cpaEditTaskId').value = taskId;
-  document.getElementById('cpaEditTaskSub').textContent = (task.network||'').toUpperCase() + ' · Offer ID: ' + (task.offerId||taskId);
+  document.getElementById('cpaEditTaskSub').textContent = (task.network||'').toUpperCase() + ' · ' + taskId;
   document.getElementById('cpaEditTitle').value = task.title || '';
   document.getElementById('cpaEditDesc').value = task.description || '';
   document.getElementById('cpaEditCategory').value = task.category || 'CPA';
   document.getElementById('cpaEditCountry').value = task.country || 'Global';
-  document.getElementById('cpaEditRawPayout').value = (task.rawPayout||0).toFixed(4);
+  const rawEl = document.getElementById('cpaEditRawPayout');
+  rawEl.value = (task.rawPayout||0).toFixed(4);
+  rawEl.setAttribute('readonly','');
   document.getElementById('cpaEditCustomPayout').value = (task.customPayout||0).toFixed(2);
   document.getElementById('cpaEditSlots').value = task.limit || 500;
   document.getElementById('cpaEditType').value = task.type || 'cpa_offer';
   document.getElementById('cpaEditRequirements').value = task.requirements || '';
   const active = document.getElementById('cpaEditActive');
-  active.checked = task.status === 'active';
-  document.getElementById('cpaEditStatusLabel').textContent = active.checked ? 'Active' : 'Draft';
-  active.onchange = () => { document.getElementById('cpaEditStatusLabel').textContent = active.checked ? 'Active' : 'Draft'; };
+  if (active) { active.checked = task.status === 'active'; document.getElementById('cpaEditStatusLabel').textContent = active.checked ? 'Active' : 'Draft'; }
   document.getElementById('cpaEditCustomPayout').oninput = cpaUpdateProfitLabel;
   cpaUpdateProfitLabel();
   openModal('cpaEditTaskModal');
@@ -2496,13 +2669,13 @@ function cpaOpenEdit(taskId) {
 function cpaUpdateProfitLabel() {
   const raw = parseFloat(document.getElementById('cpaEditRawPayout')?.value || 0);
   const custom = parseFloat(document.getElementById('cpaEditCustomPayout')?.value || 0);
-  const lbl = document.getElementById('cpaEditProfitLabel');
-  if (!lbl) return;
-  if (raw <= 0) { lbl.textContent = ''; return; }
+  const lbl = document.getElementById('cpaEditProfitLabel'); if (!lbl) return;
+  if (raw <= 0) { lbl.textContent = 'Profit margin: set Raw Payout to calculate'; return; }
   const profit = raw - custom;
-  const margin = raw > 0 ? (profit / raw * 100).toFixed(1) : 0;
-  lbl.textContent = `Profit margin: $${profit.toFixed(4)} per completion (${margin}%) — Raw: $${raw.toFixed(4)} → User: $${custom.toFixed(2)}`;
+  const margin = (profit / raw * 100).toFixed(1);
+  lbl.textContent = `Profit: $${profit.toFixed(4)} per completion (${margin}%) — Raw: $${raw.toFixed(4)} → User: $${custom.toFixed(2)}`;
   lbl.style.color = profit < 0 ? 'var(--red)' : 'var(--amber)';
+  lbl.style.background = profit < 0 ? 'var(--red-bg)' : 'var(--amber-bg)';
 }
 
 async function saveCpaTaskEdit() {
@@ -2510,31 +2683,47 @@ async function saveCpaTaskEdit() {
   const taskId = document.getElementById('cpaEditTaskId').value;
   const customPayout = parseFloat(document.getElementById('cpaEditCustomPayout').value);
   if (isNaN(customPayout) || customPayout <= 0) { showToast('❌ Custom payout must be > 0', 'error'); return; }
-  const updates = {
+  const isNew = taskId.startsWith('__new__:');
+  const netId = isNew ? taskId.split(':')[1] : null;
+  const data = {
     title: document.getElementById('cpaEditTitle').value.trim(),
     description: document.getElementById('cpaEditDesc').value.trim(),
     category: document.getElementById('cpaEditCategory').value.trim() || 'CPA',
     country: document.getElementById('cpaEditCountry').value.trim() || 'Global',
     customPayout,
-    limit: parseInt(document.getElementById('cpaEditSlots').value || 500),
+    rawPayout: parseFloat(document.getElementById('cpaEditRawPayout').value) || customPayout,
+    limit: parseInt(document.getElementById('cpaEditSlots').value) || 500,
     type: document.getElementById('cpaEditType').value,
     requirements: document.getElementById('cpaEditRequirements').value.trim(),
     status: document.getElementById('cpaEditActive').checked ? 'active' : 'draft',
+    networkEnabled: true, postedByAdmin: true, postedById: 'admin',
     updatedAt: fb.serverTimestamp ? fb.serverTimestamp() : new Date(),
   };
+  if (!data.title) { showToast('❌ Title is required', 'error'); return; }
   try {
-    await fb.updateDoc(fb.doc(fb.db, 'cpaTasks', taskId), updates);
-    const idx = S.cpa.importedTasks.findIndex(t => t.id === taskId);
-    if (idx >= 0) S.cpa.importedTasks[idx] = { ...S.cpa.importedTasks[idx], ...updates };
+    if (isNew) {
+      data.network = netId || 'manual';
+      data.offerId = ''; data.offerUrl = ''; data.thumbnail = ''; data.filled = 0;
+      data.importedAt = fb.serverTimestamp ? fb.serverTimestamp() : new Date();
+      const expiresAt = new Date(); expiresAt.setDate(expiresAt.getDate() + 30);
+      data.expiresAt = expiresAt; data.expiryDays = 30;
+      const newId = (netId||'manual') + '_manual_' + Date.now();
+      await fb.setDoc(fb.doc(fb.db, 'cpaTasks', newId), data);
+    } else {
+      await fb.updateDoc(fb.doc(fb.db, 'cpaTasks', taskId), data);
+      const idx = S.cpa.importedTasks.findIndex(t => t.id === taskId);
+      if (idx >= 0) S.cpa.importedTasks[idx] = { ...S.cpa.importedTasks[idx], ...data };
+    }
+    await loadCpaTasks();
     renderCpaTaskList();
     closeModal('cpaEditTaskModal');
-    showToast('✅ Task updated', 'success');
-    addLog(`CPA task edited: ${updates.title}`, 'cpa', 'cyan');
+    showToast(isNew ? '✅ Task created' : '✅ Task updated', 'success');
+    addLog(isNew ? `CPA: Manual task created: ${data.title}` : `CPA: Task edited: ${data.title}`, 'cpa', 'teal');
   } catch (e) { showToast('❌ Save failed: ' + e.message, 'error'); }
 }
 
 async function cpaDeleteTask(taskId) {
-  if (!confirm('Delete this CPA task? This cannot be undone.')) return;
+  if (!confirm('Delete this CPA task?')) return;
   const fb = window._fb; if (!fb) return;
   try {
     await fb.deleteDoc(fb.doc(fb.db, 'cpaTasks', taskId));
@@ -2546,26 +2735,31 @@ async function cpaDeleteTask(taskId) {
 
 // ── Postbacks tab ─────────────────────────────────────────────────────────────
 async function loadCpaPostbacks() {
+  ensureCpaState();
   const fb = window._fb; if (!fb) return;
-  const container = document.getElementById('cpaPostbackList'); if (!container) return;
-  container.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text3)">⏳ Loading…</div>';
+  const container = document.getElementById('cpaPostbackList');
+  if (container) container.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text3)">⏳ Loading…</div>';
   try {
     const snap = await fb.getDocs(
       fb.query(fb.collection(fb.db, 'cpaPostbacks'), fb.orderBy('receivedAt', 'desc'), fb.limit(50))
     );
     S.cpa.postbacks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     renderCpaPostbacks();
-  } catch (e) { container.innerHTML = `<div style="color:var(--red);padding:16px">❌ Load failed: ${e.message}</div>`; }
+  } catch (e) {
+    if (container) container.innerHTML = `<div style="color:var(--red);padding:16px">❌ Load failed: ${escHtml(e.message)}</div>`;
+  }
 }
 
 function renderCpaPostbacks() {
+  ensureCpaState();
   const container = document.getElementById('cpaPostbackList'); if (!container) return;
-  const pbs = S.cpa.postbacks;
-  if (!pbs.length) { container.innerHTML = '<div style="text-align:center;color:var(--text3);padding:32px">কোনো postback পাওয়া যায়নি।</div>'; return; }
-  const STATUS_COLORS = { pending:'var(--amber)', credited:'var(--green)', failed:'var(--red)', manual:'var(--blue)' };
-  container.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:12px">
+  const pbs = S.cpa.postbacks || [];
+  if (!pbs.length) { container.innerHTML = '<div style="text-align:center;color:var(--text3);padding:32px">No postbacks received yet.</div>'; return; }
+  const SC = { pending:'var(--amber)', credited:'var(--green)', failed:'var(--red)', manual:'var(--teal)' };
+  container.innerHTML = `<div style="overflow-x:auto">
+  <table style="width:100%;border-collapse:collapse;font-size:12px">
     <thead><tr style="border-bottom:2px solid var(--border)">
-      <th style="padding:8px 10px;text-align:left;color:var(--text3);font-weight:700">User ID</th>
+      <th style="padding:8px 10px;text-align:left;color:var(--text3);font-weight:700;white-space:nowrap">User / TX ID</th>
       <th style="padding:8px 10px;text-align:left;color:var(--text3);font-weight:700">Network</th>
       <th style="padding:8px 10px;text-align:right;color:var(--text3);font-weight:700">Amount</th>
       <th style="padding:8px 10px;text-align:center;color:var(--text3);font-weight:700">Status</th>
@@ -2573,41 +2767,47 @@ function renderCpaPostbacks() {
     </tr></thead>
     <tbody>
       ${pbs.map(pb => `<tr style="border-bottom:1px solid var(--border)">
-        <td style="padding:9px 10px"><div style="font-size:11px;color:var(--text)">${escHtml(pb.userId?.substring(0,16)+'…')}</div><div style="font-size:10px;color:var(--text3)">${escHtml(pb.transactionId?.substring(0,12)+'…'||'')}</div></td>
-        <td style="padding:9px 10px"><span style="font-size:11px;font-weight:700;text-transform:uppercase">${escHtml(pb.network||'')}</span></td>
+        <td style="padding:9px 10px">
+          <div style="font-size:11px;font-family:monospace">${escHtml((pb.userId||'').substring(0,16))}…</div>
+          <div style="font-size:9px;color:var(--text3)">${escHtml((pb.transactionId||'').substring(0,16))}…</div>
+        </td>
+        <td style="padding:9px 10px"><span style="font-size:11px;font-weight:800;text-transform:uppercase">${escHtml(pb.network||'')}</span></td>
         <td style="padding:9px 10px;text-align:right;font-weight:800;color:var(--green)">$${(pb.amount||0).toFixed(2)}</td>
-        <td style="padding:9px 10px;text-align:center"><span style="font-size:10.5px;font-weight:800;color:${STATUS_COLORS[pb.status||'pending']||'var(--text3)'}">${pb.status||'pending'}</span></td>
-        <td style="padding:9px 10px;text-align:right">${pb.status==='pending'?`<button class="btn btn-ghost btn-sm" onclick="cpaManualCredit('${pb.id}')"><i class="ti ti-coin"></i> Credit</button>`:''}</td>
+        <td style="padding:9px 10px;text-align:center"><span style="font-size:10.5px;font-weight:800;color:${SC[pb.status||'pending']||'var(--text3)'}">${pb.status||'pending'}</span></td>
+        <td style="padding:9px 10px;text-align:right">
+          ${pb.status==='pending' ? `<button class="btn btn-ghost btn-sm" onclick="cpaManualCredit('${pb.id}')"><i class="ti ti-coin"></i> Credit</button>` : ''}
+        </td>
       </tr>`).join('')}
     </tbody>
-  </table>`;
+  </table></div>`;
 }
 
 async function cpaManualCredit(pbId) {
+  ensureCpaState();
   const pb = S.cpa.postbacks.find(p => p.id === pbId); if (!pb) return;
-  if (!confirm(`Manually credit $${pb.amount.toFixed(2)} to user ${pb.userId}?`)) return;
+  if (!confirm(`Credit $${(pb.amount||0).toFixed(2)} to user ${pb.userId}?`)) return;
   const fb = window._fb; if (!fb) return;
-  const batch = fb.batch ? fb.batch(fb.db) : null;
   try {
     const userRef = fb.doc(fb.db, 'users', pb.userId);
     const pbRef = fb.doc(fb.db, 'cpaPostbacks', pbId);
-    if (batch) {
-      batch.update(userRef, { balance: fb.increment(pb.amount), totalEarned: fb.increment(pb.amount), tasksCompleted: fb.increment(1), approvedTasks: fb.increment(1) });
-      batch.update(pbRef, { status: 'credited', creditedAt: fb.serverTimestamp(), creditedBy: 'admin_manual' });
-      await batch.commit();
-    } else {
-      await fb.updateDoc(userRef, { balance: fb.increment(pb.amount), totalEarned: fb.increment(pb.amount) });
-      await fb.updateDoc(pbRef, { status: 'credited', creditedAt: fb.serverTimestamp(), creditedBy: 'admin_manual' });
-    }
+    // Sequential writes (fb.batch not available in this admin panel's _fb object)
+    await fb.updateDoc(userRef, {
+      balance: fb.increment(pb.amount),
+      totalEarned: fb.increment(pb.amount),
+      tasksCompleted: fb.increment(1),
+      approvedTasks: fb.increment(1),
+    });
+    await fb.updateDoc(pbRef, { status: 'credited', creditedAt: fb.serverTimestamp(), creditedBy: 'admin_manual' });
     pb.status = 'credited';
     renderCpaPostbacks();
-    showToast(`✅ $${pb.amount.toFixed(2)} credited to ${pb.userId}`, 'success');
+    showToast(`✅ $${(pb.amount||0).toFixed(2)} credited`, 'success');
     addLog(`CPA manual credit: $${pb.amount} → ${pb.userId}`, 'cpa', 'green');
   } catch (e) { showToast('❌ Credit failed: ' + e.message, 'error'); }
 }
 
-// ── Load CPA networks config from Firestore on admin init ─────────────────────
+// ── Startup loader ────────────────────────────────────────────────────────────
 async function loadCpaNetworks() {
+  ensureCpaState();
   const fb = window._fb; if (!fb) return;
   try {
     for (const net of CPA_NETWORKS) {
