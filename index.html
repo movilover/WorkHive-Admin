@@ -1230,8 +1230,25 @@ if (window.Capacitor?.Plugins?.OneSignal) {
                 </select>
               </div>
               <div class="field" style="flex:1;min-width:120px;margin-bottom:0">
-                <label>Country (optional)</label>
-                <input type="text" id="cpaFetchCountry" placeholder="US, BD, GB…">
+                <label>Target Country</label>
+                <select id="cpaFetchCountry" style="width:100%">
+                  <option value="">All Countries</option>
+                  <option value="BD">🇧🇩 Bangladesh</option>
+                  <option value="US">🇺🇸 USA</option>
+                  <option value="GB">🇬🇧 UK</option>
+                  <option value="IN">🇮🇳 India</option>
+                  <option value="PK">🇵🇰 Pakistan</option>
+                  <option value="CA">🇨🇦 Canada</option>
+                  <option value="AU">🇦🇺 Australia</option>
+                  <option value="DE">🇩🇪 Germany</option>
+                  <option value="FR">🇫🇷 France</option>
+                  <option value="NG">🇳🇬 Nigeria</option>
+                  <option value="PH">🇵🇭 Philippines</option>
+                  <option value="MY">🇲🇾 Malaysia</option>
+                  <option value="ID">🇮🇩 Indonesia</option>
+                  <option value="BR">🇧🇷 Brazil</option>
+                  <option value="GLOBAL">🌍 Global</option>
+                </select>
               </div>
               <button class="btn btn-primary" onclick="cpaFetchOffers()"><i class="ti ti-refresh"></i> Fetch Offers</button>
             </div>
@@ -1323,11 +1340,24 @@ if (window.Capacitor?.Plugins?.OneSignal) {
               <div class="alert warn"><i class="ti ti-alert-triangle"></i> Cloudinary Dashboard → Settings → Upload → এই preset-এ file size limit, allowed formats, folder restriction অবশ্যই সেট করে রাখো, যাতে কেউ misuse করতে না পারে। Unsigned preset পাবলিক হওয়ার জন্যই ডিজাইন করা — এটা একটা secret না, তাই এখানে সরাসরি রাখা নিরাপদ।</div>
               <div class="field"><label>Cloud Name</label><input type="text" id="setCloudinaryCloudName" placeholder="e.g. paqs4n2j"></div>
               <div class="field"><label>Unsigned Upload Preset</label><input type="text" id="setCloudinaryPreset" placeholder="e.g. ml_default"></div>
+              <div class="card-title" style="margin-top:18px">🔊 Completion Sound</div>
+              <div class="field">
+                <label>Sound on Job Submission Success</label>
+                <select id="setCompletionSound">
+                  <option value="subtle_ding">Subtle Ding</option>
+                  <option value="success_chime">Success Chime</option>
+                  <option value="coin_drop">Coin Drop</option>
+                  <option value="smooth_pop">Smooth Pop</option>
+                  <option value="modern_bell">Modern Bell</option>
+                </select>
+              </div>
+              <button class="btn btn-ghost btn-sm" onclick="adminPreviewSound()"><i class="ti ti-player-play"></i> Preview Selected Sound</button>
+
               <div class="card-title" style="margin-top:18px">📧 EmailJS — Auth Emails</div>
-              <div class="setting-row" style="margin-bottom:10px">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;margin-bottom:6px">
                 <div>
-                  <div class="setting-label">Use EmailJS for Auth Emails</div>
-                  <div class="setting-sub">বন্ধ করলে Forgot Password ও Account Verification উভয়ই Firebase-এর নিজস্ব ইমেইল লিংক ব্যবহার করবে — কোনো OTP কোড ছাড়াই।</div>
+                  <div style="font-size:14px;font-weight:700">Use EmailJS for Auth Emails</div>
+                  <div style="font-size:12px;color:var(--text3);margin-top:2px">বন্ধ করলে Forgot Password ও Account Verification উভয়ই Firebase-এর নিজস্ব ইমেইল লিংক ব্যবহার করবে — কোনো OTP কোড ছাড়াই।</div>
                 </div>
                 <label class="toggle"><input type="checkbox" id="setEmailjsAuthEnabled"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
               </div>
@@ -1687,10 +1717,20 @@ if (window.Capacitor?.Plugins?.OneSignal) {
       <div><div class="modal-title" id="catModalTitle">Add Category</div><div class="modal-sub">User App-এ dropdown ও filter chip-এ লাইভ দেখাবে</div></div>
       <div class="modal-close" onclick="closeModal('categoryModal')"><i class="ti ti-x"></i></div>
     </div>
+    <div class="field">
+      <label>Category Icon Image (Optional — Emoji-র চেয়ে অগ্রাধিকার পাবে)</label>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div id="catIconPreview" style="width:46px;height:46px;border-radius:12px;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden;flex-shrink:0">🖼️</div>
+        <input type="file" id="catIconFile" accept="image/*" onchange="handleCatIconUpload(this)" style="font-size:12px;flex:1">
+        <div class="link-row-remove" id="catIconRemoveBtn" style="display:none" onclick="removeCatIcon()" title="Remove image"><i class="ti ti-x"></i></div>
+      </div>
+      <div class="lf-hint">ছবি দিলে সেটাই সব জায়গায় দেখাবে — না দিলে নিচের Emoji ব্যবহার হবে, সেটাও খালি রাখলে অটো একটা কালার্ড ব্যাজ বসবে (আর কখনো ধূসর ফোল্ডার আইকন দেখাবে না)।</div>
+    </div>
     <div class="form-grid">
       <div class="field"><label>Emoji</label><input type="text" id="catEmoji" placeholder="🛍️" maxlength="4"></div>
       <div class="field"><label>Category Name</label><input type="text" id="catName" placeholder="e.g. Social Media"></div>
     </div>
+    <div class="field"><label>Minimum Payment Per Worker ($) — Optional</label><input type="number" id="catMinPayment" placeholder="খালি রাখলে প্ল্যাটফর্মের সাধারণ মিনিমাম প্রযোজ্য হবে" min="0" step="0.01"></div>
     <div class="field">
       <label>Subcategories</label>
       <div id="catSubList"></div>
@@ -2289,6 +2329,18 @@ function renderCpaNetworkCards() {
         </div>
       </div>
 
+      <div class="field" style="margin-bottom:8px">
+        <label style="font-size:11px;font-weight:700">Target Countries <span style="font-weight:400;color:var(--text3)">— fetched offers will be filtered for these</span></label>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px" id="cpaCfg_${net.id}_countryPills">
+          ${['BD','US','GB','IN','PK','CA','AU','DE','NG','PH','MY','ID','GLOBAL'].map(c => {
+            const saved = cfg.targetCountries || [];
+            const active = saved.includes(c) || (!saved.length && c === 'GLOBAL');
+            return `<div onclick="cpaCfg_toggleCountry('${net.id}','${c}',this)" style="padding:4px 10px;border-radius:14px;font-size:10.5px;font-weight:700;cursor:pointer;border:1.5px solid ${active?net.color:'var(--border2)'};background:${active?net.color+'22':'var(--bg3)'};color:${active?'var(--text)':'var(--text3)'};">${c}</div>`;
+          }).join('')}
+        </div>
+        <input type="hidden" id="cpaCfg_${net.id}_targetCountries" value="${escHtml(JSON.stringify(cfg.targetCountries || []))}">
+      </div>
+
       <div style="display:flex;gap:8px;margin-top:12px">
         <button class="btn btn-ghost btn-sm" style="flex:1" onclick="cpaSaveNetwork('${net.id}')">
           <i class="ti ti-device-floppy"></i> Save Config
@@ -2324,6 +2376,25 @@ async function cpaToggleNetwork(networkId, enabled) {
   showToast(enabled ? `✅ ${networkId} enabled` : `⏸ ${networkId} disabled`, 'success');
 }
 
+function cpaCfg_toggleCountry(netId, code, el) {
+  const hidden = document.getElementById(`cpaCfg_${netId}_targetCountries`);
+  let countries = JSON.parse(hidden.value || '[]');
+  const net = CPA_NETWORKS.find(n => n.id === netId);
+  const color = net?.color || '#00E676';
+  if (countries.includes(code)) {
+    countries = countries.filter(c => c !== code);
+    el.style.borderColor = 'var(--border2)';
+    el.style.background = 'var(--bg3)';
+    el.style.color = 'var(--text3)';
+  } else {
+    countries.push(code);
+    el.style.borderColor = color;
+    el.style.background = color + '22';
+    el.style.color = 'var(--text)';
+  }
+  hidden.value = JSON.stringify(countries);
+}
+
 async function cpaSaveNetwork(networkId, silent = false) {
   ensureCpaState();
   const net = CPA_NETWORKS.find(n => n.id === networkId);
@@ -2337,6 +2408,10 @@ async function cpaSaveNetwork(networkId, silent = false) {
   const secretEl = document.getElementById(`cpaCfg_${networkId}_postbackSecret`);
   if (secretEl && secretEl.value.trim()) data.postbackSecret = secretEl.value.trim();
   else data.postbackSecret = generateDomainSecret(networkId);
+  const countriesEl = document.getElementById(`cpaCfg_${networkId}_targetCountries`);
+  if (countriesEl) {
+    try { data.targetCountries = JSON.parse(countriesEl.value || '[]'); } catch(e) { data.targetCountries = []; }
+  }
   S.cpa.networks[networkId] = { ...S.cpa.networks[networkId], ...data };
   const fb = window._fb; if (!fb) return;
   try {
@@ -2367,7 +2442,12 @@ function cpaUpdatePostbackUrls() {
 async function cpaFetchOffers(networkIdArg) {
   ensureCpaState();
   const netId = networkIdArg || document.getElementById('cpaFetchNetwork')?.value;
-  const country = document.getElementById('cpaFetchCountry')?.value.trim().toUpperCase() || '';
+  const countryRaw = document.getElementById('cpaFetchCountry')?.value.trim().toUpperCase() || '';
+  // If no manual filter selected, use first targetCountry from network config (if set)
+  let country = countryRaw === 'GLOBAL' ? '' : countryRaw;
+  if (!country && cfg.targetCountries && cfg.targetCountries.length && !cfg.targetCountries.includes('GLOBAL')) {
+    country = cfg.targetCountries[0];
+  }
   const net = CPA_NETWORKS.find(n => n.id === netId);
   const cfg = S.cpa.networks[netId] || {};
   const container = document.getElementById('cpaFetchResults');
@@ -2803,6 +2883,20 @@ async function cpaManualCredit(pbId) {
     showToast(`✅ $${(pb.amount||0).toFixed(2)} credited`, 'success');
     addLog(`CPA manual credit: $${pb.amount} → ${pb.userId}`, 'cpa', 'green');
   } catch (e) { showToast('❌ Credit failed: ' + e.message, 'error'); }
+}
+
+function adminPreviewSound() {
+  const SOUNDS = {
+    subtle_ding:   'https://cdn.freesound.org/previews/411/411749_5121236-lq.mp3',
+    success_chime: 'https://cdn.freesound.org/previews/456/456966_5121236-lq.mp3',
+    coin_drop:     'https://cdn.freesound.org/previews/341/341695_5858296-lq.mp3',
+    smooth_pop:    'https://cdn.freesound.org/previews/423/423332_4508799-lq.mp3',
+    modern_bell:   'https://cdn.freesound.org/previews/263/263530_1402302-lq.mp3',
+  };
+  const key = $('setCompletionSound')?.value || 'subtle_ding';
+  const url = SOUNDS[key] || SOUNDS.subtle_ding;
+  try { new Audio(url).play(); showToast('🔊 Playing preview…', 'info'); }
+  catch(e) { showToast('❌ Could not play audio', 'error'); }
 }
 
 // ── Startup loader ────────────────────────────────────────────────────────────
@@ -4137,14 +4231,44 @@ function openCategoryModal(id) {
   $('catModalTitle').textContent = cat ? 'Edit Category' : 'Add Category';
   $('catEmoji').value = cat ? (cat.emoji||'') : '';
   $('catName').value = cat ? (cat.name||'') : '';
+  $('catMinPayment').value = (cat && cat.minPayment != null) ? cat.minPayment : '';
+  S._catIconUrl = cat ? (cat.iconUrl||'') : '';
+  const iconPreview = $('catIconPreview'), iconRemoveBtn = $('catIconRemoveBtn');
+  if (S._catIconUrl) { iconPreview.innerHTML = `<img src="${S._catIconUrl}" style="width:100%;height:100%;object-fit:cover">`; iconRemoveBtn.style.display = ''; }
+  else { iconPreview.innerHTML = '🖼️'; iconRemoveBtn.style.display = 'none'; }
+  $('catIconFile').value = '';
   $('catErr').textContent = '';
   resetCatSubFields(cat ? cat.subcategories : null);
   openModal('categoryModal');
 }
+async function handleCatIconUpload(input) {
+  const file = input.files && input.files[0]; if (!file) return;
+  if (!file.type.startsWith('image/')) { showToast('শুধু ছবি ফাইল দিন', 'error'); input.value = ''; return; }
+  if (file.size > 5 * 1024 * 1024) { showToast('ছবি খুব বড় (সর্বোচ্চ 5MB)', 'error'); input.value = ''; return; }
+  const preview = $('catIconPreview');
+  try {
+    showToast('⬆ আইকন আপলোড হচ্ছে...', 'info');
+    const url = await uploadToCloudinary(file, 'workhive_categories');
+    S._catIconUrl = url;
+    if (preview) preview.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover">`;
+    const removeBtn = $('catIconRemoveBtn'); if (removeBtn) removeBtn.style.display = '';
+    showToast('✅ আইকন আপলোড সফল', 'success');
+  } catch(e) { console.error(e); showToast('❌ আইকন আপলোড ব্যর্থ হয়েছে', 'error'); }
+  finally { input.value = ''; }
+}
+function removeCatIcon() {
+  S._catIconUrl = '';
+  const preview = $('catIconPreview'); if (preview) preview.innerHTML = '🖼️';
+  const removeBtn = $('catIconRemoveBtn'); if (removeBtn) removeBtn.style.display = 'none';
+}
 async function saveCategory() {
-  const emoji = v('catEmoji')||'📁', name = v('catName');
+  const emoji = v('catEmoji')||'', name = v('catName');
+  const iconUrl = S._catIconUrl || '';
+  const minPaymentRaw = v('catMinPayment');
+  const minPayment = minPaymentRaw !== '' && minPaymentRaw != null ? Number(minPaymentRaw) : null;
   const errEl = $('catErr');
   if (!name) { errEl.textContent = 'ক্যাটাগরি নাম দিন'; return; }
+  if (minPaymentRaw !== '' && (isNaN(minPayment) || minPayment < 0)) { errEl.textContent = 'সঠিক Minimum Payment দিন'; return; }
   const dup = S.categories.find(c => c.name.toLowerCase()===name.toLowerCase() && c.id !== S._editCatId);
   if (dup) { errEl.textContent = 'এই নামে একটা ক্যাটাগরি ইতিমধ্যে আছে'; return; }
   const subs = Array.from(document.querySelectorAll('.cat-sub-input')).map(i=>i.value.trim()).filter(Boolean);
@@ -4152,12 +4276,12 @@ async function saveCategory() {
   const btn = $('catSaveBtn'); if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader spin-ico"></i> Saving...'; }
   try {
     if (S._editCatId) {
-      await fb.updateDoc(fb.doc(fb.db,'categories',S._editCatId), { emoji, name, subcategories: subs });
+      await fb.updateDoc(fb.doc(fb.db,'categories',S._editCatId), { emoji, iconUrl, name, minPayment, subcategories: subs });
       addLog(`✏️ Category updated: "${name}"`,'settings','purple');
       showToast('✅ Category updated!','success');
     } else {
       const order = S.categories.length;
-      await fb.addDoc(fb.collection(fb.db,'categories'), { emoji, name, subcategories: subs, order, createdAt: fb.serverTimestamp() });
+      await fb.addDoc(fb.collection(fb.db,'categories'), { emoji, iconUrl, name, minPayment, subcategories: subs, order, createdAt: fb.serverTimestamp() });
       addLog(`🆕 Category added: "${name}" (${subs.length} subcategories)`,'settings','green');
       showToast('✅ Category added — User App-এ লাইভ দেখাবে!','success');
     }
@@ -4275,6 +4399,7 @@ function listenSettings() {
       if ($('setEmailjsPublicKey')) $('setEmailjsPublicKey').value = s.emailjsPublicKey||'';
       if ($('setEmailjsVerifyTemplateId')) $('setEmailjsVerifyTemplateId').value = s.emailjsVerifyTemplateId||'';
       if ($('setEmailjsAuthEnabled')) $('setEmailjsAuthEnabled').checked = !!s.emailjsAuthEnabled;
+      if ($('setCompletionSound')) $('setCompletionSound').value = s.completionSound || 'subtle_ding';
       if ($('setBannerMsg')) $('setBannerMsg').value = s.banner||'';
       if ($('setBannerType')) $('setBannerType').value = s.bannerType||'info';
       if ($('toggleSpin')) $('toggleSpin').checked = s.spinEnabled!==false;
@@ -4663,6 +4788,7 @@ async function saveSettings() {
     emailjsPublicKey: v('setEmailjsPublicKey'),
     emailjsVerifyTemplateId: v('setEmailjsVerifyTemplateId'),
     emailjsAuthEnabled: !!$('setEmailjsAuthEnabled')?.checked,
+    completionSound: v('setCompletionSound') || 'subtle_ding',
   });
   const fb=window._fb; if(!fb){showToast('Firebase not ready','error');return;}
   try{
@@ -4689,6 +4815,11 @@ async function saveSettings() {
       kycEnabled:S.settings.kycEnabled,
       cloudinaryCloudName:S.settings.cloudinaryCloudName,
       cloudinaryUploadPreset:S.settings.cloudinaryUploadPreset,
+      emailjsServiceId: S.settings.emailjsServiceId,
+      emailjsTemplateId: S.settings.emailjsTemplateId,
+      emailjsPublicKey: S.settings.emailjsPublicKey,
+      emailjsVerifyTemplateId: S.settings.emailjsVerifyTemplateId,
+      emailjsAuthEnabled: S.settings.emailjsAuthEnabled,
     }, {merge:true});
     addLog('⚙️ Settings updated (live on User App)','settings','green');
     showToast('💾 Settings saved! User App-এ লাইভ আপডেট হয়েছে।','success');
