@@ -894,6 +894,7 @@ await setDoc(doc(db, 'users', newUser.uid), {
               <option value="pending_reapproval">🔄 Needs Re-Approval</option>
               <option value="approved">Approved</option>
               <option value="rejected">Rejected</option>
+              <option value="completed">🏁 Completed</option>
             </select>
             <button class="btn btn-primary btn-sm" onclick="openPostJobModal()"><i class="ti ti-plus"></i> Post New Job</button>
           </div>
@@ -1206,6 +1207,7 @@ if (window.Capacitor?.Plugins?.OneSignal) {
             <div style="font-size:11.5px;color:var(--text2);line-height:1.9;font-family:monospace;background:var(--bg4);border-radius:10px;padding:12px;word-break:break-all" id="postbackUrlDisplay">
               Configure your domain below, then copy the postback URL for each network.
             </div>
+            <div style="font-size:10.5px;color:var(--text3);margin-top:8px;line-height:1.7">⚠️ Macro tokens like <code>{transaction_id}</code>, <code>{payout}</code>, <code>{offer_id}</code> are placeholders — most networks support these names, but always check each network's own postback documentation and rename the tokens to match if they differ before pasting the URL into their dashboard.</div>
             <div class="field" style="margin-top:12px">
               <label>Your Site Domain (e.g. https://workhive.app)</label>
               <input type="text" id="cpaSiteDomain" placeholder="https://yoursite.com" oninput="cpaUpdatePostbackUrls()">
@@ -1378,6 +1380,16 @@ if (window.Capacitor?.Plugins?.OneSignal) {
                   <button class="btn btn-ghost btn-sm" onclick="emailjsTestSend('verify')">📤 Test</button>
                 </div>
                 <div class="field-sub" style="font-size:10px;color:var(--text3);margin-top:4px">Variables: to_email, to_name, otp_code, expires_minutes, site_name</div>
+              </div>
+              <div class="field">
+                <label>Template ID — Job Approved</label>
+                <input type="text" id="setEmailjsJobApprovalTemplateId" placeholder="template_xxxxxxx (ফাঁকা রাখলে উপরের default Template ID ব্যবহার হবে)">
+                <div class="field-sub" style="font-size:10px;color:var(--text3);margin-top:4px">Variables: to_email, to_name, job_title, job_reward, job_slots, site_name, view_url, subject</div>
+              </div>
+              <div class="field">
+                <label>Template ID — Job Rejected</label>
+                <input type="text" id="setEmailjsJobRejectionTemplateId" placeholder="template_xxxxxxx (ফাঁকা রাখলে উপরের default Template ID ব্যবহার হবে)">
+                <div class="field-sub" style="font-size:10px;color:var(--text3);margin-top:4px">Variables: to_email, to_name, job_title, reject_reason, site_name, edit_url, subject</div>
               </div>
               <button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> Save Media Settings</button>
               <button class="btn btn-ghost" style="width:100%" onclick="testCloudinaryUpload()"><i class="ti ti-upload"></i> Test Upload</button>
@@ -2416,6 +2428,11 @@ async function cpaSaveNetwork(networkId, silent = false) {
   const fb = window._fb; if (!fb) return;
   try {
     await fb.setDoc(fb.doc(fb.db, 'cpaNetworks', networkId), data, { merge: true });
+    // Mirror ONLY the postback secret into the public-readable half — postback.html
+    // runs unauthenticated (the CPA network's server calls it, not a logged-in
+    // browser) and needs this to validate incoming postbacks without ever being
+    // able to read the real API keys stored on the admin-only cpaNetworks doc.
+    await fb.setDoc(fb.doc(fb.db, 'cpaPostbackSecrets', networkId), { secret: data.postbackSecret }, { merge: true }).catch(() => {});
     if (!silent) showToast(`✅ ${net.name} saved`, 'success');
     addLog(`CPA: ${net.name} config saved`, 'settings', 'teal');
   } catch (e) { showToast('❌ Save failed: ' + e.message, 'error'); }
@@ -2428,7 +2445,7 @@ function cpaUpdatePostbackUrls() {
   display.innerHTML = CPA_NETWORKS.map(net => {
     const cfg = S.cpa.networks[net.id] || {};
     const secret = cfg.postbackSecret || generateDomainSecret(net.id);
-    const url = `${domain}/postback.html?network=${net.id}&uid=${net.postbackParam}&tid={transaction_id}&amount={payout}&secret=${secret}`;
+    const url = `${domain}/postback.html?network=${net.id}&uid=${net.postbackParam}&tid={transaction_id}&amount={payout}&offerid={offer_id}&secret=${secret}`;
     return `<div style="margin-bottom:12px">
       <div style="font-size:10.5px;font-weight:800;color:var(--text2);margin-bottom:3px">${net.icon} ${net.name}</div>
       <div style="font-size:10px;color:var(--teal);background:var(--bg);padding:8px 10px;border-radius:8px;word-break:break-all;cursor:pointer;border:1px solid var(--border)"
@@ -2442,14 +2459,14 @@ function cpaUpdatePostbackUrls() {
 async function cpaFetchOffers(networkIdArg) {
   ensureCpaState();
   const netId = networkIdArg || document.getElementById('cpaFetchNetwork')?.value;
+  const net = CPA_NETWORKS.find(n => n.id === netId);
+  const cfg = S.cpa.networks[netId] || {};
   const countryRaw = document.getElementById('cpaFetchCountry')?.value.trim().toUpperCase() || '';
   // If no manual filter selected, use first targetCountry from network config (if set)
   let country = countryRaw === 'GLOBAL' ? '' : countryRaw;
   if (!country && cfg.targetCountries && cfg.targetCountries.length && !cfg.targetCountries.includes('GLOBAL')) {
     country = cfg.targetCountries[0];
   }
-  const net = CPA_NETWORKS.find(n => n.id === netId);
-  const cfg = S.cpa.networks[netId] || {};
   const container = document.getElementById('cpaFetchResults');
   if (!net) { showToast('Unknown network', 'error'); return; }
 
@@ -3486,8 +3503,8 @@ function renderJobs() {
     const links = jobLinksOf(j);
     const shots = j.type==='proof' ? (j.screenshotCount||1) : 0;
     const heldNote = j.budgetHeld ? `<div style="font-size:11px;color:var(--amber);margin-top:4px"><i class="ti ti-lock" style="font-size:12px;vertical-align:-1px"></i> এই জবে ${fmtAmt(j.budgetHeld)} হোল্ড করা আছে${j.holdSettled?' (নিষ্পত্তি হয়ে গেছে)':''}</div>` : '';
-    const statusBadgeCls = j.status==='pending'?'amber':j.status==='pending_reapproval'?'purple':j.status==='approved'?'green':'red';
-    const statusBadgeTxt = j.status==='pending_reapproval'?'🔄 Re-Approval':(j.status||'pending');
+    const statusBadgeCls = j.status==='pending'?'amber':j.status==='pending_reapproval'?'purple':j.status==='approved'?'green':j.status==='completed'?'red':'red';
+    const statusBadgeTxt = j.status==='pending_reapproval'?'🔄 Re-Approval':j.status==='completed'?'🏁 Completed':(j.status||'pending');
     return `<div class="job-card ${j.status==='pending_reapproval'?'pending':(j.status||'pending')}">
       <div class="job-poster">
         <div class="poster-av" style="${isAdminJob?'background:var(--purple)':''}">${isAdminJob?'🐝':initials(j.postedByName||'?')}</div>
@@ -3534,7 +3551,11 @@ function renderJobs() {
         <div class="alert success" style="flex:1;margin-bottom:0;min-width:180px"><i class="ti ti-circle-check"></i> Live — Workers can see and complete this job.</div>
         <button class="btn ${j.isFeatured?'btn-warning':'btn-ghost'} btn-sm" title="${j.isFeatured?'Unfeature — remove from top of feed':'Feature this job — pin to top of user feed'}" onclick="toggleJobFeatured('${j.id}',${!!j.isFeatured})"><i class="ti ti-pin"></i> ${j.isFeatured?'Unfeature':'Feature'}</button>
         ${isAdminJob?`<button class="btn btn-warning btn-sm" onclick="editJob('${j.id}')"><i class="ti ti-edit"></i> Edit</button>`:''}
+        <button class="btn btn-danger btn-sm" title="Job শেষ করে দিন — ফিড থেকে সরে যাবে, নতুন worker আর submit করতে পারবে না, কিন্তু পুরনো pending submission review/pay করা যাবে" onclick="adminCompleteJob('${j.id}','${(j.title||'').replace(/'/g,"\\'")}')"><i class="ti ti-flag"></i> Mark Completed</button>
         <button class="btn btn-message btn-sm" title="সমস্যা পাওয়া গেলে লাইভ জব বন্ধ করুন — ইতিমধ্যে সম্পন্ন worker-দের পেমেন্ট অক্ষত থাকবে, বাকি স্লটের বাজেট আংশিক ফেরত যাবে" onclick="openReject('job','${j.id}','${(j.title||'').replace(/'/g,"\\'")}')"><i class="ti ti-alert-triangle"></i> Reject (Problem Found)</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteJob('${j.id}','${(j.title||'').replace(/'/g,"\\'")}')"><i class="ti ti-trash"></i> Remove</button>
+      </div>`:j.status==='completed'?`<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <div class="alert danger" style="flex:1;margin-bottom:0;min-width:180px;background:var(--red-dim,rgba(239,68,68,.08));color:var(--red)"><i class="ti ti-flag"></i> Completed — removed from public feed. Pending submissions (if any) are still reviewable/payable.</div>
         <button class="btn btn-danger btn-sm" onclick="deleteJob('${j.id}','${(j.title||'').replace(/'/g,"\\'")}')"><i class="ti ti-trash"></i> Remove</button>
       </div>`:`<div style="display:flex;gap:10px;align-items:center">
         <div class="alert danger" style="flex:1;margin-bottom:0"><i class="ti ti-circle-x"></i> Rejected — Not visible to workers.</div>
@@ -3580,6 +3601,7 @@ async function approveJob(id) {
   notifyUser(j.postedBy,'✅ Job Approved!',`Your job "${j.title}" has been approved and is now live for workers.`);
   // Email poster via EmailJS (best-effort — non-blocking)
   if (j.postedByEmail) {
+    const domain = (S.settings.siteDomain || 'https://workhive.pro').replace(/\/+$/, '');
     sendAdminEmailJS({
       to_email: j.postedByEmail,
       to_name: j.postedByName || 'User',
@@ -3587,10 +3609,26 @@ async function approveJob(id) {
       job_reward: '$' + (j.reward || 0).toFixed(2),
       job_slots: String(j.limit || 1),
       site_name: S.settings.siteName || 'WorkHive',
+      view_url: `${domain}/?screen=myjobs`,
       subject: '✅ আপনার জবটি অ্যাপ্রুভ হয়েছে!',
     }, S.settings.emailjsJobApprovalTemplateId || S.settings.emailjsTemplateId).catch(()=>{});
   }
   showToast('✅ Job approved and published!','success');
+}
+
+// Admin can force-complete ANY job (any status) at will — e.g. budget exhausted,
+// admin no longer wants it running. Distinct from Reject: no refund happens here
+// (the job simply stops taking new workers), and any pending submissions on it
+// remain fully reviewable/payable — nothing here touches taskSubmissions.
+async function adminCompleteJob(id, title) {
+  if (!confirm(`"${title||'এই জব'}" completed মার্ক করতে চান? এটা পাবলিক ফিড থেকে সরে যাবে এবং নতুন worker আর submit করতে পারবে না। আগের pending submission-গুলো এখনো review/pay করা যাবে।`)) return;
+  const j=S.jobs.find(x=>x.id===id); if(!j)return;
+  const fb=window._fb; if(!fb)return;
+  await fb.updateDoc(fb.doc(fb.db,'jobs',id),{status:'completed'}).catch((e)=>{console.error(e);showToast('❌ Update failed','error');return;});
+  addLog(`🏁 Job marked completed: "${j.title}" by ${j.postedByName||'Unknown'}`,'job','red');
+  addAdminNotif('🏁 Job Completed',`"${j.title}" has been marked completed by admin.`,'info');
+  notifyUser(j.postedBy,'🏁 Job Marked Completed',`Your job "${j.title}" has been marked completed by admin and removed from the public feed. Any pending submissions will still be reviewed.`);
+  showToast('🏁 Job marked completed','success');
 }
 
 const MAX_FEATURED_JOBS = 5;
@@ -4019,6 +4057,19 @@ async function confirmReject() {
         ? `আপনার লাইভ জব "${j?.title}" সমস্যার কারণে বন্ধ করা হয়েছে। বাকি ${remainingSlots} স্লটের ${fmtAmt(refundAmount)} আপনার ব্যালেন্সে ফেরত দেওয়া হয়েছে। কারণ: ${reason}`
         : `Your job "${j?.title}" was not approved. Reason: ${reason}${needsRefund?` ${fmtAmt(refundAmount)} has been refunded to your balance.`:''}`);
       showToast(needsRefund ? `❌ Job ${wasLive?'stopped':'rejected'} & ${fmtAmt(refundAmount)} refunded` : `❌ Job ${wasLive?'stopped':'rejected'}`,'error');
+      // Email poster via EmailJS (best-effort — non-blocking, never fails the reject action)
+      if (j && j.postedByEmail) {
+        const domain = (S.settings.siteDomain || 'https://workhive.pro').replace(/\/+$/, '');
+        sendAdminEmailJS({
+          to_email: j.postedByEmail,
+          to_name: j.postedByName || 'User',
+          job_title: j.title || 'Your Job',
+          reject_reason: reason,
+          site_name: S.settings.siteName || 'WorkHive',
+          edit_url: `${domain}/?screen=myjobs`,
+          subject: '❌ আপনার জবটি বাতিল করা হয়েছে',
+        }, S.settings.emailjsJobRejectionTemplateId || S.settings.emailjsTemplateId).catch(()=>{});
+      }
     } else if(type==='deposit'){
       const d=S.deposits.find(x=>x.id===id);
       await fb.updateDoc(fb.doc(fb.db,'deposits',id),{status:'rejected',rejectReason:reason});
@@ -4380,6 +4431,14 @@ function listenSettings() {
         kycEnabled: d.kycEnabled !== undefined ? d.kycEnabled : S.settings.kycEnabled,
         cloudinaryCloudName: d.cloudinaryCloudName ?? S.settings.cloudinaryCloudName,
         cloudinaryUploadPreset: d.cloudinaryUploadPreset ?? S.settings.cloudinaryUploadPreset,
+        emailjsServiceId: d.emailjsServiceId ?? S.settings.emailjsServiceId,
+        emailjsTemplateId: d.emailjsTemplateId ?? S.settings.emailjsTemplateId,
+        emailjsPublicKey: d.emailjsPublicKey ?? S.settings.emailjsPublicKey,
+        emailjsVerifyTemplateId: d.emailjsVerifyTemplateId ?? S.settings.emailjsVerifyTemplateId,
+        emailjsJobApprovalTemplateId: d.emailjsJobApprovalTemplateId ?? S.settings.emailjsJobApprovalTemplateId,
+        emailjsJobRejectionTemplateId: d.emailjsJobRejectionTemplateId ?? S.settings.emailjsJobRejectionTemplateId,
+        emailjsAuthEnabled: d.emailjsAuthEnabled ?? S.settings.emailjsAuthEnabled,
+        siteDomain: d.siteDomain ?? S.settings.siteDomain,
       });
       const s = S.settings;
       if ($('setName')) $('setName').value = s.name||'WorkHive';
@@ -4398,6 +4457,9 @@ function listenSettings() {
       if ($('setEmailjsTemplateId')) $('setEmailjsTemplateId').value = s.emailjsTemplateId||'';
       if ($('setEmailjsPublicKey')) $('setEmailjsPublicKey').value = s.emailjsPublicKey||'';
       if ($('setEmailjsVerifyTemplateId')) $('setEmailjsVerifyTemplateId').value = s.emailjsVerifyTemplateId||'';
+      if ($('setEmailjsJobApprovalTemplateId')) $('setEmailjsJobApprovalTemplateId').value = s.emailjsJobApprovalTemplateId||'';
+      if ($('setEmailjsJobRejectionTemplateId')) $('setEmailjsJobRejectionTemplateId').value = s.emailjsJobRejectionTemplateId||'';
+      if ($('cpaSiteDomain') && !$('cpaSiteDomain').value) $('cpaSiteDomain').value = s.siteDomain||'';
       if ($('setEmailjsAuthEnabled')) $('setEmailjsAuthEnabled').checked = !!s.emailjsAuthEnabled;
       if ($('setCompletionSound')) $('setCompletionSound').value = s.completionSound || 'subtle_ding';
       if ($('setBannerMsg')) $('setBannerMsg').value = s.banner||'';
@@ -4787,6 +4849,9 @@ async function saveSettings() {
     emailjsTemplateId: v('setEmailjsTemplateId'),
     emailjsPublicKey: v('setEmailjsPublicKey'),
     emailjsVerifyTemplateId: v('setEmailjsVerifyTemplateId'),
+    emailjsJobApprovalTemplateId: v('setEmailjsJobApprovalTemplateId'),
+    emailjsJobRejectionTemplateId: v('setEmailjsJobRejectionTemplateId'),
+    siteDomain: v('cpaSiteDomain'),
     emailjsAuthEnabled: !!$('setEmailjsAuthEnabled')?.checked,
     completionSound: v('setCompletionSound') || 'subtle_ding',
   });
@@ -4819,6 +4884,9 @@ async function saveSettings() {
       emailjsTemplateId: S.settings.emailjsTemplateId,
       emailjsPublicKey: S.settings.emailjsPublicKey,
       emailjsVerifyTemplateId: S.settings.emailjsVerifyTemplateId,
+      emailjsJobApprovalTemplateId: S.settings.emailjsJobApprovalTemplateId,
+      emailjsJobRejectionTemplateId: S.settings.emailjsJobRejectionTemplateId,
+      siteDomain: S.settings.siteDomain,
       emailjsAuthEnabled: S.settings.emailjsAuthEnabled,
     }, {merge:true});
     addLog('⚙️ Settings updated (live on User App)','settings','green');
