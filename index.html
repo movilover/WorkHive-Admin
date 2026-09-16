@@ -1391,6 +1391,19 @@ if (window.Capacitor?.Plugins?.OneSignal) {
                 <input type="text" id="setEmailjsJobRejectionTemplateId" placeholder="template_xxxxxxx (ফাঁকা রাখলে উপরের default Template ID ব্যবহার হবে)">
                 <div class="field-sub" style="font-size:10px;color:var(--text3);margin-top:4px">Variables: to_email, to_name, job_title, reject_reason, site_name, edit_url, subject</div>
               </div>
+
+              <div style="margin-top:18px;padding-top:14px;border-top:1px dashed var(--border)">
+                <div class="card-title" style="margin-bottom:4px">📧 Job Approve/Reject — আলাদা EmailJS অ্যাকাউন্ট (ঐচ্ছিক)</div>
+                <div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.7">EmailJS-এর ফ্রি প্ল্যানে একটা অ্যাকাউন্টে সীমিত সংখ্যক টেমপ্লেট রাখা যায় — তাই Job Approved/Rejected টেমপ্লেট দুটো যদি সম্পূর্ণ আলাদা Gmail দিয়ে খোলা আলাদা EmailJS অ্যাকাউন্টে রাখা হয়ে থাকে, তাহলে সেই অ্যাকাউন্টের নিজস্ব Service ID ও Public Key এখানে বসান। খালি রাখলে উপরের ডিফল্ট Service ID/Public Key ব্যবহার হবে (একই অ্যাকাউন্ট হলে খালি রাখুন)।</div>
+                <div class="field">
+                  <label>Job Emails — Service ID</label>
+                  <input type="text" id="setEmailjsJobServiceId" placeholder="service_xxxxxxx (আলাদা অ্যাকাউন্ট হলে বসান, নাহলে খালি)">
+                </div>
+                <div class="field">
+                  <label>Job Emails — Public Key</label>
+                  <input type="text" id="setEmailjsJobPublicKey" placeholder="public key (আলাদা অ্যাকাউন্ট হলে বসান, নাহলে খালি)">
+                </div>
+              </div>
               <button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> Save Media Settings</button>
               <button class="btn btn-ghost" style="width:100%" onclick="testCloudinaryUpload()"><i class="ti ti-upload"></i> Test Upload</button>
               <div class="lf-hint" id="cloudinaryTestResult" style="margin-top:8px"></div>
@@ -3571,8 +3584,16 @@ function viewPoster(uid) {
 }
 
 let _adminEmailJsReady = false;
-async function sendAdminEmailJS(templateParams, templateId) {
-  const si = S.settings.emailjsServiceId, pk = S.settings.emailjsPublicKey;
+async function sendAdminEmailJS(templateParams, templateId, overrideServiceId, overridePublicKey) {
+  // Job Approve/Reject emails can run on their OWN separate EmailJS account
+  // (its own Gmail + service ID + public key) — EmailJS's free tier caps how
+  // many templates one account can hold, so it's common to split templates
+  // across multiple EmailJS accounts. When overrideServiceId/overridePublicKey
+  // are passed (see approveJob/confirmReject below), THOSE are used instead of
+  // the default/shared EmailJS credentials; otherwise this falls back to the
+  // single shared account exactly as before (OTP emails, broadcasts, etc.).
+  const si = overrideServiceId || S.settings.emailjsServiceId;
+  const pk = overridePublicKey || S.settings.emailjsPublicKey;
   const tid = templateId || S.settings.emailjsTemplateId;
   if (!si || !tid || !pk) { console.warn('EmailJS not configured — skipping email'); return; }
   if (!_adminEmailJsReady) {
@@ -3611,7 +3632,8 @@ async function approveJob(id) {
       site_name: S.settings.siteName || 'WorkHive',
       view_url: `${domain}/?screen=myjobs`,
       subject: '✅ আপনার জবটি অ্যাপ্রুভ হয়েছে!',
-    }, S.settings.emailjsJobApprovalTemplateId || S.settings.emailjsTemplateId).catch(()=>{});
+    }, S.settings.emailjsJobApprovalTemplateId || S.settings.emailjsTemplateId,
+       S.settings.emailjsJobServiceId, S.settings.emailjsJobPublicKey).catch(()=>{});
   }
   showToast('✅ Job approved and published!','success');
 }
@@ -4068,7 +4090,8 @@ async function confirmReject() {
           site_name: S.settings.siteName || 'WorkHive',
           edit_url: `${domain}/?screen=myjobs`,
           subject: '❌ আপনার জবটি বাতিল করা হয়েছে',
-        }, S.settings.emailjsJobRejectionTemplateId || S.settings.emailjsTemplateId).catch(()=>{});
+        }, S.settings.emailjsJobRejectionTemplateId || S.settings.emailjsTemplateId,
+           S.settings.emailjsJobServiceId, S.settings.emailjsJobPublicKey).catch(()=>{});
       }
     } else if(type==='deposit'){
       const d=S.deposits.find(x=>x.id===id);
@@ -4437,6 +4460,8 @@ function listenSettings() {
         emailjsVerifyTemplateId: d.emailjsVerifyTemplateId ?? S.settings.emailjsVerifyTemplateId,
         emailjsJobApprovalTemplateId: d.emailjsJobApprovalTemplateId ?? S.settings.emailjsJobApprovalTemplateId,
         emailjsJobRejectionTemplateId: d.emailjsJobRejectionTemplateId ?? S.settings.emailjsJobRejectionTemplateId,
+        emailjsJobServiceId: d.emailjsJobServiceId ?? S.settings.emailjsJobServiceId,
+        emailjsJobPublicKey: d.emailjsJobPublicKey ?? S.settings.emailjsJobPublicKey,
         emailjsAuthEnabled: d.emailjsAuthEnabled ?? S.settings.emailjsAuthEnabled,
         siteDomain: d.siteDomain ?? S.settings.siteDomain,
       });
@@ -4459,6 +4484,8 @@ function listenSettings() {
       if ($('setEmailjsVerifyTemplateId')) $('setEmailjsVerifyTemplateId').value = s.emailjsVerifyTemplateId||'';
       if ($('setEmailjsJobApprovalTemplateId')) $('setEmailjsJobApprovalTemplateId').value = s.emailjsJobApprovalTemplateId||'';
       if ($('setEmailjsJobRejectionTemplateId')) $('setEmailjsJobRejectionTemplateId').value = s.emailjsJobRejectionTemplateId||'';
+      if ($('setEmailjsJobServiceId')) $('setEmailjsJobServiceId').value = s.emailjsJobServiceId||'';
+      if ($('setEmailjsJobPublicKey')) $('setEmailjsJobPublicKey').value = s.emailjsJobPublicKey||'';
       if ($('cpaSiteDomain') && !$('cpaSiteDomain').value) $('cpaSiteDomain').value = s.siteDomain||'';
       if ($('setEmailjsAuthEnabled')) $('setEmailjsAuthEnabled').checked = !!s.emailjsAuthEnabled;
       if ($('setCompletionSound')) $('setCompletionSound').value = s.completionSound || 'subtle_ding';
@@ -4851,6 +4878,8 @@ async function saveSettings() {
     emailjsVerifyTemplateId: v('setEmailjsVerifyTemplateId'),
     emailjsJobApprovalTemplateId: v('setEmailjsJobApprovalTemplateId'),
     emailjsJobRejectionTemplateId: v('setEmailjsJobRejectionTemplateId'),
+    emailjsJobServiceId: v('setEmailjsJobServiceId'),
+    emailjsJobPublicKey: v('setEmailjsJobPublicKey'),
     siteDomain: v('cpaSiteDomain'),
     emailjsAuthEnabled: !!$('setEmailjsAuthEnabled')?.checked,
     completionSound: v('setCompletionSound') || 'subtle_ding',
@@ -4886,6 +4915,8 @@ async function saveSettings() {
       emailjsVerifyTemplateId: S.settings.emailjsVerifyTemplateId,
       emailjsJobApprovalTemplateId: S.settings.emailjsJobApprovalTemplateId,
       emailjsJobRejectionTemplateId: S.settings.emailjsJobRejectionTemplateId,
+      emailjsJobServiceId: S.settings.emailjsJobServiceId,
+      emailjsJobPublicKey: S.settings.emailjsJobPublicKey,
       siteDomain: S.settings.siteDomain,
       emailjsAuthEnabled: S.settings.emailjsAuthEnabled,
     }, {merge:true});
