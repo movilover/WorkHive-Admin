@@ -1209,7 +1209,7 @@ if (window.Capacitor?.Plugins?.OneSignal) {
             </div>
             <div style="font-size:10.5px;color:var(--text3);margin-top:8px;line-height:1.7">⚠️ Macro tokens like <code>{transaction_id}</code>, <code>{payout}</code>, <code>{offer_id}</code> are placeholders — most networks support these names, but always check each network's own postback documentation and rename the tokens to match if they differ before pasting the URL into their dashboard.</div>
             <div class="field" style="margin-top:12px">
-              <label>Your Site Domain (e.g. https://workhive.app)</label>
+              <label>Your Site Domain (e.g. https://workhive.pro)</label>
               <input type="text" id="cpaSiteDomain" placeholder="https://yoursite.com" oninput="cpaUpdatePostbackUrls()">
             </div>
           </div>
@@ -1410,7 +1410,7 @@ if (window.Capacitor?.Plugins?.OneSignal) {
             </div>
             <div class="card">
               <div class="card-title"><i class="ti ti-headset"></i> Support Info</div>
-              <div class="field"><label>Support Email</label><input type="text" id="setSupportEmail" value="support@workhive.app"></div>
+              <div class="field"><label>Support Email</label><input type="text" id="setSupportEmail" value="support@workhive.pro"></div>
               <div class="field"><label>Support / Live Chat Hours</label><input type="text" id="setSupportHours" value="9 AM – 11 PM"></div>
               <div class="field"><label>Average Response Time</label><input type="text" id="setSupportResponse" value="Within 12 hours"></div>
               <button class="btn btn-primary" style="width:100%" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> Save Support Settings</button>
@@ -1939,7 +1939,7 @@ const S = {
   bcHistory: [], emailBcHistory: [],
   dupGroups: [], dupUserIds: new Set(),
   settings: { name: 'WorkHive', minWd: 5, minDep: 1, fee: 5, refGen1: 0.5, refGen2: 0.25, refGen3: 0.10,
-    supportEmail: 'support@workhive.app', supportHours: '9 AM – 11 PM', supportResponse: 'Within 12 hours',
+    supportEmail: 'support@workhive.pro', supportHours: '9 AM – 11 PM', supportResponse: 'Within 12 hours',
     banner: '', bannerType: 'info', spinEnabled: true,
     postFeatureEnabled: true, postMinReward: 0.02, postMaxReward: 5.00, postMinSlots: 5, postMaxSlots: 500, postPlatformFeePct: 10,
     kycEnabled: true, cloudinaryCloudName: '', cloudinaryUploadPreset: '',
@@ -3815,7 +3815,7 @@ async function postJob() {
         links, link: links[0] || '',
         instructions, reward, limit, filled:0, country,
         screenshotCount,
-        postedBy:'admin', postedByName:'WorkHive Admin', postedByEmail:'admin@workhive.app',
+        postedBy:'admin', postedByName:'WorkHive Admin', postedByEmail:'admin@workhive.pro',
         status:'approved',
         submittedAt:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),
         _ts:Date.now(), createdAt: fb.serverTimestamp()
@@ -4646,7 +4646,7 @@ function emailBcInsertTemplate() {
   <div class="body">
     <h1>Hello {{name}}! 👋</h1>
     <p>Your message goes here. Keep it short and friendly.</p>
-    <p><a href="https://workhive.app" class="btn">Open WorkHive →</a></p>
+    <p><a href="https://workhive.pro" class="btn">Open WorkHive →</a></p>
   </div>
   <div class="footer">You received this because you're a WorkHive member. © 2026 WorkHive</div>
 </div></body></html>`;
@@ -4857,7 +4857,7 @@ async function saveSettings() {
     refGen1:parseFloat($('setRefGen1')?.value)||0,
     refGen2:parseFloat($('setRefGen2')?.value)||0,
     refGen3:parseFloat($('setRefGen3')?.value)||0,
-    supportEmail:v('setSupportEmail')||'support@workhive.app',
+    supportEmail:v('setSupportEmail')||'support@workhive.pro',
     supportHours:v('setSupportHours')||'9 AM – 11 PM',
     supportResponse:v('setSupportResponse')||'Within 12 hours',
     banner:v('setBannerMsg'),
@@ -5084,13 +5084,20 @@ function renderSupportThreadList() {
   if (!list.length) { el.innerHTML = '<div style="padding:28px;text-align:center;color:var(--text3)">কোনো সাপোর্ট থ্রেড নেই</div>'; return; }
   el.innerHTML = list.map(t => {
     const time = t.updatedAt?.toDate ? t.updatedAt.toDate().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+    const unread = t.unreadCount || 0;
     return `<div class="sup-thread-row ${t.id === S.support.activeUid ? 'active' : ''} ${t.unreadByAdmin ? 'unread' : ''}" onclick="openSupportThread('${t.id}')">
       <div class="user-av" style="background:var(--${avColor(t.userName)}-bg);color:var(--${avColor(t.userName)});border-color:var(--${avColor(t.userName)}-border)">${initials(t.userName)}</div>
       <div style="flex:1;min-width:0">
         <div class="sup-thread-name">${devEsc(t.userName || 'Unknown')}</div>
         <div class="sup-thread-preview">${t.lastFrom === 'admin' ? '<b>You:</b> ' : ''}${devEsc(t.lastMessage || '')}</div>
       </div>
-      <div class="sup-thread-time">${time}</div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+        <div class="sup-thread-time">${time}</div>
+        <div style="display:flex;align-items:center;gap:5px">
+          <span title="Total messages" style="font-size:9.5px;color:var(--text3);font-weight:700">💬 ${t.messageCount || 0}</span>
+          ${unread > 0 ? `<span title="Unread from user" style="font-size:9.5px;font-weight:800;color:#fff;background:var(--red);border-radius:10px;padding:1px 6px;min-width:16px;text-align:center">${unread}</span>` : ''}
+        </div>
+      </div>
     </div>`;
   }).join('');
 }
@@ -5118,7 +5125,7 @@ async function openSupportThread(uid) {
     e => console.warn('supportChat listener:', e)
   );
   if (t && t.unreadByAdmin) {
-    fb.setDoc(fb.doc(fb.db, 'supportThreads', uid), { unreadByAdmin: false }, { merge: true }).catch(() => {});
+    fb.setDoc(fb.doc(fb.db, 'supportThreads', uid), { unreadByAdmin: false, unreadCount: 0 }, { merge: true }).catch(() => {});
   }
 }
 function renderSupportChat() {
@@ -5137,7 +5144,7 @@ async function sendSupportAdminReply() {
   input.value = '';
   try {
     await fb.addDoc(fb.collection(fb.db, 'users', uid, 'supportChat'), { from: 'admin', text, _ts: Date.now(), createdAt: fb.serverTimestamp() });
-    await fb.setDoc(fb.doc(fb.db, 'supportThreads', uid), { lastMessage: text, lastFrom: 'admin', unreadByAdmin: false, updatedAt: fb.serverTimestamp() }, { merge: true });
+    await fb.setDoc(fb.doc(fb.db, 'supportThreads', uid), { lastMessage: text, lastFrom: 'admin', unreadByAdmin: false, unreadCount: 0, messageCount: fb.increment(1), updatedAt: fb.serverTimestamp() }, { merge: true });
     sendPushNotification(uid, '📩 Support Reply', text);
   } catch (e) { console.error(e); showToast('❌ Reply failed — check Firestore permissions', 'error'); }
 }
@@ -5152,7 +5159,7 @@ async function handleSupportAdminAttach(input) {
     showToast('⬆ ছবি আপলোড হচ্ছে...', 'info');
     const url = await uploadToCloudinary(file, 'workhive_support');
     await fb.addDoc(fb.collection(fb.db, 'users', uid, 'supportChat'), { from: 'admin', text: '', imageUrl: url, _ts: Date.now(), createdAt: fb.serverTimestamp() });
-    await fb.setDoc(fb.doc(fb.db, 'supportThreads', uid), { lastMessage: '📷 Image', lastFrom: 'admin', unreadByAdmin: false, updatedAt: fb.serverTimestamp() }, { merge: true });
+    await fb.setDoc(fb.doc(fb.db, 'supportThreads', uid), { lastMessage: '📷 Image', lastFrom: 'admin', unreadByAdmin: false, unreadCount: 0, messageCount: fb.increment(1), updatedAt: fb.serverTimestamp() }, { merge: true });
   } catch (e) { console.error(e); showToast('❌ ছবি পাঠাতে ব্যর্থ হয়েছে', 'error'); }
 }
 
