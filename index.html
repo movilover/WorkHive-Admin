@@ -306,6 +306,15 @@ table tbody tr:hover td{background:rgba(255,255,255,.015)}
 .sup-thread-preview{font-size:11px;color:var(--text3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px}
 .sup-thread-time{font-size:9.5px;color:var(--text3);flex-shrink:0}
 .sup-chat-card{padding:0;display:flex;flex-direction:column;height:72vh}
+/* Clean popup behavior on narrow screens — a dual-pane inbox doesn't fit on
+   mobile, so opening a thread there takes over the full screen like a modal,
+   with its own close (✕) button back to the thread list. */
+@media (max-width:768px){
+  .sup-chat-card.chat-open{position:fixed;inset:0;z-index:300;height:100vh;border-radius:0;margin:0}
+}
+.sup-chat-close{display:none;cursor:pointer;padding:6px;border-radius:8px;color:var(--text3)}
+@media (max-width:768px){ .sup-chat-close{display:flex} }
+.sup-chat-close:hover{background:var(--bg3);color:var(--text)}
 .sup-msg-area{flex:1;overflow-y:auto;padding:14px 15px;display:flex;flex-direction:column;gap:10px}
 .sup-msg-row{display:flex;max-width:78%}
 .sup-msg-row.them{align-self:flex-start}
@@ -1162,6 +1171,7 @@ if (window.Capacitor?.Plugins?.OneSignal) {
                   <div style="font-size:10.5px;color:var(--text3)" id="supChatEmail">—</div>
                 </div>
                 <span class="badge blue" id="supChatLang">EN</span>
+                <div class="sup-chat-close" onclick="closeSupportThread()" title="Close"><i class="ti ti-x" style="font-size:18px"></i></div>
               </div>
               <div id="supportMsgArea" class="sup-msg-area"></div>
               <div style="display:flex;align-items:center;gap:8px;padding:12px 14px;border-top:1px solid var(--border);flex-shrink:0">
@@ -1414,6 +1424,12 @@ if (window.Capacitor?.Plugins?.OneSignal) {
               <div class="field"><label>Support / Live Chat Hours</label><input type="text" id="setSupportHours" value="9 AM – 11 PM"></div>
               <div class="field"><label>Average Response Time</label><input type="text" id="setSupportResponse" value="Within 12 hours"></div>
               <button class="btn btn-primary" style="width:100%" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> Save Support Settings</button>
+            </div>
+            <div class="card">
+              <div class="card-title"><i class="ti ti-file-text"></i> নিয়মাবলী ও নীতিমালা (Rules Tab)</div>
+              <div style="font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.7">এখানে যা লিখবেন সেটাই ইউজারদের Profile → "নিয়মাবলী ও নীতিমালা" পাতায় হুবহু দেখাবে (plain text, লাইন-ব্রেক সহ)।</div>
+              <div class="field"><textarea id="setRulesContent" rows="16" style="width:100%;font-family:inherit;font-size:12px;line-height:1.7;resize:vertical"></textarea></div>
+              <button class="btn btn-primary" style="width:100%" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> Save Rules Content</button>
             </div>
           </div>
           <div>
@@ -1939,7 +1955,7 @@ const S = {
   bcHistory: [], emailBcHistory: [],
   dupGroups: [], dupUserIds: new Set(),
   settings: { name: 'WorkHive', minWd: 5, minDep: 1, fee: 5, refGen1: 0.5, refGen2: 0.25, refGen3: 0.10,
-    supportEmail: 'support@workhive.pro', supportHours: '9 AM – 11 PM', supportResponse: 'Within 12 hours',
+    supportEmail: 'support@workhive.pro', supportHours: '9 AM – 11 PM', supportResponse: 'Within 12 hours', rulesContent: '',
     banner: '', bannerType: 'info', spinEnabled: true,
     postFeatureEnabled: true, postMinReward: 0.02, postMaxReward: 5.00, postMinSlots: 5, postMaxSlots: 500, postPlatformFeePct: 10,
     kycEnabled: true, cloudinaryCloudName: '', cloudinaryUploadPreset: '',
@@ -4451,6 +4467,7 @@ function listenSettings() {
         refGen2: d.refGen2 ?? S.settings.refGen2,
         refGen3: d.refGen3 ?? S.settings.refGen3,
         supportEmail: d.supportEmail ?? S.settings.supportEmail,
+        rulesContent: d.rulesContent ?? S.settings.rulesContent,
         supportHours: d.supportHours ?? S.settings.supportHours,
         supportResponse: d.supportResponse ?? S.settings.supportResponse,
         banner: d.banner ?? S.settings.banner,
@@ -4485,6 +4502,7 @@ function listenSettings() {
       if ($('setRefGen2')) $('setRefGen2').value = s.refGen2??0.25;
       if ($('setRefGen3')) $('setRefGen3').value = s.refGen3??0.10;
       if ($('setSupportEmail')) $('setSupportEmail').value = s.supportEmail||'';
+      if ($('setRulesContent') && !$('setRulesContent').value) $('setRulesContent').value = s.rulesContent||'';
       if ($('setSupportHours')) $('setSupportHours').value = s.supportHours||'';
       if ($('setSupportResponse')) $('setSupportResponse').value = s.supportResponse||'';
       if ($('setCloudinaryCloudName')) $('setCloudinaryCloudName').value = s.cloudinaryCloudName||'';
@@ -4869,6 +4887,7 @@ async function saveSettings() {
     refGen2:parseFloat($('setRefGen2')?.value)||0,
     refGen3:parseFloat($('setRefGen3')?.value)||0,
     supportEmail:v('setSupportEmail')||'support@workhive.pro',
+    rulesContent: v('setRulesContent'),
     supportHours:v('setSupportHours')||'9 AM – 11 PM',
     supportResponse:v('setSupportResponse')||'Within 12 hours',
     banner:v('setBannerMsg'),
@@ -4906,6 +4925,7 @@ async function saveSettings() {
       refGen2:S.settings.refGen2,
       refGen3:S.settings.refGen3,
       supportEmail:S.settings.supportEmail,
+      rulesContent: S.settings.rulesContent,
       supportHours:S.settings.supportHours,
       supportResponse:S.settings.supportResponse,
       banner:S.settings.banner,
@@ -5112,11 +5132,19 @@ function renderSupportThreadList() {
     </div>`;
   }).join('');
 }
+function closeSupportThread() {
+  S.support.activeUid = null;
+  renderSupportThreadList();
+  $('supportChatCard')?.classList.remove('chat-open');
+  $('supportChatActive').style.display = 'none';
+  $('supportChatEmpty').style.display = 'flex';
+}
 async function openSupportThread(uid) {
   S.support.activeUid = uid;
   renderSupportThreadList();
   $('supportChatEmpty').style.display = 'none';
   $('supportChatActive').style.display = 'flex';
+  $('supportChatCard')?.classList.add('chat-open'); // full-screen popup on mobile
   const t = S.support.threads.find(x => x.id === uid);
   if (t) {
     $('supChatName').textContent = t.userName || 'Unknown';
