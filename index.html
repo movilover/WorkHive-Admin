@@ -3596,6 +3596,7 @@ function renderJobs() {
         <button class="btn btn-danger btn-sm" onclick="deleteJob('${j.id}','${(j.title||'').replace(/'/g,"\\'")}')"><i class="ti ti-trash"></i> Remove</button>
       </div>`:j.status==='completed'?`<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <div class="alert danger" style="flex:1;margin-bottom:0;min-width:180px;background:var(--red-dim,rgba(239,68,68,.08));color:var(--red)"><i class="ti ti-flag"></i> Completed — removed from public feed. Pending submissions (if any) are still reviewable/payable.</div>
+        ${(j.filled||0) < (j.limit||0) ? `<button class="btn btn-approve btn-sm" onclick="relistJob('${j.id}','${(j.title||'').replace(/'/g,"\\'")}')"><i class="ti ti-refresh"></i> Relist / Live Again</button>` : ''}
         <button class="btn btn-danger btn-sm" onclick="deleteJob('${j.id}','${(j.title||'').replace(/'/g,"\\'")}')"><i class="ti ti-trash"></i> Remove</button>
       </div>`:`<div style="display:flex;gap:10px;align-items:center">
         <div class="alert danger" style="flex:1;margin-bottom:0"><i class="ti ti-circle-x"></i> Rejected — Not visible to workers.</div>
@@ -3622,7 +3623,13 @@ async function sendAdminEmailJS(templateParams, templateId, overrideServiceId, o
   const si = overrideServiceId || S.settings.emailjsServiceId;
   const pk = overridePublicKey || S.settings.emailjsPublicKey;
   const tid = templateId || S.settings.emailjsTemplateId;
-  if (!si || !tid || !pk) { console.warn('EmailJS not configured — skipping email'); return; }
+  if (!si || !tid || !pk) {
+    // BUG FIX: this used to just console.warn and return `undefined` — every
+    // caller's try/catch saw that as a *success* (no exception was thrown),
+    // so an unconfigured EmailJS account silently counted as "sent" in the
+    // broadcast progress/history instead of showing up as a failure anywhere.
+    throw new Error('EmailJS not configured (missing Service ID, Template ID, or Public Key)');
+  }
   if (!_adminEmailJsReady) {
     await new Promise((res, rej) => {
       if (window.emailjs) { _adminEmailJsReady = true; res(); return; }
@@ -3634,7 +3641,20 @@ async function sendAdminEmailJS(templateParams, templateId, overrideServiceId, o
     });
   }
   emailjs.init(pk);
-  return emailjs.send(si, tid, templateParams).catch(e => console.warn('EmailJS send failed:', e));
+  // BUG FIX: this used to .catch() the send here and return undefined either
+  // way — callers relying on a thrown error to detect failure (sendEmailBroadcast's
+  // sent/failed counters, the ✅/❌ toast, and the saved history) never actually
+  // saw a failure, so a broadcast could report "50/50 sent" while EmailJS's
+  // dashboard shows zero deliveries. Now it logs AND re-throws, so every
+  // existing best-effort caller (approveJob/confirmReject/sendBroadcast) — which
+  // already wraps its own call in .catch(()=>{}) — keeps working exactly as
+  // before, while sendEmailBroadcast's try/catch finally sees the real error.
+  try {
+    return await emailjs.send(si, tid, templateParams);
+  } catch (e) {
+    console.error('EmailJS send failed:', e?.text || e?.message || e);
+    throw e;
+  }
 }
 
 async function approveJob(id) {
@@ -3678,6 +3698,63 @@ async function adminCompleteJob(id, title) {
   addAdminNotif('🏁 Job Completed',`"${j.title}" has been marked completed by admin.`,'info');
   notifyUser(j.postedBy,'🏁 Job Marked Completed',`Your job "${j.title}" has been marked completed by admin and removed from the public feed. Any pending submissions will still be reviewed.`);
   showToast('🏁 Job marked completed','success');
+}
+
+// Bring a completed job (manually completed OR auto-expired after 7 days)
+// back to life with a fresh deadline. Already-filled slots (workers who
+// finished it before) stay exactly as they are — only the REMAINING open
+// slots go live again for new workers. If this job's unused budget was
+// already auto-refunded to a real (non-admin) poster's wallet when it
+// expired, relisting re-holds that same amount from their balance so the
+// budget backing the reopened slots is genuine — if they don't have enough
+// balance anymore, relisting is blocked with a clear message rather than
+// quietly running an unfunded job.
+async function relistJob(id, title) {
+  const j = S.jobs.find(x => x.id === id); if (!j) return;
+  if (j.status !== 'completed') { showToast('শুধু Completed job আবার লাইভ করা যায়', 'error'); return; }
+  const daysStr = prompt(`"${title || j.title}" কতদিনের জন্য আবার লাইভ করতে চান? (দিন সংখ্যা লিখুন)`, '7');
+  if (daysStr === null) return;
+  const days = parseInt(daysStr, 10);
+  if (!days || days < 1 || days > 90) { showToast('১-৯০ এর মধ্যে একটা সংখ্যা দিন', 'error'); return; }
+  const fb = window._fb; if (!fb) return;
+  const limit = j.limit || 0, filled = j.filled || 0;
+  if (filled >= limit) { showToast('এই জবের সব slot আগেই ভরা — নতুন করে লাইভ করার কিছু নেই। বরং Edit করে limit বাড়ান।', 'error'); return; }
+  try {
+    const jobRef = fb.doc(fb.db, 'jobs', id);
+    const needsRefund = j.postedBy !== 'admin' && j.expiryRefunded === true && j.budgetHeld && limit > 0;
+    const refundAmount = needsRefund ? parseFloat(((j.budgetHeld / limit) * (limit - filled)).toFixed(2)) : 0;
+    await fb.runTransaction(fb.db, async (tx) => {
+      const jSnap = await tx.get(jobRef);
+      if (!jSnap.exists()) throw new Error('JOB_NOT_FOUND');
+      const jData = jSnap.data();
+      if (jData.status !== 'completed') throw new Error('NOT_COMPLETED');
+      let posterRef = null, bal = 0;
+      if (needsRefund) {
+        posterRef = fb.doc(fb.db, 'users', j.postedBy);
+        const uSnap = await tx.get(posterRef);
+        if (!uSnap.exists()) throw new Error('POSTER_NOT_FOUND');
+        bal = uSnap.data().balance || 0;
+        if (bal < refundAmount) throw new Error('INSUFFICIENT_BALANCE');
+      }
+      const newExpiresAt = new Date(Date.now() + days * 86400000);
+      tx.update(jobRef, {
+        status: 'approved', expiresAt: newExpiresAt, expiryDays: days,
+        expiryRefunded: false, relistedAt: fb.serverTimestamp(), relistedByAdmin: true,
+      });
+      if (needsRefund && posterRef) {
+        tx.update(posterRef, { balance: bal - refundAmount, postingHold: fb.increment(refundAmount) });
+      }
+    });
+    addLog(`🔁 Job relisted for ${days} days: "${j.title}"${needsRefund ? ` (${fmtAmt(refundAmount)} re-held from poster)` : ''}`, 'job', 'green');
+    notifyUser(j.postedBy, '🔁 Job Relisted', `Your job "${j.title}" has been relisted by admin for ${days} more day${days===1?'':'s'} — it's live again and accepting new submissions.`);
+    showToast(`🔁 Relisted for ${days} দিন`, 'success');
+  } catch (e) {
+    console.error(e);
+    const msg = e.message === 'INSUFFICIENT_BALANCE'
+      ? `❌ Poster-এর ব্যালেন্সে যথেষ্ট টাকা নেই (${fmtAmt(refundAmount)} দরকার) — আগে balance যোগ করতে বলুন।`
+      : '❌ Relist ব্যর্থ হয়েছে';
+    showToast(msg, 'error');
+  }
 }
 
 const MAX_FEATURED_JOBS = 5;
@@ -4699,7 +4776,7 @@ async function sendEmailBroadcast() {
   // Filter users
   let targets = S.users.filter(u => u.email);
   if (target === 'kyc_verified') targets = targets.filter(u => u.kycStatus === 'verified' || u.kyc === true);
-  if (target === 'active') targets = targets.filter(u => (u.tasksCompleted || 0) >= 1);
+  if (target === 'kyc_pending') targets = targets.filter(u => u.kycStatus === 'pending');
 
   _emailBcSending = true;
   const sendBtn = document.getElementById('emailBcSendBtn');
@@ -4711,6 +4788,7 @@ async function sendEmailBroadcast() {
 
   let sent = 0, failed = 0;
   const total = targets.length;
+  let firstError = ''; // surface the actual reason to the admin instead of a blind count
 
   // Ensure EmailJS is initialised
   await loadEmailJsAdminSdk();
@@ -4730,7 +4808,7 @@ async function sendEmailBroadcast() {
         site_name: S.settings.siteName || 'WorkHive',
       });
       sent++;
-    } catch (e) { failed++; console.warn('Email failed to', u.email, e); }
+    } catch (e) { failed++; if (!firstError) firstError = e?.text || e?.message || String(e); console.warn('Email failed to', u.email, e); }
 
     // Update progress
     const pct = Math.round(((i + 1) / total) * 100);
@@ -4760,7 +4838,9 @@ async function sendEmailBroadcast() {
   renderEmailBcHistory();
 
   addLog(`📧 Email Broadcast: "${subject}" → ${sent} sent, ${failed} failed`, 'broadcast', 'green');
-  showToast(`✅ Sent ${sent}/${total} emails${failed ? ` (${failed} failed)` : ''}`, 'success');
+  showToast(failed && !sent
+    ? `❌ All ${total} emails failed — ${firstError || 'check EmailJS config'}`
+    : `✅ Sent ${sent}/${total} emails${failed ? ` (${failed} failed — ${firstError})` : ''}`, sent ? 'success' : 'error');
 }
 
 async function loadEmailBcHistory() {
