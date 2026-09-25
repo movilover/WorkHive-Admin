@@ -1085,10 +1085,27 @@ if (window.Capacitor?.Plugins?.OneSignal) {
                 <select id="bcTarget"><option value="all">All Users</option><option value="kyc_verified">KYC Verified</option><option value="kyc_pending">KYC Pending</option></select>
               </div>
               <div class="field"><label>Channel</label>
-                <select id="bcChannel"><option value="notification">In-App Notification</option><option value="telegram">Telegram</option><option value="both">Notification + Telegram</option></select>
+                <select id="bcChannel"><option value="notification">In-App Notification</option><option value="telegram">Telegram</option><option value="both">Notification + Telegram</option><option value="email">Email Only</option><option value="all_channels">Notification + Telegram + Email</option></select>
               </div>
               <div class="field"><label>Title</label><input type="text" id="bcTitle" placeholder="e.g. New Tasks Available!"></div>
               <div class="field"><label>Message</label><textarea id="bcBody" placeholder="Write your message…"></textarea><button type="button" class="btn btn-ghost btn-xs" style="margin-top:6px" onclick="aiComposeInto('bcBody','Write a short, friendly broadcast announcement in Bangla for all users of a micro-task earning app, about: ' + (v('bcTitle')||'an update'), this)"><i class="ti ti-sparkles"></i> AI দিয়ে মেসেজ লিখুন</button></div>
+              <div class="form-grid">
+                <div class="field"><label>Notification Color Theme</label>
+                  <select id="bcColor">
+                    <option value="">Default (green)</option>
+                    <option value="blue">Blue</option>
+                    <option value="amber">Amber / Warning</option>
+                    <option value="red">Red / Urgent</option>
+                    <option value="purple">Purple</option>
+                    <option value="teal">Teal</option>
+                  </select>
+                </div>
+                <div class="field"><label>Photo URL (ঐচ্ছিক)</label><input type="text" id="bcImageUrl" placeholder="https://…jpg/png"></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:9px;padding:6px 0 10px">
+                <label class="toggle"><input type="checkbox" id="bcBold"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+                <div style="font-size:12.5px;color:var(--text2);font-weight:600">টাইটেল/মেসেজ বোল্ড (মোটা) করে দেখাও</div>
+              </div>
               <button class="btn btn-primary" style="width:100%" onclick="sendBroadcast()"><i class="ti ti-speakerphone"></i> Send Broadcast</button>
             </div>
             <div class="card">
@@ -1352,9 +1369,9 @@ if (window.Capacitor?.Plugins?.OneSignal) {
               <div class="alert warn"><i class="ti ti-alert-triangle"></i> Cloudinary Dashboard → Settings → Upload → এই preset-এ file size limit, allowed formats, folder restriction অবশ্যই সেট করে রাখো, যাতে কেউ misuse করতে না পারে। Unsigned preset পাবলিক হওয়ার জন্যই ডিজাইন করা — এটা একটা secret না, তাই এখানে সরাসরি রাখা নিরাপদ।</div>
               <div class="field"><label>Cloud Name</label><input type="text" id="setCloudinaryCloudName" placeholder="e.g. paqs4n2j"></div>
               <div class="field"><label>Unsigned Upload Preset</label><input type="text" id="setCloudinaryPreset" placeholder="e.g. ml_default"></div>
-              <div class="card-title" style="margin-top:18px">🔊 Completion Sound</div>
+              <div class="card-title" style="margin-top:18px">🔊 Notification Sound</div>
               <div class="field">
-                <label>Sound on Job Submission Success</label>
+                <label>Sound (User: job-post submitted · Admin: new task submission)</label>
                 <select id="setCompletionSound">
                   <option value="subtle_ding">Subtle Ding</option>
                   <option value="success_chime">Success Chime</option>
@@ -1364,6 +1381,13 @@ if (window.Capacitor?.Plugins?.OneSignal) {
                 </select>
               </div>
               <button class="btn btn-ghost btn-sm" onclick="adminPreviewSound()"><i class="ti ti-player-play"></i> Preview Selected Sound</button>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0 4px;margin-top:10px;border-top:1px dashed var(--border)">
+                <div>
+                  <div style="font-size:14px;font-weight:700">Play Sound on New Task Submission (Admin)</div>
+                  <div style="font-size:11.5px;color:var(--text3);margin-top:2px">ইউজার নতুন টাস্ক সাবমিট করলে এই Admin Panel খোলা অবস্থায় উপরের সাউন্ডটি বেজে উঠবে + একটি টোস্ট দেখাবে। ব্রাউজারের অটোপ্লে নিয়মের কারণে প্রথমবার Panel-এ যেকোনো জায়গায় ক্লিক করার পর থেকে কাজ করবে।</div>
+                </div>
+                <label class="toggle"><input type="checkbox" id="setTaskAlertSoundEnabled" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+              </div>
 
               <div class="card-title" style="margin-top:18px">📧 EmailJS — Auth Emails</div>
               <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;margin-bottom:6px">
@@ -1412,6 +1436,47 @@ if (window.Capacitor?.Plugins?.OneSignal) {
                 <div class="field">
                   <label>Job Emails — Public Key</label>
                   <input type="text" id="setEmailjsJobPublicKey" placeholder="public key (আলাদা অ্যাকাউন্ট হলে বসান, নাহলে খালি)">
+                </div>
+              </div>
+
+              <div style="margin-top:18px;padding-top:14px;border-top:1px dashed var(--border)">
+                <div class="card-title" style="margin-bottom:4px">📧 Task Submission Approve/Reject — Worker Email</div>
+                <div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.7">যখন কোনো worker-এর টাস্ক প্রুফ (taskSubmissions) আপনি Approve/Reject করবেন, তখন এই টেমপ্লেট দিয়ে worker-এর ইমেইলে মেসেজ যাবে। খালি রাখলে উপরের ডিফল্ট Template ID ব্যবহার হবে।</div>
+                <div class="field">
+                  <label>Template ID — Task Approved</label>
+                  <input type="text" id="setEmailjsTaskApprovalTemplateId" placeholder="template_xxxxxxx (ফাঁকা রাখলে ডিফল্ট Template ID ব্যবহার হবে)">
+                  <div class="field-sub" style="font-size:10px;color:var(--text3);margin-top:4px">Variables: to_email, to_name, job_title, job_reward, site_name, view_url, subject</div>
+                </div>
+                <div class="field">
+                  <label>Template ID — Task Rejected</label>
+                  <input type="text" id="setEmailjsTaskRejectionTemplateId" placeholder="template_xxxxxxx (ফাঁকা রাখলে ডিফল্ট Template ID ব্যবহার হবে)">
+                  <div class="field-sub" style="font-size:10px;color:var(--text3);margin-top:4px">Variables: to_email, to_name, job_title, reject_reason, site_name, view_url, subject</div>
+                </div>
+                <div class="field">
+                  <label>Task Emails — Service ID (ঐচ্ছিক, আলাদা অ্যাকাউন্ট হলে)</label>
+                  <input type="text" id="setEmailjsTaskServiceId" placeholder="service_xxxxxxx (খালি রাখলে ডিফল্ট Service ID ব্যবহার হবে)">
+                </div>
+                <div class="field">
+                  <label>Task Emails — Public Key (ঐচ্ছিক)</label>
+                  <input type="text" id="setEmailjsTaskPublicKey" placeholder="public key (খালি রাখলে ডিফল্ট Public Key ব্যবহার হবে)">
+                </div>
+              </div>
+
+              <div style="margin-top:18px;padding-top:14px;border-top:1px dashed var(--border)">
+                <div class="card-title" style="margin-bottom:4px">🛟 Backup EmailJS Account (Broadcast Fallback)</div>
+                <div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.7">Bulk Email Broadcast পাঠানোর সময় যদি প্রধান EmailJS অ্যাকাউন্টে সমস্যা হয় (মাসিক লিমিট শেষ, rate limit, বা কোনো error) — তাহলে স্বয়ংক্রিয়ভাবে এই আলাদা Gmail দিয়ে খোলা দ্বিতীয় EmailJS অ্যাকাউন্ট দিয়ে সেই ইমেইলটি আবার পাঠানোর চেষ্টা করা হবে। খালি রাখলে fallback off থাকবে।</div>
+                <div class="field">
+                  <label>Backup — Service ID</label>
+                  <input type="text" id="setEmailjsBackupServiceId" placeholder="service_xxxxxxx (দ্বিতীয় অ্যাকাউন্ট)">
+                </div>
+                <div class="field">
+                  <label>Backup — Public Key</label>
+                  <input type="text" id="setEmailjsBackupPublicKey" placeholder="public key (দ্বিতীয় অ্যাকাউন্ট)">
+                </div>
+                <div class="field">
+                  <label>Backup — Broadcast Template ID</label>
+                  <input type="text" id="setEmailjsBackupTemplateId" placeholder="template_xxxxxxx (দ্বিতীয় অ্যাকাউন্টের broadcast টেমপ্লেট)">
+                  <div class="field-sub" style="font-size:10px;color:var(--text3);margin-top:4px">Variables: to_email, to_name, subject, html_body, broadcast_title, broadcast_body, site_name</div>
                 </div>
               </div>
               <button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> Save Media Settings</button>
@@ -1959,7 +2024,11 @@ const S = {
     banner: '', bannerType: 'info', spinEnabled: true,
     postFeatureEnabled: true, postMinReward: 0.02, postMaxReward: 5.00, postMinSlots: 5, postMaxSlots: 500, postPlatformFeePct: 10,
     kycEnabled: true, cloudinaryCloudName: '', cloudinaryUploadPreset: '',
-    emailjsServiceId: '', emailjsTemplateId: '', emailjsPublicKey: '' },
+    emailjsServiceId: '', emailjsTemplateId: '', emailjsPublicKey: '',
+    emailjsTaskApprovalTemplateId: '', emailjsTaskRejectionTemplateId: '',
+    emailjsTaskServiceId: '', emailjsTaskPublicKey: '',
+    emailjsBackupServiceId: '', emailjsBackupPublicKey: '', emailjsBackupTemplateId: '',
+    completionSound: 'subtle_ding', taskAlertSoundEnabled: true },
 };
 S.support = { threads: [], filter: 'all', activeUid: null, messages: [], _unsubThreads: null, _unsubChat: null };
 
@@ -2942,18 +3011,32 @@ async function cpaManualCredit(pbId) {
   } catch (e) { showToast('❌ Credit failed: ' + e.message, 'error'); }
 }
 
+const ADMIN_ALERT_SOUNDS = {
+  subtle_ding:   'https://cdn.freesound.org/previews/411/411749_5121236-lq.mp3',
+  success_chime: 'https://cdn.freesound.org/previews/456/456966_5121236-lq.mp3',
+  coin_drop:     'https://cdn.freesound.org/previews/341/341695_5858296-lq.mp3',
+  smooth_pop:    'https://cdn.freesound.org/previews/423/423332_4508799-lq.mp3',
+  modern_bell:   'https://cdn.freesound.org/previews/263/263530_1402302-lq.mp3',
+};
 function adminPreviewSound() {
-  const SOUNDS = {
-    subtle_ding:   'https://cdn.freesound.org/previews/411/411749_5121236-lq.mp3',
-    success_chime: 'https://cdn.freesound.org/previews/456/456966_5121236-lq.mp3',
-    coin_drop:     'https://cdn.freesound.org/previews/341/341695_5858296-lq.mp3',
-    smooth_pop:    'https://cdn.freesound.org/previews/423/423332_4508799-lq.mp3',
-    modern_bell:   'https://cdn.freesound.org/previews/263/263530_1402302-lq.mp3',
-  };
   const key = $('setCompletionSound')?.value || 'subtle_ding';
-  const url = SOUNDS[key] || SOUNDS.subtle_ding;
-  try { new Audio(url).play(); showToast('🔊 Playing preview…', 'info'); }
+  try { playAdminAlertSound(key); showToast('🔊 Playing preview…', 'info'); }
   catch(e) { showToast('❌ Could not play audio', 'error'); }
+}
+// Plays in the Admin Panel itself when a new task submission arrives (see
+// listenTasks()). Browsers block autoplay until the page has seen a user
+// gesture — logging into the panel (a click) satisfies that, so this works
+// for the rest of the tab's session without any extra interaction needed.
+let _adminAlertAudio = null;
+function playAdminAlertSound(key) {
+  const soundKey = key || S.settings.completionSound || 'subtle_ding';
+  const url = ADMIN_ALERT_SOUNDS[soundKey] || ADMIN_ALERT_SOUNDS.subtle_ding;
+  try {
+    if (_adminAlertAudio) { _adminAlertAudio.pause(); _adminAlertAudio.currentTime = 0; }
+    _adminAlertAudio = new Audio(url);
+    _adminAlertAudio.volume = 0.8;
+    _adminAlertAudio.play().catch(() => {});
+  } catch (e) { console.warn('Admin alert sound failed:', e); }
 }
 
 // ── Startup loader ────────────────────────────────────────────────────────────
@@ -3064,10 +3147,19 @@ function testOneSignalBroadcastPush() {
 }
 
 // ===== NOTIFY USER =====
-async function notifyUser(uid, title, msg, icon='🔔') {
+async function notifyUser(uid, title, msg, icon='🔔', opts) {
   if (!uid || !window._fb) return;
   const fb = window._fb;
-  await fb.addDoc(fb.collection(fb.db,'users',uid,'notifications'),{title,msg,icon,unread:true,createdAt:fb.serverTimestamp()});
+  const doc = { title, msg, icon, unread: true, createdAt: fb.serverTimestamp() };
+  // Optional styling for admin-sent notifications: a color theme (accent
+  // border/icon background on the user's Notifications screen), a bold
+  // title/message, and an attached photo — all set from the Broadcast
+  // composer (color/bold toggle/photo URL fields) and stored right on the
+  // notification doc so user.html can render them without extra lookups.
+  if (opts && opts.color) doc.color = opts.color;
+  if (opts && opts.bold) doc.bold = true;
+  if (opts && opts.image) doc.image = opts.image;
+  await fb.addDoc(fb.collection(fb.db,'users',uid,'notifications'), doc);
   sendPushNotification(uid, title, msg);
 }
 
@@ -3657,6 +3749,46 @@ async function sendAdminEmailJS(templateParams, templateId, overrideServiceId, o
   }
 }
 
+// ── Reliable send: retries the primary EmailJS account a couple of times
+// (handles transient network blips / momentary 429 rate-limit responses),
+// then — only if a Backup EmailJS Account is configured in Settings — retries
+// once more through that second Gmail/EmailJS account. This is what fixes
+// broadcasts that silently stopped partway through: previously a single
+// failed request on ANY recipient (rate limit, monthly quota hit, a dropped
+// request) permanently marked that recipient as failed with zero retry, so a
+// short blip in the middle of a large broadcast meant every remaining
+// recipient could be skipped once the free-tier quota ran out mid-send.
+// Now each recipient gets: primary (up to 3 tries, backing off 600ms/1500ms)
+// → backup account (1 try) before finally being counted as failed.
+async function sendAdminEmailJSReliable(templateParams, templateId, overrideServiceId, overridePublicKey) {
+  const delays = [0, 600, 1500];
+  let lastErr;
+  for (let i = 0; i < delays.length; i++) {
+    if (delays[i]) await new Promise(r => setTimeout(r, delays[i]));
+    try {
+      return await sendAdminEmailJS(templateParams, templateId, overrideServiceId, overridePublicKey);
+    } catch (e) {
+      lastErr = e;
+      console.warn(`EmailJS attempt ${i + 1}/${delays.length} failed:`, e?.text || e?.message || e);
+    }
+  }
+  // Primary account exhausted its retries — fall back to the Backup EmailJS
+  // Account (a second Gmail-based EmailJS account) if the admin configured one.
+  const backupSi = S.settings.emailjsBackupServiceId;
+  const backupPk = S.settings.emailjsBackupPublicKey;
+  const backupTid = S.settings.emailjsBackupTemplateId || templateId;
+  if (backupSi && backupPk && backupTid) {
+    try {
+      console.warn('Primary EmailJS account failed — retrying via Backup EmailJS Account…');
+      return await sendAdminEmailJS(templateParams, backupTid, backupSi, backupPk);
+    } catch (e2) {
+      console.error('Backup EmailJS account also failed:', e2?.text || e2?.message || e2);
+      throw e2;
+    }
+  }
+  throw lastErr;
+}
+
 async function approveJob(id) {
   const j=S.jobs.find(x=>x.id===id); if(!j)return;
   const fb=window._fb; if(!fb)return;
@@ -4021,6 +4153,20 @@ async function approveTask(id) {
     if(t.jobId&&t.jobId!=='spin') fb.updateDoc(fb.doc(fb.db,'jobs',t.jobId),{filled:fb.increment(1)}).catch(()=>{});
     addLog(`✅ Task approved: ${t.workerName} — "${t.jobTitle}" +${fmtAmt(t.reward)}`,'job','green');
     notifyUser(t.workerId,'✅ Task Approved!',`"${t.jobTitle}" proof approved — ${fmtAmt(t.reward)} added to your balance.`);
+    // Email worker via EmailJS (best-effort — non-blocking, never fails the approve action)
+    if (t.workerEmail) {
+      const domain = (S.settings.siteDomain || 'https://workhive.pro').replace(/\/+$/, '');
+      sendAdminEmailJSReliable({
+        to_email: t.workerEmail,
+        to_name: t.workerName || 'User',
+        job_title: t.jobTitle || 'Your Task',
+        job_reward: fmtAmt(t.reward),
+        site_name: S.settings.siteName || S.settings.name || 'WorkHive',
+        view_url: `${domain}/?screen=history`,
+        subject: '✅ আপনার টাস্কটি অ্যাপ্রুভ হয়েছে!',
+      }, S.settings.emailjsTaskApprovalTemplateId || S.settings.emailjsTemplateId,
+         S.settings.emailjsTaskServiceId, S.settings.emailjsTaskPublicKey).catch((e)=>{console.warn('Task approval email failed:', e?.text||e?.message||e);});
+    }
     showToast(`✅ Task approved — ${fmtAmt(t.reward)} credited`,'success');
   }catch(e){ console.error(e); showToast('❌ Approve failed — check Firestore permissions','error'); }
 }
@@ -4220,6 +4366,20 @@ async function confirmReject() {
       });
       notifyUser(t?.workerId,'❌ Task Rejected',`"${t?.jobTitle}" was rejected. Reason: ${reason}`);
       addLog(`❌ Task rejected: ${t?.workerName} — "${t?.jobTitle}" — ${reason}`,'job','red');
+      // Email worker via EmailJS (best-effort — non-blocking, never fails the reject action)
+      if (t?.workerEmail) {
+        const domain = (S.settings.siteDomain || 'https://workhive.pro').replace(/\/+$/, '');
+        sendAdminEmailJSReliable({
+          to_email: t.workerEmail,
+          to_name: t.workerName || 'User',
+          job_title: t.jobTitle || 'Your Task',
+          reject_reason: reason,
+          site_name: S.settings.siteName || S.settings.name || 'WorkHive',
+          view_url: `${domain}/?screen=history`,
+          subject: '❌ আপনার টাস্কটি বাতিল করা হয়েছে',
+        }, S.settings.emailjsTaskRejectionTemplateId || S.settings.emailjsTemplateId,
+           S.settings.emailjsTaskServiceId, S.settings.emailjsTaskPublicKey).catch((e)=>{console.warn('Task rejection email failed:', e?.text||e?.message||e);});
+      }
       showToast('❌ Task rejected','error');
     } else if(type==='kyc'){
       const u=findUser(id);
@@ -4519,13 +4679,39 @@ function listenWithdrawals() {
     renderWithdrawals(); renderDashWithdrawals(); updateStats(); updateBadges(); renderStatusTabs('withdrawTabs','wd');
   }, (e)=>{console.warn('listenWithdrawals error (check Firestore Rules / Auth):',e);showToast('❌ Withdrawals load failed — check Firebase Admin login','error');});
 }
+let _tasksListenerInitialized = false;
+let _knownTaskIds = new Set();
 function listenTasks() {
   const fb = window._fb; if (!fb) return;
   fb.onSnapshot(fb.collection(fb.db,'taskSubmissions'), snap => {
+    // BUG FIX: nothing here used to detect a brand-new pending submission
+    // arriving while the panel is open, so the "Completion Sound" setting
+    // never actually played for the admin — it only ever played on the
+    // USER side (job-post success chime). We now diff against the
+    // previously-seen doc IDs: anything new AND still 'pending' triggers the
+    // configured sound + a toast + an admin notification. The very first
+    // snapshot (initial page load) is skipped so existing pending items
+    // don't all trigger sound at once.
+    const isFirstLoad = !_tasksListenerInitialized;
+    const prevIds = _knownTaskIds;
     S.tasks = [];
-    snap.forEach(d => S.tasks.push({id:d.id,...d.data()}));
+    const freshPending = [];
+    snap.forEach(d => {
+      const data = { id: d.id, ...d.data() };
+      S.tasks.push(data);
+      if (!isFirstLoad && data.status === 'pending' && !prevIds.has(d.id)) freshPending.push(data);
+    });
+    _knownTaskIds = new Set(S.tasks.map(t => t.id));
+    _tasksListenerInitialized = true;
     S.tasks.sort((a,b)=>(b._ts||0)-(a._ts||0));
     renderTasks(); updateStats(); updateBadges(); renderStatusTabs('taskTabs','task');
+    if (freshPending.length && S.settings.taskAlertSoundEnabled !== false) {
+      playAdminAlertSound();
+      freshPending.forEach(t => addAdminNotif('📥 New Task Submission', `${t.workerName||'A worker'} submitted "${t.jobTitle||'a task'}" for review.`, 'info'));
+      showToast(freshPending.length === 1
+        ? `🔔 New submission from ${freshPending[0].workerName||'a worker'}`
+        : `🔔 ${freshPending.length} new task submissions`, 'info');
+    }
   }, (e)=>{console.warn('listenTasks error (check Firestore Rules / Auth):',e);showToast('❌ Task submissions load failed — check Firebase Admin login','error');});
 }
 
@@ -4567,8 +4753,17 @@ function listenSettings() {
         emailjsJobRejectionTemplateId: d.emailjsJobRejectionTemplateId ?? S.settings.emailjsJobRejectionTemplateId,
         emailjsJobServiceId: d.emailjsJobServiceId ?? S.settings.emailjsJobServiceId,
         emailjsJobPublicKey: d.emailjsJobPublicKey ?? S.settings.emailjsJobPublicKey,
+        emailjsTaskApprovalTemplateId: d.emailjsTaskApprovalTemplateId ?? S.settings.emailjsTaskApprovalTemplateId,
+        emailjsTaskRejectionTemplateId: d.emailjsTaskRejectionTemplateId ?? S.settings.emailjsTaskRejectionTemplateId,
+        emailjsTaskServiceId: d.emailjsTaskServiceId ?? S.settings.emailjsTaskServiceId,
+        emailjsTaskPublicKey: d.emailjsTaskPublicKey ?? S.settings.emailjsTaskPublicKey,
+        emailjsBackupServiceId: d.emailjsBackupServiceId ?? S.settings.emailjsBackupServiceId,
+        emailjsBackupPublicKey: d.emailjsBackupPublicKey ?? S.settings.emailjsBackupPublicKey,
+        emailjsBackupTemplateId: d.emailjsBackupTemplateId ?? S.settings.emailjsBackupTemplateId,
         emailjsAuthEnabled: d.emailjsAuthEnabled ?? S.settings.emailjsAuthEnabled,
         siteDomain: d.siteDomain ?? S.settings.siteDomain,
+        completionSound: d.completionSound ?? S.settings.completionSound,
+        taskAlertSoundEnabled: d.taskAlertSoundEnabled !== undefined ? d.taskAlertSoundEnabled : S.settings.taskAlertSoundEnabled,
       });
       const s = S.settings;
       if ($('setName')) $('setName').value = s.name||'WorkHive';
@@ -4592,9 +4787,17 @@ function listenSettings() {
       if ($('setEmailjsJobRejectionTemplateId')) $('setEmailjsJobRejectionTemplateId').value = s.emailjsJobRejectionTemplateId||'';
       if ($('setEmailjsJobServiceId')) $('setEmailjsJobServiceId').value = s.emailjsJobServiceId||'';
       if ($('setEmailjsJobPublicKey')) $('setEmailjsJobPublicKey').value = s.emailjsJobPublicKey||'';
+      if ($('setEmailjsTaskApprovalTemplateId')) $('setEmailjsTaskApprovalTemplateId').value = s.emailjsTaskApprovalTemplateId||'';
+      if ($('setEmailjsTaskRejectionTemplateId')) $('setEmailjsTaskRejectionTemplateId').value = s.emailjsTaskRejectionTemplateId||'';
+      if ($('setEmailjsTaskServiceId')) $('setEmailjsTaskServiceId').value = s.emailjsTaskServiceId||'';
+      if ($('setEmailjsTaskPublicKey')) $('setEmailjsTaskPublicKey').value = s.emailjsTaskPublicKey||'';
+      if ($('setEmailjsBackupServiceId')) $('setEmailjsBackupServiceId').value = s.emailjsBackupServiceId||'';
+      if ($('setEmailjsBackupPublicKey')) $('setEmailjsBackupPublicKey').value = s.emailjsBackupPublicKey||'';
+      if ($('setEmailjsBackupTemplateId')) $('setEmailjsBackupTemplateId').value = s.emailjsBackupTemplateId||'';
       if ($('cpaSiteDomain') && !$('cpaSiteDomain').value) $('cpaSiteDomain').value = s.siteDomain||'';
       if ($('setEmailjsAuthEnabled')) $('setEmailjsAuthEnabled').checked = !!s.emailjsAuthEnabled;
       if ($('setCompletionSound')) $('setCompletionSound').value = s.completionSound || 'subtle_ding';
+      if ($('setTaskAlertSoundEnabled')) $('setTaskAlertSoundEnabled').checked = s.taskAlertSoundEnabled !== false;
       if ($('setBannerMsg')) $('setBannerMsg').value = s.banner||'';
       if ($('setBannerType')) $('setBannerType').value = s.bannerType||'info';
       if ($('toggleSpin')) $('toggleSpin').checked = s.spinEnabled!==false;
@@ -4789,34 +4992,52 @@ async function sendEmailBroadcast() {
   let sent = 0, failed = 0;
   const total = targets.length;
   let firstError = ''; // surface the actual reason to the admin instead of a blind count
+  const failedEmails = []; // kept in history so a partial broadcast can be resumed later
 
   // Ensure EmailJS is initialised
   await loadEmailJsAdminSdk();
 
+  // BUG FIX: this used to send at a flat 250ms gap (~4/sec) with zero retry —
+  // fast enough to trip EmailJS's rate limiting partway through a large list,
+  // and any recipient hit by that (or any other transient error) was simply
+  // marked failed forever with no second attempt. sendAdminEmailJSReliable()
+  // retries each recipient on the primary account and then, if a Backup
+  // EmailJS Account is configured in Settings, tries that second account
+  // before giving up — so a mid-broadcast quota/rate-limit hit on the
+  // primary account no longer means the rest of the list gets dropped.
+  let consecutiveFailures = 0;
   for (let i = 0; i < targets.length; i++) {
     const u = targets[i];
     // Replace {{name}} placeholder
     const personalised = htmlBody.replace(/\{\{name\}\}/g, u.name || u.username || 'User');
     try {
-      await sendAdminEmailJS({
+      await sendAdminEmailJSReliable({
         to_email: u.email,
         to_name: u.name || u.username || 'User',
         subject,
         html_body: personalised,
         broadcast_title: subject,
         broadcast_body: personalised,
-        site_name: S.settings.siteName || 'WorkHive',
+        site_name: S.settings.siteName || S.settings.name || 'WorkHive',
       });
-      sent++;
-    } catch (e) { failed++; if (!firstError) firstError = e?.text || e?.message || String(e); console.warn('Email failed to', u.email, e); }
+      sent++; consecutiveFailures = 0;
+    } catch (e) {
+      failed++; consecutiveFailures++;
+      failedEmails.push(u.email);
+      if (!firstError) firstError = e?.text || e?.message || String(e);
+      console.warn('Email failed to', u.email, e);
+    }
 
     // Update progress
     const pct = Math.round(((i + 1) / total) * 100);
     if (progressBar) progressBar.style.width = pct + '%';
     if (progressLabel) progressLabel.textContent = `${i + 1} / ${total}`;
 
-    // Rate limit: ~4/sec (250ms delay after every email)
-    await new Promise(r => setTimeout(r, 250));
+    // Base rate limit: ~1.3/sec (750ms). If several sends in a row are
+    // failing (a sign the account is actively being rate-limited right now),
+    // slow down further instead of hammering it — up to +2.25s extra.
+    const backoff = Math.min(consecutiveFailures, 3) * 750;
+    await new Promise(r => setTimeout(r, 750 + backoff));
   }
 
   _emailBcSending = false;
@@ -4825,7 +5046,7 @@ async function sendEmailBroadcast() {
 
   // Save to history
   const historyEntry = {
-    subject, target, total, sent, failed,
+    subject, target, total, sent, failed, failedEmails,
     sentAt: new Date().toISOString(),
     sentBy: 'admin',
   };
@@ -4840,7 +5061,7 @@ async function sendEmailBroadcast() {
   addLog(`📧 Email Broadcast: "${subject}" → ${sent} sent, ${failed} failed`, 'broadcast', 'green');
   showToast(failed && !sent
     ? `❌ All ${total} emails failed — ${firstError || 'check EmailJS config'}`
-    : `✅ Sent ${sent}/${total} emails${failed ? ` (${failed} failed — ${firstError})` : ''}`, sent ? 'success' : 'error');
+    : `✅ Sent ${sent}/${total} emails${failed ? ` (${failed} failed even after retries/backup — ${firstError})` : ''}`, sent ? 'success' : 'error');
 }
 
 async function loadEmailBcHistory() {
@@ -4912,32 +5133,45 @@ async function sendBroadcast() {
   const target=v('bcTarget')||document.getElementById('bcTarget').value;
   const channel=v('bcChannel')||document.getElementById('bcChannel').value;
   const title=$('bcTitle').value.trim(), body=$('bcBody').value.trim();
+  const notifOpts = { color: v('bcColor')||'', bold: !!$('bcBold')?.checked, image: v('bcImageUrl')||'' };
   if(!title||!body){showToast('All fields required','error');return;}
   const targets=S.users.filter(u=>{if(target==='all')return true;if(target==='kyc_verified')return u.kyc==='Verified';if(target==='kyc_pending')return u.kyc==='Pending';return true;});
   if(channel==='telegram'||channel==='both'||channel==='all_channels'){targets.filter(u=>u.telegramChatId).forEach(u=>{const token=S.tg.token||ls('wha_tg_token');if(token&&u.telegramChatId)fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${u.telegramChatId}&text=${encodeURIComponent('📢 '+title+'\n\n'+body)}`).catch(()=>{});});}
-  if(channel!=='telegram'&&channel!=='email')targets.forEach(u=>notifyUser(u.id,'📢 '+title,body,'📢'));
-  // Email broadcast via EmailJS — batched with a small delay to respect rate limits
+  if(channel!=='telegram'&&channel!=='email')targets.forEach(u=>notifyUser(u.id,'📢 '+title,body,'📢',notifOpts));
+  // Email broadcast via EmailJS — retried per-recipient + optional Backup
+  // EmailJS Account fallback (sendAdminEmailJSReliable), with real per-recipient
+  // success/failure tracking instead of a blind .catch(()=>{}) that silently
+  // swallowed every failure and always reported the full target count as "sent".
+  let emailSent = 0, emailFailed = 0;
   if(channel==='email'||channel==='all_channels'){
     const emailTargets=targets.filter(u=>u.email);
     if(!S.settings.emailjsServiceId){showToast('⚠️ EmailJS not configured — skipping email','warn');}
     else {
       showToast(`📧 Sending to ${emailTargets.length} email addresses…`,'info');
+      await loadEmailJsAdminSdk();
+      let consecutiveFailures = 0;
       for(let i=0;i<emailTargets.length;i++){
         const u=emailTargets[i];
-        await sendAdminEmailJS({ to_email:u.email, to_name:u.name||u.username||'User', broadcast_title:title, broadcast_body:body, site_name:S.settings.siteName||'WorkHive' }).catch(()=>{});
-        if(i>0 && i%5===0) await new Promise(r=>setTimeout(r,1200)); // rate-limit: ~5/sec
+        try {
+          await sendAdminEmailJSReliable({ to_email:u.email, to_name:u.name||u.username||'User', broadcast_title:title, broadcast_body:body, site_name:S.settings.siteName||S.settings.name||'WorkHive' });
+          emailSent++; consecutiveFailures = 0;
+        } catch(e) { emailFailed++; consecutiveFailures++; console.warn('Broadcast email failed to', u.email, e); }
+        const backoff = Math.min(consecutiveFailures, 3) * 750;
+        await new Promise(r=>setTimeout(r, 750 + backoff));
       }
     }
   }
-  S.bcHistory.unshift({title,body,target,channel,sent:targets.length,date:new Date().toLocaleString()});
-  $('bcTitle').value=''; $('bcBody').value='';
+  S.bcHistory.unshift({title,body,target,channel,sent:targets.length,emailSent,emailFailed,date:new Date().toLocaleString()});
+  $('bcTitle').value=''; $('bcBody').value=''; $('bcImageUrl').value=''; if($('bcBold'))$('bcBold').checked=false;
   $('bcHistory').innerHTML=S.bcHistory.map(b=>`
     <div style="padding:11px 0;border-bottom:1px solid var(--border)">
       <div style="font-size:13px;font-weight:700;margin-bottom:3px">${b.title}</div>
-      <div style="font-size:11px;color:var(--text3)"><i class="ti ti-users" style="font-size:12px;vertical-align:-1px"></i> ${b.target} · ${b.channel} · ${b.sent} users · ${b.date}</div>
+      <div style="font-size:11px;color:var(--text3)"><i class="ti ti-users" style="font-size:12px;vertical-align:-1px"></i> ${b.target} · ${b.channel} · ${b.sent} users · ${b.date}${(b.emailSent||b.emailFailed)?` · 📧 ${b.emailSent||0} sent${b.emailFailed?`, ${b.emailFailed} failed`:''}`:''}</div>
     </div>`).join('');
-  addLog(`📢 Broadcast: "${title}" → ${targets.length} users`,'broadcast','green');
-  showToast(`📢 Sent to ${targets.length} users!`,'success');
+  addLog(`📢 Broadcast: "${title}" → ${targets.length} users${(channel==='email'||channel==='all_channels')?` (📧 ${emailSent} sent, ${emailFailed} failed)`:''}`,'broadcast','green');
+  showToast((channel==='email'||channel==='all_channels')
+    ? `📢 Sent! In-app: ${channel==='email'?'skipped':targets.length} · Email: ${emailSent} sent${emailFailed?`, ${emailFailed} failed`:''}`
+    : `📢 Sent to ${targets.length} users!`,'success');
 }
 
 // ===== ADMIN NOTIFS =====
@@ -4990,9 +5224,17 @@ async function saveSettings() {
     emailjsJobRejectionTemplateId: v('setEmailjsJobRejectionTemplateId'),
     emailjsJobServiceId: v('setEmailjsJobServiceId'),
     emailjsJobPublicKey: v('setEmailjsJobPublicKey'),
+    emailjsTaskApprovalTemplateId: v('setEmailjsTaskApprovalTemplateId'),
+    emailjsTaskRejectionTemplateId: v('setEmailjsTaskRejectionTemplateId'),
+    emailjsTaskServiceId: v('setEmailjsTaskServiceId'),
+    emailjsTaskPublicKey: v('setEmailjsTaskPublicKey'),
+    emailjsBackupServiceId: v('setEmailjsBackupServiceId'),
+    emailjsBackupPublicKey: v('setEmailjsBackupPublicKey'),
+    emailjsBackupTemplateId: v('setEmailjsBackupTemplateId'),
     siteDomain: v('cpaSiteDomain'),
     emailjsAuthEnabled: !!$('setEmailjsAuthEnabled')?.checked,
     completionSound: v('setCompletionSound') || 'subtle_ding',
+    taskAlertSoundEnabled: !!$('setTaskAlertSoundEnabled')?.checked,
   });
   const fb=window._fb; if(!fb){showToast('Firebase not ready','error');return;}
   try{
@@ -5028,8 +5270,17 @@ async function saveSettings() {
       emailjsJobRejectionTemplateId: S.settings.emailjsJobRejectionTemplateId,
       emailjsJobServiceId: S.settings.emailjsJobServiceId,
       emailjsJobPublicKey: S.settings.emailjsJobPublicKey,
+      emailjsTaskApprovalTemplateId: S.settings.emailjsTaskApprovalTemplateId,
+      emailjsTaskRejectionTemplateId: S.settings.emailjsTaskRejectionTemplateId,
+      emailjsTaskServiceId: S.settings.emailjsTaskServiceId,
+      emailjsTaskPublicKey: S.settings.emailjsTaskPublicKey,
+      emailjsBackupServiceId: S.settings.emailjsBackupServiceId,
+      emailjsBackupPublicKey: S.settings.emailjsBackupPublicKey,
+      emailjsBackupTemplateId: S.settings.emailjsBackupTemplateId,
       siteDomain: S.settings.siteDomain,
       emailjsAuthEnabled: S.settings.emailjsAuthEnabled,
+      completionSound: S.settings.completionSound,
+      taskAlertSoundEnabled: S.settings.taskAlertSoundEnabled,
     }, {merge:true});
     addLog('⚙️ Settings updated (live on User App)','settings','green');
     showToast('💾 Settings saved! User App-এ লাইভ আপডেট হয়েছে।','success');
