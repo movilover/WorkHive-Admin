@@ -1365,10 +1365,9 @@ if (window.Capacitor?.Plugins?.OneSignal) {
               <button class="btn btn-ghost" style="width:100%;margin-top:10px" onclick="goScreen('kyc')"><i class="ti ti-id-badge-2"></i> Go to KYC Review</button>
             </div>
             <div class="card">
-              <div class="card-title"><i class="ti ti-folder"></i> Media Storage Settings (Cloudinary)</div>
-              <div class="alert warn"><i class="ti ti-alert-triangle"></i> Cloudinary Dashboard → Settings → Upload → এই preset-এ file size limit, allowed formats, folder restriction অবশ্যই সেট করে রাখো, যাতে কেউ misuse করতে না পারে। Unsigned preset পাবলিক হওয়ার জন্যই ডিজাইন করা — এটা একটা secret না, তাই এখানে সরাসরি রাখা নিরাপদ।</div>
-              <div class="field"><label>Cloud Name</label><input type="text" id="setCloudinaryCloudName" placeholder="e.g. paqs4n2j"></div>
-              <div class="field"><label>Unsigned Upload Preset</label><input type="text" id="setCloudinaryPreset" placeholder="e.g. ml_default"></div>
+              <div class="card-title"><i class="ti ti-folder"></i> Media Storage Settings (ImgBB)</div>
+              <div class="alert warn"><i class="ti ti-alert-triangle"></i> Cloudinary বন্ধ/সাসপেন্ড হওয়ায় এখন থেকে সব ছবি (KYC, Avatar, Task Proof, Job Attachment, Category Icon, Support Chat) <b>ImgBB</b>-তে আপলোড হবে। <a href="https://api.imgbb.com/" target="_blank" rel="noopener" style="color:var(--green)">api.imgbb.com</a>-এ গিয়ে ফ্রি অ্যাকাউন্ট খুলে "Get API Key" থেকে key নিয়ে নিচে বসান। ImgBB ছবি-ছাড়া অন্য ফাইল (ভিডিও ইত্যাদি) সাপোর্ট করে না — তবে এই সাইটের সব আপলোড ফিল্ডই ছবি-নির্দিষ্ট, তাই সমস্যা হবে না।</div>
+              <div class="field"><label>ImgBB API Key</label><input type="text" id="setImgbbApiKey" placeholder="আপনার ImgBB API Key এখানে বসান"></div>
               <div class="card-title" style="margin-top:18px">🔊 Notification Sound</div>
               <div class="field">
                 <label>Sound (User: job-post submitted · Admin: new task submission)</label>
@@ -1480,8 +1479,8 @@ if (window.Capacitor?.Plugins?.OneSignal) {
                 </div>
               </div>
               <button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> Save Media Settings</button>
-              <button class="btn btn-ghost" style="width:100%" onclick="testCloudinaryUpload()"><i class="ti ti-upload"></i> Test Upload</button>
-              <div class="lf-hint" id="cloudinaryTestResult" style="margin-top:8px"></div>
+              <button class="btn btn-ghost" style="width:100%" onclick="testImgbbUpload()"><i class="ti ti-upload"></i> Test Upload</button>
+              <div class="lf-hint" id="imgbbTestResult" style="margin-top:8px"></div>
             </div>
             <div class="card">
               <div class="card-title"><i class="ti ti-headset"></i> Support Info</div>
@@ -2023,7 +2022,7 @@ const S = {
     supportEmail: 'support@workhive.pro', supportHours: '9 AM – 11 PM', supportResponse: 'Within 12 hours', rulesContent: '',
     banner: '', bannerType: 'info', spinEnabled: true,
     postFeatureEnabled: true, postMinReward: 0.02, postMaxReward: 5.00, postMinSlots: 5, postMaxSlots: 500, postPlatformFeePct: 10,
-    kycEnabled: true, cloudinaryCloudName: '', cloudinaryUploadPreset: '',
+    kycEnabled: true, imgbbApiKey: '',
     emailjsServiceId: '', emailjsTemplateId: '', emailjsPublicKey: '',
     emailjsTaskApprovalTemplateId: '', emailjsTaskRejectionTemplateId: '',
     emailjsTaskServiceId: '', emailjsTaskPublicKey: '',
@@ -2223,49 +2222,51 @@ function resizeImageFile(file, maxSize, callback) {
 function openLightbox(url) { const lb=$('imgLightbox'); $('lightboxImg').src=url; lb.classList.add('show'); }
 function closeLightbox() { $('imgLightbox').classList.remove('show'); }
 
-// ===== CLOUDINARY (dynamic — reads from S.settings, admin-configurable) =====
-const CLOUDINARY_CLOUD_NAME_DEFAULT = 'paqs4n2j';
-const CLOUDINARY_UPLOAD_PRESET_DEFAULT = 'ml_default';
-async function uploadToCloudinary(file, folder) {
-  const cloudName = S.settings.cloudinaryCloudName || CLOUDINARY_CLOUD_NAME_DEFAULT;
-  const uploadPreset = S.settings.cloudinaryUploadPreset || CLOUDINARY_UPLOAD_PRESET_DEFAULT;
+// ===== IMGBB (dynamic — reads from S.settings, admin-configurable) =====
+// Switched from Cloudinary after that account got suspended. ImgBB is
+// images-only (no video) — confirmed safe here since every upload input in
+// this site (KYC, avatars, task proofs, job attachments, category icons,
+// support chat) is already accept="image/*" only.
+// Get a free key at https://api.imgbb.com/ (click "Get API Key"), then paste
+// it into Settings → Media Storage Settings (ImgBB).
+const IMGBB_API_KEY_DEFAULT = '';
+async function uploadToImgbb(file, name) {
+  const apiKey = S.settings.imgbbApiKey || IMGBB_API_KEY_DEFAULT;
+  if (!apiKey) throw new Error('ImgBB API Key কনফিগার করা হয়নি — Settings → Media Storage-এ গিয়ে বসান');
   const form = new FormData();
-  form.append('file', file);
-  form.append('upload_preset', uploadPreset);
-  form.append('folder', folder || 'workhive_support');
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method:'POST', body: form });
-  if (!res.ok) {
-    let detail = ''; try { detail = (await res.json())?.error?.message || ''; } catch(e) {}
-    throw new Error(detail || ('Cloudinary upload failed (' + res.status + ')'));
+  form.append('image', file);
+  if (name) form.append('name', name);
+  const res = await fetch(`https://api.imgbb.com/1/upload?key=${encodeURIComponent(apiKey)}`, { method: 'POST', body: form });
+  let json = null; try { json = await res.json(); } catch (e) {}
+  if (!res.ok || !json || !json.success) {
+    const detail = json?.error?.message || '';
+    throw new Error(detail || ('ImgBB upload failed (' + res.status + ')'));
   }
-  const json = await res.json();
-  return json.secure_url;
+  return json.data.url; // permanent direct image URL (no expiration param sent)
 }
-async function testCloudinaryUpload() {
-  const cloudName = v('setCloudinaryCloudName') || S.settings.cloudinaryCloudName || CLOUDINARY_CLOUD_NAME_DEFAULT;
-  const uploadPreset = v('setCloudinaryPreset') || S.settings.cloudinaryUploadPreset || CLOUDINARY_UPLOAD_PRESET_DEFAULT;
-  const resultEl = $('cloudinaryTestResult');
+async function testImgbbUpload() {
+  const apiKey = v('setImgbbApiKey') || S.settings.imgbbApiKey || IMGBB_API_KEY_DEFAULT;
+  const resultEl = $('imgbbTestResult');
+  if (!apiKey) { if (resultEl) resultEl.innerHTML = '<span style="color:var(--red)"><i class="ti ti-circle-x"></i> আগে API Key বসান</span>'; return; }
   if (resultEl) resultEl.innerHTML = '<i class="ti ti-loader spin-ico"></i> টেস্ট করা হচ্ছে...';
   try {
     // 1x1 transparent PNG, generated client-side — no real file needed to validate the config.
     const dataUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
     const blob = await (await fetch(dataUrl)).blob();
     const form = new FormData();
-    form.append('file', blob, 'test.png');
-    form.append('upload_preset', uploadPreset);
-    form.append('folder', 'workhive_config_test');
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method:'POST', body: form });
+    form.append('image', blob, 'test.png');
+    const res = await fetch(`https://api.imgbb.com/1/upload?key=${encodeURIComponent(apiKey)}`, { method: 'POST', body: form });
     const data = await res.json();
-    if (res.ok && data.secure_url) {
+    if (res.ok && data.success && data.data?.url) {
       if (resultEl) resultEl.innerHTML = '<span style="color:var(--green)"><i class="ti ti-circle-check"></i> সফল! কনফিগারেশন ঠিক আছে।</span>';
-      showToast('✅ Cloudinary test upload successful','success');
+      showToast('✅ ImgBB test upload successful', 'success');
     } else {
-      if (resultEl) resultEl.innerHTML = `<span style="color:var(--red)"><i class="ti ti-circle-x"></i> ব্যর্থ: ${devEsc(data.error?.message||'Unknown error')}</span>`;
-      showToast('❌ Test upload failed','error');
+      if (resultEl) resultEl.innerHTML = `<span style="color:var(--red)"><i class="ti ti-circle-x"></i> ব্যর্থ: ${devEsc(data.error?.message || 'Unknown error')}</span>`;
+      showToast('❌ Test upload failed', 'error');
     }
-  } catch(e) {
+  } catch (e) {
     if (resultEl) resultEl.innerHTML = `<span style="color:var(--red)"><i class="ti ti-circle-x"></i> নেটওয়ার্ক এরর</span>`;
-    showToast('❌ Test upload failed — network error','error');
+    showToast('❌ Test upload failed — network error', 'error');
   }
 }
 
@@ -4183,7 +4184,7 @@ async function deleteTaskSubmission(id) {
   try{
     for (const url of imgs) {
       try { await fb.deleteObject(fb.fbStorageRef(fb.storage, url)); }
-      catch(e){ /* not a Firebase Storage URL (e.g. Cloudinary) or already removed — ignore */ }
+      catch(e){ /* not a Firebase Storage URL (e.g. ImgBB) or already removed — ignore */ }
     }
     await fb.deleteDoc(fb.doc(fb.db,'taskSubmissions',id));
     addLog(`🗑️ Submission deleted: ${t.workerName||'Unknown'} — "${t.jobTitle||''}"${hasImg?` (${imgs.length} screenshot${imgs.length>1?'s':''} cleared)`:''}`,'job','red');
@@ -4586,7 +4587,7 @@ async function handleCatIconUpload(input) {
   const preview = $('catIconPreview');
   try {
     showToast('⬆ আইকন আপলোড হচ্ছে...', 'info');
-    const url = await uploadToCloudinary(file, 'workhive_categories');
+    const url = await uploadToImgbb(file, 'workhive_categories');
     S._catIconUrl = url;
     if (preview) preview.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover">`;
     const removeBtn = $('catIconRemoveBtn'); if (removeBtn) removeBtn.style.display = '';
@@ -4743,8 +4744,7 @@ function listenSettings() {
         postMaxSlots: d.postMaxSlots ?? S.settings.postMaxSlots,
         postPlatformFeePct: d.postPlatformFeePct ?? S.settings.postPlatformFeePct,
         kycEnabled: d.kycEnabled !== undefined ? d.kycEnabled : S.settings.kycEnabled,
-        cloudinaryCloudName: d.cloudinaryCloudName ?? S.settings.cloudinaryCloudName,
-        cloudinaryUploadPreset: d.cloudinaryUploadPreset ?? S.settings.cloudinaryUploadPreset,
+        imgbbApiKey: d.imgbbApiKey ?? S.settings.imgbbApiKey,
         emailjsServiceId: d.emailjsServiceId ?? S.settings.emailjsServiceId,
         emailjsTemplateId: d.emailjsTemplateId ?? S.settings.emailjsTemplateId,
         emailjsPublicKey: d.emailjsPublicKey ?? S.settings.emailjsPublicKey,
@@ -4777,8 +4777,7 @@ function listenSettings() {
       if ($('setRulesContent') && !$('setRulesContent').value) $('setRulesContent').value = s.rulesContent||'';
       if ($('setSupportHours')) $('setSupportHours').value = s.supportHours||'';
       if ($('setSupportResponse')) $('setSupportResponse').value = s.supportResponse||'';
-      if ($('setCloudinaryCloudName')) $('setCloudinaryCloudName').value = s.cloudinaryCloudName||'';
-      if ($('setCloudinaryPreset')) $('setCloudinaryPreset').value = s.cloudinaryUploadPreset||'';
+      if ($('setImgbbApiKey')) $('setImgbbApiKey').value = s.imgbbApiKey||'';
       if ($('setEmailjsServiceId')) $('setEmailjsServiceId').value = s.emailjsServiceId||'';
       if ($('setEmailjsTemplateId')) $('setEmailjsTemplateId').value = s.emailjsTemplateId||'';
       if ($('setEmailjsPublicKey')) $('setEmailjsPublicKey').value = s.emailjsPublicKey||'';
@@ -5214,8 +5213,7 @@ async function saveSettings() {
     postMaxSlots: parseInt($('setPostMaxSlots')?.value)||500,
     postPlatformFeePct: parseFloat($('setPostFeePct')?.value)||10,
     kycEnabled: $('setKycEnabled')?.checked!==false,
-    cloudinaryCloudName: v('setCloudinaryCloudName'),
-    cloudinaryUploadPreset: v('setCloudinaryPreset'),
+    imgbbApiKey: v('setImgbbApiKey'),
     emailjsServiceId: v('setEmailjsServiceId'),
     emailjsTemplateId: v('setEmailjsTemplateId'),
     emailjsPublicKey: v('setEmailjsPublicKey'),
@@ -5260,8 +5258,7 @@ async function saveSettings() {
       postMaxSlots:S.settings.postMaxSlots,
       postPlatformFeePct:S.settings.postPlatformFeePct,
       kycEnabled:S.settings.kycEnabled,
-      cloudinaryCloudName:S.settings.cloudinaryCloudName,
-      cloudinaryUploadPreset:S.settings.cloudinaryUploadPreset,
+      imgbbApiKey:S.settings.imgbbApiKey,
       emailjsServiceId: S.settings.emailjsServiceId,
       emailjsTemplateId: S.settings.emailjsTemplateId,
       emailjsPublicKey: S.settings.emailjsPublicKey,
@@ -5527,7 +5524,7 @@ async function handleSupportAdminAttach(input) {
   const fb = window._fb; if (!fb) return;
   try {
     showToast('⬆ ছবি আপলোড হচ্ছে...', 'info');
-    const url = await uploadToCloudinary(file, 'workhive_support');
+    const url = await uploadToImgbb(file, 'workhive_support');
     await fb.addDoc(fb.collection(fb.db, 'users', uid, 'supportChat'), { from: 'admin', text: '', imageUrl: url, _ts: Date.now(), createdAt: fb.serverTimestamp() });
     await fb.setDoc(fb.doc(fb.db, 'supportThreads', uid), { lastMessage: '📷 Image', lastFrom: 'admin', unreadByAdmin: false, unreadCount: 0, messageCount: fb.increment(1), updatedAt: fb.serverTimestamp() }, { merge: true });
   } catch (e) { console.error(e); showToast('❌ ছবি পাঠাতে ব্যর্থ হয়েছে', 'error'); }
