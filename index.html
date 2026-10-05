@@ -483,6 +483,16 @@ tr.dup-row td{background:rgba(239,68,68,0.03)}
 
 @media(max-width:1100px){.stats-grid{grid-template-columns:repeat(2,1fr)}.quick-actions{grid-template-columns:1fr 1fr}}
 @media(max-width:800px){.two-col,.three-col{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.content-area{padding:16px}.topbar{padding:0 14px}.user-job-stats{grid-template-columns:1fr}}
+
+/* ===== Compact popup chat (admin support inbox) ===== */
+.sup-backdrop{display:none;position:fixed;inset:0;background:rgba(5,8,14,.66);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);z-index:299}
+.sup-backdrop.show{display:block}
+.sup-chat-card.chat-open{position:fixed!important;z-index:300;right:24px;bottom:24px;left:auto;top:auto;width:430px;max-width:calc(100vw - 24px);height:min(640px,86vh);border-radius:18px;margin:0;box-shadow:0 24px 80px rgba(0,0,0,.65);border:1px solid var(--border3)}
+.sup-chat-close{display:flex!important}
+@media (max-width:768px){.sup-chat-card.chat-open{inset:0;right:0;bottom:0;width:100%;max-width:100%;height:100%;border-radius:0}}
+.sup-file-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border:1px solid var(--border2);border-radius:10px;padding:8px 10px;margin-bottom:6px;color:inherit;text-decoration:none;font-size:12px;font-weight:700}
+.sup-unread-pill{font-size:10px;font-weight:800;color:#fff;background:var(--red);border-radius:10px;padding:1px 7px}
+.sl-test-out{font-size:11.5px;margin-top:8px;word-break:break-all}
 </style>
 </head>
 <body>
@@ -1176,6 +1186,7 @@ if (window.Capacitor?.Plugins?.OneSignal) {
           <div class="card" style="padding:0;max-height:72vh;overflow-y:auto">
             <div id="supportThreadList"></div>
           </div>
+          <div class="sup-backdrop" id="supBackdrop" onclick="closeSupportThread()"></div>
           <div class="card sup-chat-card" id="supportChatCard">
             <div id="supportChatEmpty" style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--text3);text-align:center;padding:24px">
               <div><i class="ti ti-message-circle-2" style="font-size:32px;display:block;margin-bottom:8px"></i>একটা থ্রেড সিলেক্ট করুন</div>
@@ -1187,14 +1198,16 @@ if (window.Capacitor?.Plugins?.OneSignal) {
                   <div style="font-size:13px;font-weight:800" id="supChatName">—</div>
                   <div style="font-size:10.5px;color:var(--text3)" id="supChatEmail">—</div>
                 </div>
+                <span class="sup-unread-pill" id="supChatUnread" style="display:none"></span>
                 <span class="badge blue" id="supChatLang">EN</span>
+                <div class="sup-attach-btn" style="color:var(--red)" onclick="clearSupportChat()" title="Clear chat history"><i class="ti ti-trash"></i></div>
                 <div class="sup-chat-close" onclick="closeSupportThread()" title="Close"><i class="ti ti-x" style="font-size:18px"></i></div>
               </div>
               <div id="supportMsgArea" class="sup-msg-area"></div>
               <div style="display:flex;align-items:center;gap:8px;padding:12px 14px;border-top:1px solid var(--border);flex-shrink:0">
                 <div class="sup-attach-btn" onclick="document.getElementById('supportAttachInput').click()"><i class="ti ti-paperclip"></i></div>
                 <input type="file" id="supportAttachInput" accept="image/*" style="display:none" onchange="handleSupportAdminAttach(this)">
-                <input type="text" id="supportReplyInput" placeholder="রিপ্লাই লিখুন...">
+                <input type="text" id="supportReplyInput" placeholder="রিপ্লাই লিখুন..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendSupportAdminReply();}">
                 <button class="btn btn-primary btn-sm" onclick="sendSupportAdminReply()"><i class="ti ti-send"></i></button>
               </div>
             </div>
@@ -1363,6 +1376,27 @@ if (window.Capacitor?.Plugins?.OneSignal) {
               </div>
               <div class="lf-hint">ইতিমধ্যে জমা হওয়া KYC রিভিউ করতে <b>KYC Review</b> স্ক্রিনে যান (Dashboard থেকে অথবা এখানে)।</div>
               <button class="btn btn-ghost" style="width:100%;margin-top:10px" onclick="goScreen('kyc')"><i class="ti ti-id-badge-2"></i> Go to KYC Review</button>
+            </div>
+            <div class="card" id="slSettingsCard">
+              <div class="card-title"><i class="ti ti-link"></i> Shortlink Provider API Setup</div>
+              <div class="lf-hint" style="margin-bottom:10px">Shortlink Visit Task বানানোর সময় Destination URL অটোমেটিক এই API দিয়ে short হয়ে জবে সেভ হবে। API Key শুধু Admin-only (<code>adminSecrets/shortlink</code>) ডকুমেন্টে থাকে — Worker-রা দেখতে পাবে না।</div>
+              <div class="form-grid">
+                <div class="field"><label>Provider</label><select id="slProvider" onchange="slToggleTpl()"><option value="shrinkme">ShrinkMe.io</option><option value="adfocus">Adfoc.us</option><option value="custom">Custom (URL template)</option></select></div>
+                <div class="field"><label>API Key</label><input type="password" id="slApiKey" placeholder="Provider API Key" autocomplete="off"></div>
+              </div>
+              <div class="field" id="slTplField" style="display:none"><label>Custom API URL template</label><input type="text" id="slTemplate" placeholder="https://provider.com/api?api={key}&url={url}&format=text"><div class="lf-hint">{key} ও {url} অটো বসবে। Response plain text অথবা JSON (shortenedUrl / short_url / url) হতে পারে।</div></div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" onclick="slSaveProvider()"><i class="ti ti-device-floppy"></i> Save API</button><button class="btn btn-ghost btn-sm" onclick="slTestProvider()"><i class="ti ti-bolt"></i> Test API</button></div>
+              <div class="sl-test-out" id="slTestOut"></div>
+            </div>
+            <div class="card" id="bonusSettingsCard">
+              <div class="card-title"><i class="ti ti-gift"></i> Signup Bonus, Job Fee &amp; CPA Payout</div>
+              <div class="form-grid">
+                <div class="field"><label>Signup Bonus (USD → Job Deposit Balance)</label><input type="number" step="0.01" min="0" id="setSignupBonus" placeholder="0.50"></div>
+                <div class="field"><label>Deposit-Job Platform Fee % (10–20)</label><input type="number" step="1" min="10" max="20" id="setDepositFeePct" placeholder="15"></div>
+                <div class="field"><label>CPA Worker Share % (fallback)</label><input type="number" step="1" min="1" max="100" id="setCpaShare" placeholder="60"></div>
+              </div>
+              <div class="field"><label>CPA Postback Endpoint (Google Apps Script Web App URL — free)</label><input type="text" id="setCpaPostbackBase" placeholder="https://script.google.com/macros/s/XXXX/exec"></div>
+              <button class="btn btn-primary btn-sm" onclick="saveBonusSettings()"><i class="ti ti-device-floppy"></i> Save</button>
             </div>
             <div class="card">
               <div class="card-title"><i class="ti ti-folder"></i> Media Storage Settings (ImgBB)</div>
@@ -1871,6 +1905,7 @@ if (window.Capacitor?.Plugins?.OneSignal) {
           <option value="link">Direct Link Click Only</option>
           <option value="dailylink">🔁 Daily Direct Link (Auto 24h Repeat)</option>
           <option value="landing">🌐 Landing Page Visit (Multi-Ad + Secret Code)</option>
+          <option value="shortlink">🔗 Shortlink Visit (Auto API + Secret Code)</option>
         </select>
       </div>
     </div>
@@ -1891,6 +1926,11 @@ if (window.Capacitor?.Plugins?.OneSignal) {
       <div class="lf-hint">Worker App-এ এই সংখ্যক আলাদা "Screenshot 1, Screenshot 2…" আপলোড বক্স দেখাবে — সবগুলো না দিলে Submit করা যাবে না।</div>
     </div>
     <div class="alert info" id="pjDailyHint" style="display:none"><i class="ti ti-info-circle"></i> এই টাইপে কোনো Worker Limit নেই — সব ইউজার প্রতি ২৪ ঘণ্টায় একবার এই লিংক(গুলো) ভিজিট করে reward পাবে, এবং লিংকে ভিজিট করে ফিরে এলে balance অটোমেটিক যোগ হয়ে যাবে (কোনো proof review লাগবে না)।</div>
+    <div id="pjShortFields" style="display:none">
+      <div class="alert info"><i class="ti ti-info-circle"></i> Worker shortlink-এর captcha শেষ করে Verification Page-এ গিয়ে Secret Code পাবে, সেটা Work অ্যাপে সাবমিট করলেই instant payout। নিচের Ad Links ঐচ্ছিক।</div>
+      <div class="field"><label>Destination / Verification URL (https)</label><input type="url" id="pjShortDest" placeholder="খালি রাখলে অটো landing.html verification URL ব্যবহার হবে" oninput="S._pjShortDest=null"></div>
+      <div class="field"><label>Generated Short Link</label><div style="display:flex;gap:8px"><input type="text" id="pjShortUrl" readonly placeholder="Post করার সময় অটো তৈরি হবে" onclick="this.select()"><button class="btn btn-ghost btn-sm" type="button" onclick="pjGenShort()"><i class="ti ti-bolt"></i> Generate</button></div><div class="lf-hint" id="pjShortStatus"></div></div>
+    </div>
     <div id="pjLandingFields" style="display:none">
       <div class="field"><label>Description</label><textarea id="pjDesc" rows="2" placeholder="টাস্কের সংক্ষিপ্ত বর্ণনা (Worker-দের দেখাবে)"></textarea></div>
       <div class="field">
@@ -1947,13 +1987,13 @@ if (window.Capacitor?.Plugins?.OneSignal) {
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
   getFirestore, collection, getDocs, doc, updateDoc, addDoc, onSnapshot,
-  query, where, orderBy, serverTimestamp, increment, setDoc, deleteDoc, getDoc, runTransaction, deleteField
+  query, where, orderBy, limit, writeBatch, serverTimestamp, increment, setDoc, deleteDoc, getDoc, runTransaction, deleteField
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import {
   getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
-  getStorage, ref as fbStorageRef, deleteObject
+  getStorage, ref as fbStorageRef, deleteObject, uploadBytes, getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
 const cfg = {
@@ -1968,7 +2008,7 @@ const app = initializeApp(cfg);
 const db = getFirestore(app);
 const auth = getAuth(app);
 const storage = getStorage(app);
-window._fb = { db, auth, storage, collection, getDocs, doc, updateDoc, addDoc, onSnapshot, query, where, orderBy, serverTimestamp, increment, setDoc, deleteDoc, getDoc, runTransaction, deleteField, fbStorageRef, deleteObject };
+window._fb = { db, auth, storage, collection, getDocs, doc, updateDoc, addDoc, onSnapshot, query, where, orderBy, serverTimestamp, increment, setDoc, deleteDoc, getDoc, runTransaction, deleteField, limit, writeBatch, fbStorageRef, deleteObject, uploadBytes, getDownloadURL };
 
 function fbSetStatus(text, ok) {
   const el = document.getElementById('fbStatus');
@@ -2334,6 +2374,14 @@ const CPA_NETWORKS = [
     docs: 'https://www.cpagrip.com',
   },
   {
+    id: 'cpabuild', name: 'CPABuild', icon: '🛠️', color: '#00897b',
+    fields: [{ key:'apiKey', label:'API Key' }, { key:'userId', label:'User / Publisher ID (optional)' },
+             { key:'feedUrl', label:'Offer Feed URL — paste from your CPABuild dashboard (placeholders: {api_key} {user_id} {country})' }],
+    buildOfferUrl: (cfg, country) => '',
+    postbackParam: '{subid}', postbackMacros: { tid: '{transaction_id}', payout: '{payout}', offerid: '{offer_id}' },
+    docs: 'https://cpabuild.com',
+  },
+  {
     id: 'adgate', name: 'AdGate Media', icon: '🔵', color: '#1565c0',
     fields: [{ key:'apiKey', label:'API Key / Publisher ID' }],
     buildOfferUrl: (cfg, country) =>
@@ -2359,29 +2407,55 @@ const CPA_NETWORKS = [
   },
 ];
 
+// Every network accepts an optional "Custom Feed URL" override (so a wrong/changed endpoint never blocks you).
+CPA_NETWORKS.forEach(n => {
+  if (!n.fields.some(f => f.key === 'feedUrl')) n.fields.push({ key:'feedUrl', label:'Custom Feed URL override (optional — placeholders {api_key} {user_id} {country})' });
+  const orig = n.buildOfferUrl;
+  n.buildOfferUrl = (cfg, country) => {
+    if (cfg.feedUrl && cfg.feedUrl.trim()) {
+      const key = cfg.apiKey || cfg.secretKey || cfg.apiToken || '';
+      const uid = cfg.userId || cfg.publisherId || cfg.appId || cfg.placementId || '';
+      return cfg.feedUrl.trim().replace(/\{api_key\}/g, encodeURIComponent(key)).replace(/\{user_id\}/g, encodeURIComponent(uid)).replace(/\{country\}/g, encodeURIComponent(country || ''));
+    }
+    return orig(cfg, country);
+  };
+});
+
 // ── CORS proxy fallback chain ────────────────────────────────────────────────
 // Three proxies tried in order; first success wins.
 const CORS_PROXIES = [
-  url => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
   url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
   url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+  url => `https://thingproxy.freeboard.io/fetch/${url}`,
 ];
-async function fetchViaProxy(targetUrl) {
+// Direct request first (some networks allow CORS), then every proxy. Returns raw TEXT.
+async function fetchRawViaProxy(targetUrl) {
   const errors = [];
-  for (const buildProxy of CORS_PROXIES) {
+  const attempts = [u => u, ...CORS_PROXIES];
+  for (const build of attempts) {
+    const u = build(targetUrl);
     try {
-      const proxyUrl = buildProxy(targetUrl);
-      const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(12000) });
-      if (!res.ok) { errors.push(`HTTP ${res.status} from ${proxyUrl}`); continue; }
-      const json = await res.json();
-      // allorigins wraps in { contents: "..." }; others return JSON directly
-      const raw = json.contents !== undefined
-        ? (typeof json.contents === 'string' ? JSON.parse(json.contents) : json.contents)
-        : json;
-      return raw;
+      const res = await fetch(u, { signal: AbortSignal.timeout(12000) });
+      const text = await res.text();
+      if (!res.ok) { errors.push(`HTTP ${res.status}`); continue; }
+      if (!text || !text.trim()) { errors.push('empty response'); continue; }
+      return text;
     } catch (e) { errors.push(e.message); }
   }
-  throw new Error('All CORS proxies failed:\n' + errors.join('\n'));
+  throw new Error('All fetch routes failed: ' + errors.join(' | '));
+}
+function parseJsonLoose(text) {
+  try { return JSON.parse(text); } catch (e) {}
+  const m = text.match(/[\[{][\s\S]*[\]}]/);
+  if (m) { try { return JSON.parse(m[0]); } catch (e) {} }
+  throw new Error('Network did not return JSON: ' + text.slice(0, 120).replace(/\s+/g, ' '));
+}
+async function fetchViaProxy(targetUrl) {
+  const raw = parseJsonLoose(await fetchRawViaProxy(targetUrl));
+  // some proxies still wrap in { contents: "..." }
+  if (raw && raw.contents !== undefined) return typeof raw.contents === 'string' ? parseJsonLoose(raw.contents) : raw.contents;
+  return raw;
 }
 
 // ── Auto-generate a domain-based postback secret ─────────────────────────────
@@ -2557,11 +2631,22 @@ async function cpaSaveNetwork(networkId, silent = false) {
     // browser) and needs this to validate incoming postbacks without ever being
     // able to read the real API keys stored on the admin-only cpaNetworks doc.
     await fb.setDoc(fb.doc(fb.db, 'cpaPostbackSecrets', networkId), { secret: data.postbackSecret }, { merge: true }).catch(() => {});
+    // Mirror ONLY the postback secret into the public-readable half — postback.html
+    // runs unauthenticated (the CPA network's server calls it, not a logged-in
+    // browser) and needs this to validate incoming postbacks without ever being
+    // able to read the real API keys stored on the admin-only cpaNetworks doc.
     if (!silent) showToast(`✅ ${net.name} saved`, 'success');
     addLog(`CPA: ${net.name} config saved`, 'settings', 'teal');
   } catch (e) { showToast('❌ Save failed: ' + e.message, 'error'); }
 }
 
+// Server-side postback endpoint (Cloud Function `cpaPostback`, see functions/index.js). A static page cannot receive a network's server ping.
+function cpaPostbackBase() {
+  const custom = ((S.settings && S.settings.cpaPostbackBase) || '').trim().replace(/\/+$/, '');
+  if (custom) return custom;                                   // optional Apps Script endpoint (Settings)
+  const domain = (document.getElementById('cpaSiteDomain')?.value || '').trim().replace(/\/+$/, '') || 'https://yoursite.com';
+  return domain + '/postback.html';                            // original behaviour
+}
 function cpaUpdatePostbackUrls() {
   const domain = (document.getElementById('cpaSiteDomain')?.value || '').trim().replace(/\/+$/, '') || 'https://yoursite.com';
   const display = document.getElementById('postbackUrlDisplay');
@@ -2574,7 +2659,7 @@ function cpaUpdatePostbackUrls() {
     // exact macros aren't hardcoded yet (see postbackMacros comment on the
     // CPALead entry above for why this matters).
     const m = net.postbackMacros || { tid: '{transaction_id}', payout: '{payout}', offerid: '{offer_id}' };
-    const url = `${domain}/postback.html?network=${net.id}&uid=${net.postbackParam}&tid=${m.tid}&amount=${m.payout}&offerid=${m.offerid}&secret=${secret}`;
+    const url = `${cpaPostbackBase()}?network=${net.id}&uid=${net.postbackParam}&tid=${m.tid}&amount=${m.payout}&offerid=${m.offerid}&secret=${secret}`;
     return `<div style="margin-bottom:12px">
       <div style="font-size:10.5px;font-weight:800;color:var(--text2);margin-bottom:3px">${net.icon} ${net.name}</div>
       <div style="font-size:10px;color:var(--teal);background:var(--bg);padding:8px 10px;border-radius:8px;word-break:break-all;cursor:pointer;border:1px solid var(--border)"
@@ -3082,6 +3167,7 @@ function goScreen(name) {
   if (name==='kyc') renderKycQueue();
   if (name==='categories') renderCategoriesGrid();
   if (name==='support') initSupportInbox();
+  if (name==='settings') slFillSettings();
   if (name==='devstudio') devInit();
   if (name==='cpanetworks') { cpaTabSwitch('config'); renderCpaNetworkCards(); loadCpaTasks(); }
 }
@@ -3933,7 +4019,7 @@ async function deleteJob(id, title) {
   const fb=window._fb; if(!fb)return;
   try {
     if (needsRefund && j.postedBy && j.postedBy !== 'admin') {
-      await fb.updateDoc(fb.doc(fb.db,'users',j.postedBy),{ balance: fb.increment(j.budgetHeld), postingHold: fb.increment(-j.budgetHeld) }).catch(()=>{});
+      await fb.updateDoc(fb.doc(fb.db,'users',j.postedBy), j.fundedBy==='deposit' ? { depositBalance: fb.increment(j.budgetHeld) } : { balance: fb.increment(j.budgetHeld), postingHold: fb.increment(-j.budgetHeld) }).catch(()=>{});
       notifyUser(j.postedBy, '↩️ Job Removed — Refunded', `"${title}" was removed by admin. ${fmtAmt(j.budgetHeld)} has been refunded to your balance.`);
       addLog(`↩️ Refunded ${fmtAmt(j.budgetHeld)} to ${j.postedByName||'poster'} (job deleted: "${title}")`,'job','amber');
     }
@@ -3993,7 +4079,7 @@ function landingJobUrl(id) {
   const base = LANDING_BASE || new URL('landing.html', location.href).href;
   return base + '?job_id=' + encodeURIComponent(id) + '&user_id=USER_ID';
 }
-function updatePjJobUrl() { const el = $('pjJobUrl'); if (el) el.value = landingJobUrl(S._editJobId || 'JOB_ID'); }
+function updatePjJobUrl() { const el = $('pjJobUrl'); if (el) el.value = landingJobUrl(S._editJobId || (S._pjRef && S._pjRef.id) || 'JOB_ID'); }
 
 function updatePjTypeUI() {
   const type = $('pjType')?.value;
@@ -4006,7 +4092,9 @@ function updatePjTypeUI() {
   if (limitField) limitField.style.display = isDaily ? 'none' : '';
   if (dailyHint) dailyHint.style.display = isDaily ? 'flex' : 'none';
   if (shotsField) shotsField.style.display = isProof ? '' : 'none';
-  const isLanding = type === 'landing';
+  const isShortT = type === 'shortlink';
+  const isLanding = type === 'landing' || isShortT;
+  if ($('pjShortFields')) $('pjShortFields').style.display = isShortT ? '' : 'none';
   if ($('pjLandingFields')) $('pjLandingFields').style.display = isLanding ? '' : 'none';
   if ($('pjLinkField')) $('pjLinkField').style.display = isLanding ? 'none' : '';
   if (isLanding) updatePjJobUrl();
@@ -4015,6 +4103,7 @@ function updatePjTypeUI() {
 
 function openPostJobModal() {
   S._editJobId = null;
+  { const _fb = window._fb; S._pjRef = _fb ? _fb.doc(_fb.collection(_fb.db, 'jobs')) : null; S._pjShortDest = null; if ($('pjShortDest')) $('pjShortDest').value = ''; if ($('pjShortUrl')) $('pjShortUrl').value = ''; if ($('pjShortStatus')) $('pjShortStatus').textContent = ''; }
   $('pjModalTitle').textContent = 'Post New Micro Job';
   $('pjModalSub').textContent = 'Admin থেকে পোস্ট করা জব সাথে সাথেই Live হবে';
   $('pjSubmitBtn').innerHTML = '<i class="ti ti-rocket"></i> Post & Publish Job';
@@ -4044,7 +4133,8 @@ function editJob(id) {
   if ($('pjCategory')) $('pjCategory').value = j.category || 'Social Media';
   populatePjCategorySelect();
   if ($('pjSubcategory') && j.subcategory) $('pjSubcategory').value = j.subcategory;
-  if ($('pjType')) $('pjType').value = j.type || 'proof';
+  if ($('pjType')) $('pjType').value = (j.taskKind === 'shortlink') ? 'shortlink' : (j.type || 'proof');
+  if ($('pjShortDest')) $('pjShortDest').value = j.destUrl || ''; if ($('pjShortUrl')) $('pjShortUrl').value = j.shortUrl || ''; S._pjShortDest = j.destUrl || null; S._pjRef = null;
   if ($('pjInstructions')) $('pjInstructions').value = j.instructions || '';
   if ($('pjReward')) $('pjReward').value = j.reward || '';
   if ($('pjLimit')) $('pjLimit').value = j.limit || '';
@@ -4066,7 +4156,9 @@ function editJob(id) {
 }
 
 async function postJob() {
-  const title=v('pjTitle'), category=$('pjCategory').value, subcategory=$('pjSubcategory')?.value||'', type=$('pjType').value, instructions=v('pjInstructions'), country=v('pjCountry')||'Global';
+  const title=v('pjTitle'), category=$('pjCategory').value, subcategory=$('pjSubcategory')?.value||'', uiType=$('pjType').value, instructions=v('pjInstructions'), country=v('pjCountry')||'Global';
+  const isShort = uiType==='shortlink';
+  const type = isShort ? 'landing' : uiType;          // shortlink jobs reuse the secure landing-session/claim pipeline
   const reward=parseFloat($('pjReward').value)||0;
   const adLinks = {};
   if (type==='landing') PJ_AD_FIELDS.forEach(([k,id])=>{ const val=v(id); if(val) adLinks[k]=val; });
@@ -4077,20 +4169,28 @@ async function postJob() {
   if(!reward||reward<=0){showToast('সঠিক Reward amount দিন','error');return;}
   if((type==='link'||type==='dailylink')&&!links.length){showToast('অন্তত একটি Direct Link দিন','error');return;}
   if(type==='landing'){
-    if(!links.length){showToast('অন্তত একটি Ad Direct Link দিন','error');return;}
+    if(!isShort && !links.length){showToast('অন্তত একটি Ad Direct Link দিন','error');return;}
     if(links.some(l=>!/^https:\/\//i.test(l))){showToast('সব Ad লিংক https:// দিয়ে শুরু হতে হবে','error');return;}
   }
   if(type==='dailylink'){ limit = 999999; }
   else if(!limit||limit<=0){showToast('সঠিক Worker Limit দিন','error');return;}
-  const landingExtra = type==='landing' ? {
-    adLinks, desc: v('pjDesc'),
-    timerSeconds: Math.max(10, Math.min(300, parseInt($('pjTimer').value)||30)),
-    cooldownHours: $('pjCooldown').value==='12' ? 12 : 24,
-    template: $('pjTemplate').value || 'news',
-  } : {};
   const fb=window._fb; if(!fb){showToast('Firebase not ready','error');return;}
   const isEdit = !!S._editJobId;
+  const btn = $('pjSubmitBtn'); if (btn) btn.disabled = true;
   try{
+    let shortExtra = {};
+    if (isShort) {
+      if (!isEdit && !S._pjRef) S._pjRef = fb.doc(fb.collection(fb.db,'jobs'));
+      shortExtra = await pjEnsureShort(isEdit ? S._editJobId : S._pjRef.id);   // calls the Shortlink API in the background
+    }
+    const landingExtra = type==='landing' ? {
+      adLinks, desc: v('pjDesc'),
+      timerSeconds: Math.max(10, Math.min(300, parseInt($('pjTimer').value)||30)),
+      cooldownHours: $('pjCooldown').value==='12' ? 12 : 24,
+      template: $('pjTemplate').value || 'news',
+      taskKind: isShort ? 'shortlink' : 'landing',
+      ...shortExtra,
+    } : {};
     if (isEdit) {
       const id = S._editJobId;
       await fb.updateDoc(fb.doc(fb.db,'jobs',id),{
@@ -4102,7 +4202,8 @@ async function postJob() {
       addLog(`✏️ Admin edited job: "${title}"`,'job','amber');
       showToast('✅ Job updated!','success');
     } else {
-      const newRef = await fb.addDoc(fb.collection(fb.db,'jobs'),{
+      const newRef = S._pjRef || fb.doc(fb.collection(fb.db,'jobs'));
+      await fb.setDoc(newRef,{
         title, category, subcategory, type,
         links, link: links[0] || '',
         instructions, reward, limit, filled:0, country,
@@ -4112,15 +4213,17 @@ async function postJob() {
         submittedAt:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),
         _ts:Date.now(), createdAt: fb.serverTimestamp()
       });
+      S._pjRef = null;
       closeModal('postJobModal');
-      const typeLabel = type==='landing' ? ' (🌐 Landing Page Visit)' : type==='dailylink' ? ' (🔁 Daily 24h Repeat Link)' : type==='link' ? ' (Direct Link)' : '';
+      const typeLabel = isShort ? ' (🔗 Shortlink Visit)' : type==='landing' ? ' (🌐 Landing Page Visit)' : type==='dailylink' ? ' (🔁 Daily 24h Repeat Link)' : type==='link' ? ' (Direct Link)' : '';
       const extraLabel = (links.length>1?` · ${links.length} links`:'') + (type==='proof'&&screenshotCount>1?` · ${screenshotCount} screenshots required`:'');
       addLog(`🆕 Admin posted new job: "${title}"${typeLabel} (+${fmtAmt(reward)}${type==='dailylink'?'/visit':'/task'}${type==='dailylink'?'':', '+limit+' slots'})${extraLabel}`,'job','green');
       addAdminNotif('🆕 New Job Posted', `"${title}" is now live${type==='dailylink'?' as a daily-repeat link task':' for '+limit+' workers'}.`, 'success');
-      if(type==='landing') addLog('🔗 Landing Job URL: '+landingJobUrl(newRef.id),'job','green');
+      if(type==='landing') addLog('🔗 '+(isShort?'Short Link: '+shortExtra.shortUrl:'Landing Job URL: '+landingJobUrl(newRef.id)),'job','green');
       showToast('✅ Job posted and is now live for workers!','success');
     }
-  }catch(e){ console.error(e); showToast('❌ Save failed — check Firebase Admin login / Firestore permissions','error'); }
+  }catch(e){ console.error(e); showToast('❌ '+(e.message && !e.code ? e.message : 'Save failed — check Firebase Admin login / Firestore permissions'),'error'); }
+  finally { if (btn) btn.disabled = false; }
 }
 
 // ===== RENDER: TASKS =====
@@ -4378,7 +4481,7 @@ async function confirmReject() {
       if (j && j.budgetHeld && !j.holdSettled) jobUpd.holdSettled = true;
       await fb.updateDoc(fb.doc(fb.db,'jobs',id),jobUpd);
       if (needsRefund) {
-        await fb.updateDoc(fb.doc(fb.db,'users',j.postedBy),{ balance: fb.increment(refundAmount), postingHold: fb.increment(-j.budgetHeld) }).catch(()=>{});
+        await fb.updateDoc(fb.doc(fb.db,'users',j.postedBy), j.fundedBy==='deposit' ? { depositBalance: fb.increment(refundAmount) } : { balance: fb.increment(refundAmount), postingHold: fb.increment(-j.budgetHeld) }).catch(()=>{});
       }
       const wasLive = j && j.status === 'approved';
       addLog(`❌ Job ${wasLive?'un-approved (problem found)':'rejected'}: "${j?.title}" — ${reason}${needsRefund?` (${fmtAmt(refundAmount)} refunded for ${remainingSlots} remaining slot${remainingSlots===1?'':'s'})`:''}`,'job','red');
@@ -5482,6 +5585,7 @@ function initSupportInbox() {
       snap.forEach(d => S.support.threads.push({ id: d.id, ...d.data() }));
       renderSupportThreadList();
       updateSupportBadge();
+      if (S.support.activeUid) supMarkRead(S.support.activeUid);
     },
     e => console.warn('supportThreads listener:', e)
   );
@@ -5518,47 +5622,92 @@ function renderSupportThreadList() {
 }
 function closeSupportThread() {
   S.support.activeUid = null;
+  if (S.support._unsubChat) { try { S.support._unsubChat(); } catch (e) {} S.support._unsubChat = null; }
   renderSupportThreadList();
   $('supportChatCard')?.classList.remove('chat-open');
-  $('supportChatActive').style.display = 'none';
-  $('supportChatEmpty').style.display = 'flex';
+  $('supBackdrop')?.classList.remove('show');
+  if ($('supportChatActive')) $('supportChatActive').style.display = 'none';
+  if ($('supportChatEmpty')) $('supportChatEmpty').style.display = 'flex';
+}
+function supMsgTs(m) { return m._ts || (m.createdAt?.toMillis ? m.createdAt.toMillis() : 0); }
+function supSafeUrl(u) { return /^https?:\/\//i.test(u || '') ? u : ''; }
+async function supMarkRead(uid) {
+  const fb = window._fb; if (!fb || !uid) return;
+  const t = S.support.threads.find(x => x.id === uid);
+  if (t && !t.unreadByAdmin && !(t.unreadCount > 0)) return;
+  fb.setDoc(fb.doc(fb.db, 'supportThreads', uid), { unreadByAdmin: false, unreadCount: 0 }, { merge: true }).catch(() => {});
 }
 async function openSupportThread(uid) {
-  S.support.activeUid = uid;
+  S.support.activeUid = uid; S.support.messages = [];
   renderSupportThreadList();
   $('supportChatEmpty').style.display = 'none';
   $('supportChatActive').style.display = 'flex';
-  $('supportChatCard')?.classList.add('chat-open'); // full-screen popup on mobile
+  $('supportChatCard')?.classList.add('chat-open');   // compact popup (desktop) / full-screen (mobile)
+  $('supBackdrop')?.classList.add('show');
   const t = S.support.threads.find(x => x.id === uid);
   if (t) {
     $('supChatName').textContent = t.userName || 'Unknown';
     $('supChatEmail').textContent = t.userEmail || '—';
     $('supChatLang').textContent = (t.lang || 'en').toUpperCase();
     $('supChatAvatar').textContent = initials(t.userName);
+    const up = $('supChatUnread'); if (up) { const n = t.unreadCount || (t.unreadByAdmin ? 1 : 0); up.textContent = n + ' unread'; up.style.display = n ? '' : 'none'; }
   }
-  const fb = window._fb; if (!fb) return;
-  if (S.support._unsubChat) S.support._unsubChat();
-  S.support._unsubChat = fb.onSnapshot(
-    fb.query(fb.collection(fb.db, 'users', uid, 'supportChat'), fb.orderBy('_ts', 'asc'), fb.limit(200)),
-    snap => {
-      S.support.messages = [];
-      snap.forEach(d => S.support.messages.push({ id: d.id, ...d.data() }));
-      renderSupportChat();
-    },
-    e => console.warn('supportChat listener:', e)
-  );
-  if (t && t.unreadByAdmin) {
-    fb.setDoc(fb.doc(fb.db, 'supportThreads', uid), { unreadByAdmin: false, unreadCount: 0 }, { merge: true }).catch(() => {});
-  }
+  const area = $('supportMsgArea');
+  if (area) area.innerHTML = '<div style="padding:30px;text-align:center;color:var(--text3);font-size:12px">⏳ Loading chat…</div>';
+  const fb = window._fb;
+  if (!fb) { showToast('Firebase not ready', 'error'); return; }
+  if (S.support._unsubChat) { try { S.support._unsubChat(); } catch (e) {} S.support._unsubChat = null; }
+  try {
+    // No orderBy here on purpose: older messages without `_ts` would otherwise be silently dropped.
+    // Sorting is done client-side by _ts / createdAt.
+    S.support._unsubChat = fb.onSnapshot(
+      fb.query(fb.collection(fb.db, 'users', uid, 'supportChat'), fb.limit(500)),
+      snap => {
+        if (S.support.activeUid !== uid) return;
+        S.support.messages = [];
+        snap.forEach(d => S.support.messages.push({ id: d.id, ...d.data() }));
+        S.support.messages.sort((a, b) => supMsgTs(a) - supMsgTs(b));
+        renderSupportChat();
+        supMarkRead(uid);
+      },
+      e => {
+        console.error('supportChat listener:', e);
+        if (area) area.innerHTML = '<div style="padding:30px;text-align:center;color:var(--red);font-size:12px">❌ Chat load failed (' + devEsc(e.code || e.message) + ')<br>Firestore rules + admin login চেক করুন।<br><button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="openSupportThread(\'' + uid + '\')">Retry</button></div>';
+      }
+    );
+  } catch (e) { console.error(e); showToast('❌ Chat open failed: ' + e.message, 'error'); }
+  supMarkRead(uid);
 }
 function renderSupportChat() {
   const el = $('supportMsgArea'); if (!el) return;
+  if (!S.support.messages.length) { el.innerHTML = '<div style="padding:30px;text-align:center;color:var(--text3);font-size:12px">কোনো মেসেজ নেই</div>'; return; }
+  let lastDay = '';
   el.innerHTML = S.support.messages.map(m => {
-    const time = m.createdAt?.toDate ? m.createdAt.toDate().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
-    const imgHtml = m.imageUrl ? `<img src="${devEsc(m.imageUrl)}" style="max-width:180px;border-radius:10px;display:block;margin-bottom:${m.text ? '6px' : '0'};cursor:pointer" onclick="openLightbox('${devEsc(m.imageUrl)}')">` : '';
-    return `<div class="sup-msg-row ${m.from === 'admin' ? 'me' : 'them'}"><div class="sup-msg-bubble">${imgHtml}${devEsc(m.text || '')}<div class="sup-msg-time">${time}</div></div></div>`;
+    const d = m.createdAt?.toDate ? m.createdAt.toDate() : (m._ts ? new Date(m._ts) : null);
+    const time = d ? d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
+    const day = d ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+    const sep = day && day !== lastDay ? `<div style="text-align:center;font-size:10px;color:var(--text3);margin:8px 0">${day}</div>` : '';
+    lastDay = day || lastDay;
+    const img = supSafeUrl(m.imageUrl);
+    const imgHtml = img ? `<img src="${devEsc(img)}" style="max-width:200px;border-radius:10px;display:block;margin-bottom:${m.text ? '6px' : '0'};cursor:pointer" onclick="openLightbox('${devEsc(img)}')">` : '';
+    const f = supSafeUrl(m.fileUrl);
+    const fileHtml = f ? `<a class="sup-file-chip" href="${devEsc(f)}" target="_blank" rel="noopener"><i class="ti ti-file"></i><span>${devEsc(m.fileName || 'Attachment')}</span></a>` : '';
+    return `${sep}<div class="sup-msg-row ${m.from === 'admin' ? 'me' : 'them'}"><div class="sup-msg-bubble">${imgHtml}${fileHtml}${devEsc(m.text || '')}<div class="sup-msg-time">${m.auto ? '🤖 ' : ''}${time}</div></div></div>`;
   }).join('');
   el.scrollTop = el.scrollHeight;
+}
+async function clearSupportChat() {
+  const uid = S.support.activeUid; if (!uid) return;
+  if (!confirm('এই ইউজারের পুরো চ্যাট হিস্ট্রি স্থায়ীভাবে মুছে ফেলবেন? (ইউজারের দিক থেকেও মুছে যাবে)')) return;
+  const fb = window._fb; if (!fb) return;
+  try {
+    const snap = await fb.getDocs(fb.collection(fb.db, 'users', uid, 'supportChat'));
+    let batch = fb.writeBatch(fb.db), n = 0;
+    for (const d of snap.docs) { batch.delete(d.ref); if (++n % 400 === 0) { await batch.commit(); batch = fb.writeBatch(fb.db); } }
+    await batch.commit();
+    await fb.setDoc(fb.doc(fb.db, 'supportThreads', uid), { lastMessage: '', lastFrom: 'admin', unreadByAdmin: false, unreadCount: 0, messageCount: 0, updatedAt: fb.serverTimestamp() }, { merge: true });
+    showToast('🗑️ চ্যাট হিস্ট্রি মুছে ফেলা হয়েছে', 'success');
+  } catch (e) { console.error(e); showToast('❌ Clear failed: ' + (e.code || e.message), 'error'); }
 }
 async function sendSupportAdminReply() {
   const uid = S.support.activeUid; if (!uid) return;
@@ -5573,17 +5722,111 @@ async function sendSupportAdminReply() {
 }
 async function handleSupportAdminAttach(input) {
   const file = input.files && input.files[0]; if (!file) return;
-  const uid = S.support.activeUid; if (!uid) { input.value = ''; return; }
-  if (!file.type.startsWith('image/')) { showToast('শুধু ছবি ফাইল দিন', 'error'); input.value = ''; return; }
-  if (file.size > 8 * 1024 * 1024) { showToast('ছবি খুব বড় (সর্বোচ্চ 8MB)', 'error'); input.value = ''; return; }
-  input.value = '';
+  const uid = S.support.activeUid; input.value = '';
+  if (!uid) return;
+  if (file.size > 10 * 1024 * 1024) { showToast('ফাইল খুব বড় (সর্বোচ্চ 10MB)', 'error'); return; }
   const fb = window._fb; if (!fb) return;
   try {
-    showToast('⬆ ছবি আপলোড হচ্ছে...', 'info');
-    const url = await uploadToImgbb(file, 'workhive_support');
-    await fb.addDoc(fb.collection(fb.db, 'users', uid, 'supportChat'), { from: 'admin', text: '', imageUrl: url, _ts: Date.now(), createdAt: fb.serverTimestamp() });
-    await fb.setDoc(fb.doc(fb.db, 'supportThreads', uid), { lastMessage: '📷 Image', lastFrom: 'admin', unreadByAdmin: false, unreadCount: 0, messageCount: fb.increment(1), updatedAt: fb.serverTimestamp() }, { merge: true });
-  } catch (e) { console.error(e); showToast('❌ ছবি পাঠাতে ব্যর্থ হয়েছে', 'error'); }
+    showToast('⬆ আপলোড হচ্ছে...', 'info');
+    const isImg = file.type.startsWith('image/');
+    if (!isImg) { showToast('Spark প্ল্যানে শুধু ছবি/স্ক্রিনশট পাঠানো যায়', 'error'); return; }
+    const payload = { from: 'admin', text: '', _ts: Date.now(), createdAt: fb.serverTimestamp() };
+    if (isImg) payload.imageUrl = await uploadToImgbb(file, 'workhive_support');
+    else {
+      const safe = file.name.replace(/[^\w.\-]+/g, '_');
+      const r = fb.fbStorageRef(fb.storage, `supportFiles/${uid}/${Date.now()}_${safe}`);
+      await fb.uploadBytes(r, file);
+      payload.fileUrl = await fb.getDownloadURL(r); payload.fileName = file.name;
+    }
+    await fb.addDoc(fb.collection(fb.db, 'users', uid, 'supportChat'), payload);
+    await fb.setDoc(fb.doc(fb.db, 'supportThreads', uid), { lastMessage: isImg ? '📷 Image' : '📎 ' + file.name, lastFrom: 'admin', unreadByAdmin: false, unreadCount: 0, messageCount: fb.increment(1), updatedAt: fb.serverTimestamp() }, { merge: true });
+  } catch (e) { console.error(e); showToast('❌ পাঠাতে ব্যর্থ: ' + (e.code || e.message) + (/storage/i.test(e.code||'') ? ' (Storage rules চেক করুন)' : ''), 'error'); }
+}
+
+
+// ══════════════════════════════════════════════════════════
+// ======= 🔗 SHORTLINK API + SIGNUP BONUS / FEE SETTINGS ====
+// ══════════════════════════════════════════════════════════
+S.shortlink = S.shortlink || { provider: 'shrinkme', apiKey: '', template: '' };
+function slToggleTpl() { const f = $('slTplField'); if (f) f.style.display = $('slProvider').value === 'custom' ? '' : 'none'; }
+async function slLoadProvider() {
+  const fb = window._fb; if (!fb) return;
+  try {
+    const snap = await fb.getDoc(fb.doc(fb.db, 'adminSecrets', 'shortlink'));
+    if (snap.exists()) S.shortlink = { ...S.shortlink, ...snap.data() };
+  } catch (e) { console.warn('slLoadProvider:', e.code || e.message); }
+}
+async function slFillSettings() {
+  await slLoadProvider();
+  if ($('slProvider')) $('slProvider').value = S.shortlink.provider || 'shrinkme';
+  if ($('slApiKey')) $('slApiKey').value = S.shortlink.apiKey || '';
+  if ($('slTemplate')) $('slTemplate').value = S.shortlink.template || '';
+  slToggleTpl();
+  const s = S.settings || {};
+  if ($('setSignupBonus')) $('setSignupBonus').value = s.signupBonus ?? 0.5;
+  if ($('setDepositFeePct')) $('setDepositFeePct').value = s.depositJobFeePct ?? 15;
+  if ($('setCpaShare')) $('setCpaShare').value = s.cpaUserSharePct ?? 60;
+  if ($('setCpaPostbackBase')) $('setCpaPostbackBase').value = s.cpaPostbackBase || '';
+}
+async function slSaveProvider() {
+  const fb = window._fb; if (!fb) return;
+  const data = { provider: $('slProvider').value, apiKey: $('slApiKey').value.trim(), template: ($('slTemplate').value || '').trim(), updatedAt: new Date().toISOString() };
+  if (!data.apiKey) { showToast('API Key দিন', 'error'); return; }
+  if (data.provider === 'custom' && !/\{url\}/.test(data.template)) { showToast('Template-এ {url} থাকতে হবে', 'error'); return; }
+  try { await fb.setDoc(fb.doc(fb.db, 'adminSecrets', 'shortlink'), data, { merge: true }); S.shortlink = { ...S.shortlink, ...data }; showToast('✅ Shortlink API saved', 'success'); }
+  catch (e) { console.error(e); showToast('❌ Save failed: ' + (e.code || e.message), 'error'); }
+}
+async function shortenUrl(dest) {
+  if (!S.shortlink.apiKey) await slLoadProvider();
+  const { provider, apiKey, template } = S.shortlink;
+  if (!apiKey) throw new Error('আগে Settings → Shortlink Provider API Setup-এ API Key সেভ করুন');
+  const enc = encodeURIComponent(dest), k = encodeURIComponent(apiKey);
+  let api;
+  if (provider === 'adfocus') api = `http://adfoc.us/api/?key=${k}&url=${enc}`;
+  else if (provider === 'custom') api = (template || '').replace(/\{key\}/g, k).replace(/\{url\}/g, enc);
+  else api = `https://shrinkme.io/api?api=${k}&url=${enc}&format=text`;
+  const txt = (await fetchRawViaProxy(api)).trim();
+  let out = txt;
+  try { const j = JSON.parse(txt); out = j.shortenedUrl || j.short_url || j.shortUrl || j.link || j.url || ''; if (j.status === 'error') throw new Error(j.message || 'API error'); } catch (e) { if (e.message && /API error|message/.test(e.message) && out === txt) throw e; }
+  if (!/^https?:\/\/\S+$/i.test(out)) throw new Error('Shortlink API ব্যর্থ: ' + txt.slice(0, 140));
+  return out;
+}
+async function slTestProvider() {
+  const out = $('slTestOut'); out.style.color = 'var(--text2)'; out.textContent = '⏳ Testing…';
+  try { await slSaveProvider(); const s = await shortenUrl('https://example.com/?t=' + Date.now()); out.style.color = 'var(--green)'; out.textContent = '✅ Working → ' + s; }
+  catch (e) { out.style.color = 'var(--red)'; out.textContent = '❌ ' + e.message; }
+}
+async function saveBonusSettings() {
+  const fb = window._fb; if (!fb) return;
+  const fee = Math.min(20, Math.max(10, parseFloat($('setDepositFeePct').value) || 15));
+  const data = {
+    signupBonus: Math.max(0, parseFloat($('setSignupBonus').value) || 0),
+    depositJobFeePct: fee,
+    cpaUserSharePct: Math.min(100, Math.max(1, parseFloat($('setCpaShare').value) || 60)),
+    cpaPostbackBase: ($('setCpaPostbackBase').value || '').trim(),
+  };
+  try { await fb.setDoc(fb.doc(fb.db, 'siteSettings', 'global'), data, { merge: true }); Object.assign(S.settings, data); showToast('✅ Saved', 'success'); cpaUpdatePostbackUrls?.(); }
+  catch (e) { console.error(e); showToast('❌ Save failed: ' + (e.code || e.message), 'error'); }
+}
+
+// ----- Shortlink Visit task (admin post-job modal) -----
+async function pjEnsureShort(jobId) {
+  const dest = (v('pjShortDest') || landingJobUrl(jobId).replace('&user_id=USER_ID', '')).trim();
+  if (!/^https:\/\//i.test(dest)) throw new Error('Destination URL অবশ্যই https:// দিয়ে শুরু হতে হবে');
+  let shortUrl = v('pjShortUrl');
+  if (!shortUrl || S._pjShortDest !== dest) shortUrl = await shortenUrl(dest);
+  S._pjShortDest = dest; if ($('pjShortUrl')) $('pjShortUrl').value = shortUrl;
+  return { taskKind: 'shortlink', destUrl: dest, shortUrl, shortProvider: S.shortlink.provider || 'shrinkme' };
+}
+async function pjGenShort() {
+  const out = $('pjShortStatus'); out.textContent = '⏳ Generating…'; out.style.color = 'var(--text2)';
+  try {
+    const fb = window._fb;
+    if (!S._editJobId && !S._pjRef && fb) S._pjRef = fb.doc(fb.collection(fb.db, 'jobs'));
+    S._pjShortDest = null; if ($('pjShortUrl')) $('pjShortUrl').value = '';
+    await pjEnsureShort(S._editJobId || S._pjRef.id);
+    out.textContent = '✅ Short link ready'; out.style.color = 'var(--green)';
+  } catch (e) { out.textContent = '❌ ' + e.message; out.style.color = 'var(--red)'; }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -6131,6 +6374,11 @@ async function devRollback(sha, msg) {
     devLoadCommits();
   } catch(e) { console.error(e); showToast('❌ Rollback ব্যর্থ: '+e.message,'error'); }
 }
+</script>
+<script>
+window.addEventListener('unhandledrejection',e=>{console.warn('Unhandled promise rejection:',e.reason&&(e.reason.code||e.reason.message)||e.reason);e.preventDefault();});
+// Escape closes any open modal / chat popup; stops stuck backdrops.
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(document.getElementById('supportChatCard')?.classList.contains('chat-open')&&typeof closeSupportThread==='function')closeSupportThread();document.querySelectorAll('.modal-overlay.show,.modal.show').forEach(m=>m.classList.remove('show'));});
 </script>
 </body>
 </html>
