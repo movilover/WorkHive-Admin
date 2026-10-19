@@ -6380,5 +6380,79 @@ window.addEventListener('unhandledrejection',e=>{console.warn('Unhandled promise
 // Escape closes any open modal / chat popup; stops stuck backdrops.
 document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(document.getElementById('supportChatCard')?.classList.contains('chat-open')&&typeof closeSupportThread==='function')closeSupportThread();document.querySelectorAll('.modal-overlay.show,.modal.show').forEach(m=>m.classList.remove('show'));});
 </script>
+
+<!-- ══ App Download Link card (Settings) ══ -->
+<script>
+(function () {
+  var CARD_ID = 'appDlCard';
+
+  function toast(msg, type) {
+    try { if (typeof showToast === 'function') { showToast(msg, type); return; } } catch (e) {}
+    alert(msg);
+  }
+
+  function buildCard() {
+    var screen = document.getElementById('screen-settings');
+    if (!screen || document.getElementById(CARD_ID)) return !!document.getElementById(CARD_ID);
+
+    var col = screen.querySelector('.two-col > div') || screen;
+    var card = document.createElement('div');
+    card.className = 'card';
+    card.id = CARD_ID;
+    card.innerHTML =
+      '<div class="card-title"><i class="ti ti-device-mobile-down"></i> App Download Link (User Site)</div>' +
+      '<div class="lf-hint" style="margin-bottom:10px">ইউজার সাইটের “অ্যাপ ডাউনলোড” বাটনে ক্লিক করলে এই লিংক থেকে APK অটো ডাউনলোড হবে। ' +
+      'GitHub Releases-এর লিংক বসান, যেমন: <b>https://github.com/আপনার-ইউজারনেম/WorkHive-Android/releases/download/latest/WorkHive.apk</b></div>' +
+      '<div class="field"><label>APK Download URL</label>' +
+      '<input type="text" id="appDlUrl" placeholder="https://github.com/.../releases/download/latest/WorkHive.apk"></div>' +
+      '<div class="field"><label>Active Workers (ঐচ্ছিক — ল্যান্ডিং পেজে দেখাবে, যেমন 1,200+)</label>' +
+      '<input type="text" id="appDlWorkers" placeholder="খালি রাখলে “নতুন” দেখাবে"></div>' +
+      '<div id="appDlStatus" class="lf-hint" style="margin-bottom:8px"></div>' +
+      '<button class="btn btn-primary" id="appDlSave" style="width:100%"><i class="ti ti-device-floppy"></i> Save App Link</button>';
+    col.insertBefore(card, col.firstChild);
+
+    document.getElementById('appDlSave').addEventListener('click', save);
+    load();
+    return true;
+  }
+
+  async function load() {
+    var fb = window._fb; if (!fb) return;
+    try {
+      var snap = await fb.getDoc(fb.doc(fb.db, 'siteSettings', 'appDownload'));
+      if (snap.exists()) {
+        var d = snap.data() || {};
+        document.getElementById('appDlUrl').value = d.url || '';
+        document.getElementById('appDlWorkers').value = d.activeWorkers || '';
+        if (d.url) document.getElementById('appDlStatus').textContent = '✅ বর্তমানে সেভ করা আছে';
+      }
+    } catch (e) { console.warn('app link load failed', e); }
+  }
+
+  async function save() {
+    var fb = window._fb;
+    if (!fb) { toast('Firebase এখনো প্রস্তুত নয়', 'error'); return; }
+    var url = document.getElementById('appDlUrl').value.trim();
+    var workers = document.getElementById('appDlWorkers').value.trim();
+    if (url && !/^https:\/\//i.test(url)) { toast('লিংক অবশ্যই https:// দিয়ে শুরু হতে হবে', 'error'); return; }
+    var btn = document.getElementById('appDlSave');
+    btn.disabled = true;
+    try {
+      await fb.setDoc(fb.doc(fb.db, 'siteSettings', 'appDownload'),
+        { url: url, activeWorkers: workers, updatedAt: fb.serverTimestamp() }, { merge: true });
+      document.getElementById('appDlStatus').textContent = url ? '✅ সেভ হয়েছে — ইউজার সাইটে এখনই কাজ করবে' : '✅ সেভ হয়েছে (লিংক খালি — পুরনো ডিফল্ট লিংক ব্যবহার হবে না, বাটনে “শীঘ্রই আসছে” দেখাবে)';
+      toast('✅ App Download Link সেভ হয়েছে');
+    } catch (e) {
+      console.error(e);
+      toast('সেভ হয়নি — Firebase Rules-এ siteSettings write পারমিশন আছে কি দেখুন', 'error');
+    }
+    btn.disabled = false;
+  }
+
+  // The admin builds screens lazily — keep checking until Settings exists.
+  setInterval(buildCard, 1500);
+  buildCard();
+})();
+</script>
 </body>
 </html>
