@@ -1449,6 +1449,14 @@ if (window.Capacitor?.Plugins?.OneSignal) {
                 <div class="field-sub" style="font-size:10px;color:var(--text3);margin-top:4px">Variables: to_email, to_name, otp_code, expires_minutes, site_name</div>
               </div>
               <div class="field">
+                <label>Template ID — Broadcast / সব ইউজারকে মেসেজ (Email)</label>
+                <div style="display:flex;gap:8px">
+                  <input type="text" id="setEmailjsBroadcastTemplateId" placeholder="template_xxxxxxx" style="flex:1">
+                  <button class="btn btn-ghost btn-sm" onclick="emailjsTestSend('broadcast')">📤 Test</button>
+                </div>
+                <div class="field-sub" style="font-size:10px;color:var(--text3);margin-top:4px">EmailJS Template-এ: To Email = <b>{{to_email}}</b> · Subject = <b>{{subject}}</b> · Content (HTML) = <b>{{{html_body}}}</b> (তিনটা ব্রেস)। অন্য Variables: to_name, broadcast_title, broadcast_body, site_name</div>
+              </div>
+              <div class="field">
                 <label>Template ID — Job Approved</label>
                 <input type="text" id="setEmailjsJobApprovalTemplateId" placeholder="template_xxxxxxx (ফাঁকা রাখলে উপরের default Template ID ব্যবহার হবে)">
                 <div class="field-sub" style="font-size:10px;color:var(--text3);margin-top:4px">Variables: to_email, to_name, job_title, job_reward, job_slots, site_name, view_url, subject</div>
@@ -3245,11 +3253,41 @@ function setOsConnected(ok) {
 //     OneSignal Journey in the dashboard, triggered off a tag. index.html can
 //     set that tag itself whenever a new Firestore notification arrives for
 //     the signed-in user (see index.html's listenUserNotifications callback).
-async function sendPushNotification(uid, title, message) {
-  // Intentionally a no-op here — the in-app notification via notifyUser() already covers this.
+// Phone push (OneSignal) — the REST key lives on a Cloudflare Worker; its URL is set in Settings → "App, Push & Notice".
+window.__whPushUrl = undefined;
+async function whAdminPushUrl() {
+  if (window.__whPushUrl !== undefined) return window.__whPushUrl;
+  try {
+    const fb = window._fb;
+    const s = await fb.getDoc(fb.doc(fb.db, 'siteSettings', 'push'));
+    window.__whPushUrl = (s.exists() && (s.data().workerUrl || '') || '').trim().replace(/\/+$/, '');
+  } catch (e) { window.__whPushUrl = ''; }
+  return window.__whPushUrl;
 }
-function testOneSignalBroadcastPush() {
-  showToast('একবার-মাত্র ব্রডকাস্ট পাঠাতে OneSignal Dashboard → Messages → New Push ব্যবহার করুন।', 'info');
+async function whAdminPush(payload) {
+  const url = await whAdminPushUrl();
+  if (!url) return { skipped: true };
+  const fb = window._fb;
+  const user = fb && fb.auth && fb.auth.currentUser;
+  if (!user) return { skipped: true };
+  const tok = await user.getIdToken();
+  const r = await fetch(url, { method: 'POST', headers: { 'Authorization': 'Bearer ' + tok, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || !j.ok) throw new Error(j.error || ('HTTP ' + r.status));
+  return j;
+}
+async function sendPushNotification(uid, title, message, screen) {
+  try { await whAdminPush({ kind: 'custom', uid, title: String(title || '').slice(0, 80), message: String(message || '').slice(0, 300), screen: screen || 'notifications' }); }
+  catch (e) { console.warn('push failed:', e && e.message || e); }
+}
+async function testOneSignalBroadcastPush() {
+  try {
+    const url = await whAdminPushUrl();
+    if (!url) { showToast('আগে Settings → App, Push & Notice-এ Push Worker URL দিন', 'error'); return; }
+    const uid = window._fb && window._fb.auth && window._fb.auth.currentUser && window._fb.auth.currentUser.uid;
+    const j = await whAdminPush({ kind: 'custom', uid, title: 'WorkHive টেস্ট', message: 'পুশ নোটিফিকেশন ঠিকভাবে কাজ করছে!', screen: 'notifications' });
+    showToast('টেস্ট পুশ পাঠানো হয়েছে (recipients: ' + (j.recipients == null ? '?' : j.recipients) + ')', 'success');
+  } catch (e) { showToast('Push ব্যর্থ: ' + (e && e.message || e), 'error'); }
 }
 
 // ===== NOTIFY USER =====
@@ -3266,7 +3304,7 @@ async function notifyUser(uid, title, msg, icon='🔔', opts) {
   if (opts && opts.bold) doc.bold = true;
   if (opts && opts.image) doc.image = opts.image;
   await fb.addDoc(fb.collection(fb.db,'users',uid,'notifications'), doc);
-  sendPushNotification(uid, title, msg);
+  if (!(opts && opts.noPush)) sendPushNotification(uid, title, msg);
 }
 
 function openMsgUser(uid) {
@@ -3867,7 +3905,7 @@ async function sendAdminEmailJS(templateParams, templateId, overrideServiceId, o
 // recipient could be skipped once the free-tier quota ran out mid-send.
 // Now each recipient gets: primary (up to 3 tries, backing off 600ms/1500ms)
 // → backup account (1 try) before finally being counted as failed.
-async function sendAdminEmailJSReliable(templateParams, templateId, overrideServiceId, overridePublicKey) {
+async function sendAdminEmailJSReliable(templateParams, templateId, overrideServiceId, overridePublicKey, backupTemplateOverride) {
   const delays = [0, 600, 1500];
   let lastErr;
   for (let i = 0; i < delays.length; i++) {
@@ -3883,7 +3921,7 @@ async function sendAdminEmailJSReliable(templateParams, templateId, overrideServ
   // Account (a second Gmail-based EmailJS account) if the admin configured one.
   const backupSi = S.settings.emailjsBackupServiceId;
   const backupPk = S.settings.emailjsBackupPublicKey;
-  const backupTid = S.settings.emailjsBackupTemplateId || templateId;
+  const backupTid = backupTemplateOverride !== undefined ? backupTemplateOverride : (S.settings.emailjsBackupTemplateId || templateId);
   if (backupSi && backupPk && backupTid) {
     try {
       console.warn('Primary EmailJS account failed — retrying via Backup EmailJS Account…');
@@ -4908,6 +4946,7 @@ function listenSettings() {
         emailjsTemplateId: d.emailjsTemplateId ?? S.settings.emailjsTemplateId,
         emailjsPublicKey: d.emailjsPublicKey ?? S.settings.emailjsPublicKey,
         emailjsVerifyTemplateId: d.emailjsVerifyTemplateId ?? S.settings.emailjsVerifyTemplateId,
+      emailjsBroadcastTemplateId: d.emailjsBroadcastTemplateId ?? S.settings.emailjsBroadcastTemplateId,
         emailjsJobApprovalTemplateId: d.emailjsJobApprovalTemplateId ?? S.settings.emailjsJobApprovalTemplateId,
         emailjsJobRejectionTemplateId: d.emailjsJobRejectionTemplateId ?? S.settings.emailjsJobRejectionTemplateId,
         emailjsJobServiceId: d.emailjsJobServiceId ?? S.settings.emailjsJobServiceId,
@@ -4941,6 +4980,7 @@ function listenSettings() {
       if ($('setEmailjsTemplateId')) $('setEmailjsTemplateId').value = s.emailjsTemplateId||'';
       if ($('setEmailjsPublicKey')) $('setEmailjsPublicKey').value = s.emailjsPublicKey||'';
       if ($('setEmailjsVerifyTemplateId')) $('setEmailjsVerifyTemplateId').value = s.emailjsVerifyTemplateId||'';
+  if ($('setEmailjsBroadcastTemplateId')) $('setEmailjsBroadcastTemplateId').value = s.emailjsBroadcastTemplateId||'';
       if ($('setEmailjsJobApprovalTemplateId')) $('setEmailjsJobApprovalTemplateId').value = s.emailjsJobApprovalTemplateId||'';
       if ($('setEmailjsJobRejectionTemplateId')) $('setEmailjsJobRejectionTemplateId').value = s.emailjsJobRejectionTemplateId||'';
       if ($('setEmailjsJobServiceId')) $('setEmailjsJobServiceId').value = s.emailjsJobServiceId||'';
@@ -5132,12 +5172,15 @@ async function sendEmailBroadcast() {
   if (!S.settings.emailjsServiceId || !S.settings.emailjsPublicKey) {
     showToast('❌ EmailJS not configured — go to Settings → EmailJS to set up first', 'error'); return;
   }
+  if (!S.settings.emailjsBroadcastTemplateId) {
+    showToast('❌ Settings → EmailJS → “Template ID — Broadcast” দিন (Template-এ {{{html_body}}} থাকতে হবে)', 'error'); return;
+  }
   if (!confirm(`Send "${subject}" to all ${target} users? This cannot be undone.`)) return;
 
   // Filter users
   let targets = S.users.filter(u => u.email);
-  if (target === 'kyc_verified') targets = targets.filter(u => u.kycStatus === 'verified' || u.kyc === true);
-  if (target === 'kyc_pending') targets = targets.filter(u => u.kycStatus === 'pending');
+  if (target === 'kyc_verified') targets = targets.filter(u => u.kycStatus === 'verified' || u.kyc === true || u.kyc === 'Verified');
+  if (target === 'kyc_pending') targets = targets.filter(u => u.kycStatus === 'pending' || u.kyc === 'Pending');
 
   _emailBcSending = true;
   const sendBtn = document.getElementById('emailBcSendBtn');
@@ -5177,7 +5220,7 @@ async function sendEmailBroadcast() {
         broadcast_title: subject,
         broadcast_body: personalised,
         site_name: S.settings.siteName || S.settings.name || 'WorkHive',
-      });
+      }, S.settings.emailjsBroadcastTemplateId, undefined, undefined, '');
       sent++; consecutiveFailures = 0;
     } catch (e) {
       failed++; consecutiveFailures++;
@@ -5195,7 +5238,7 @@ async function sendEmailBroadcast() {
     // failing (a sign the account is actively being rate-limited right now),
     // slow down further instead of hammering it — up to +2.25s extra.
     const backoff = Math.min(consecutiveFailures, 3) * 750;
-    await new Promise(r => setTimeout(r, 750 + backoff));
+    await new Promise(r => setTimeout(r, 1100 + backoff));
   }
 
   _emailBcSending = false;
@@ -5266,7 +5309,9 @@ async function emailjsTestSend(type) {
   const publicKey = v('setEmailjsPublicKey') || S.settings.emailjsPublicKey;
   const templateId = type === 'verify'
     ? (v('setEmailjsVerifyTemplateId') || S.settings.emailjsVerifyTemplateId)
-    : (v('setEmailjsTemplateId') || S.settings.emailjsTemplateId);
+    : type === 'broadcast'
+      ? (v('setEmailjsBroadcastTemplateId') || S.settings.emailjsBroadcastTemplateId)
+      : (v('setEmailjsTemplateId') || S.settings.emailjsTemplateId);
   if (!serviceId || !publicKey || !templateId) {
     showToast('❌ Service ID, Public Key এবং Template ID সব দিন', 'error'); return;
   }
@@ -5281,7 +5326,8 @@ async function emailjsTestSend(type) {
       otp_code: '123456', expires_minutes: '3',
       site_name: S.settings.siteName || 'WorkHive',
       broadcast_title: 'Test Email', broadcast_body: 'This is a test email from WorkHive Admin.',
-      subject: type === 'verify' ? 'Test — Account Verification OTP' : 'Test — Forgot Password OTP',
+      subject: type === 'verify' ? 'Test — Account Verification OTP' : type === 'broadcast' ? 'Test — Broadcast message' : 'Test — Forgot Password OTP',
+      html_body: '<div style="font-family:Arial,sans-serif;font-size:15px"><h3>Test broadcast ✅</h3><p>এই মেসেজটা আসলে বুঝবেন Broadcast Template ঠিক আছে।</p></div>',
     });
     showToast(`✅ Test email sent to ${testEmail} (status: ${res.status})`, 'success');
   } catch (e) { showToast('❌ Send failed: ' + (e?.text || e?.message || JSON.stringify(e)), 'error'); }
@@ -5295,7 +5341,8 @@ async function sendBroadcast() {
   if(!title||!body){showToast('All fields required','error');return;}
   const targets=S.users.filter(u=>{if(target==='all')return true;if(target==='kyc_verified')return u.kyc==='Verified';if(target==='kyc_pending')return u.kyc==='Pending';return true;});
   if(channel==='telegram'||channel==='both'||channel==='all_channels'){targets.filter(u=>u.telegramChatId).forEach(u=>{const token=S.tg.token||ls('wha_tg_token');if(token&&u.telegramChatId)fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${u.telegramChatId}&text=${encodeURIComponent('📢 '+title+'\n\n'+body)}`).catch(()=>{});});}
-  if(channel!=='telegram'&&channel!=='email')targets.forEach(u=>notifyUser(u.id,'📢 '+title,body,'📢',notifOpts));
+  if(channel!=='telegram'&&channel!=='email'){targets.forEach(u=>notifyUser(u.id,'📢 '+title,body,'📢',Object.assign({},notifOpts,{noPush:true})));
+    (target==='all' ? whAdminPush({kind:'broadcast',title:'📢 '+title,message:body,screen:'notifications'}) : whAdminPush({kind:'custom',uids:targets.map(u=>u.id),title:'📢 '+title,message:body,screen:'notifications'})).catch(e=>console.warn('push broadcast failed:',e&&e.message||e));}
   // Email broadcast via EmailJS — retried per-recipient + optional Backup
   // EmailJS Account fallback (sendAdminEmailJSReliable), with real per-recipient
   // success/failure tracking instead of a blind .catch(()=>{}) that silently
@@ -5304,6 +5351,7 @@ async function sendBroadcast() {
   if(channel==='email'||channel==='all_channels'){
     const emailTargets=targets.filter(u=>u.email);
     if(!S.settings.emailjsServiceId){showToast('⚠️ EmailJS not configured — skipping email','warn');}
+    else if(!S.settings.emailjsBroadcastTemplateId){showToast('⚠️ Settings → EmailJS → “Template ID — Broadcast” দিন — email পাঠানো হয়নি','warn');}
     else {
       showToast(`📧 Sending to ${emailTargets.length} email addresses…`,'info');
       await loadEmailJsAdminSdk();
@@ -5311,11 +5359,11 @@ async function sendBroadcast() {
       for(let i=0;i<emailTargets.length;i++){
         const u=emailTargets[i];
         try {
-          await sendAdminEmailJSReliable({ to_email:u.email, to_name:u.name||u.username||'User', broadcast_title:title, broadcast_body:body, site_name:S.settings.siteName||S.settings.name||'WorkHive' });
+          await sendAdminEmailJSReliable({ to_email:u.email, to_name:u.name||u.username||'User', subject:title, html_body:'<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.7;white-space:pre-line">'+String(body).replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</div>', broadcast_title:title, broadcast_body:body, site_name:S.settings.siteName||S.settings.name||'WorkHive' }, S.settings.emailjsBroadcastTemplateId, undefined, undefined, '');
           emailSent++; consecutiveFailures = 0;
         } catch(e) { emailFailed++; consecutiveFailures++; console.warn('Broadcast email failed to', u.email, e); }
         const backoff = Math.min(consecutiveFailures, 3) * 750;
-        await new Promise(r=>setTimeout(r, 750 + backoff));
+        await new Promise(r=>setTimeout(r, 1100 + backoff));
       }
     }
   }
@@ -5377,6 +5425,7 @@ async function saveSettings() {
     emailjsTemplateId: v('setEmailjsTemplateId'),
     emailjsPublicKey: v('setEmailjsPublicKey'),
     emailjsVerifyTemplateId: v('setEmailjsVerifyTemplateId'),
+    emailjsBroadcastTemplateId: v('setEmailjsBroadcastTemplateId'),
     emailjsJobApprovalTemplateId: v('setEmailjsJobApprovalTemplateId'),
     emailjsJobRejectionTemplateId: v('setEmailjsJobRejectionTemplateId'),
     emailjsJobServiceId: v('setEmailjsJobServiceId'),
@@ -5422,6 +5471,7 @@ async function saveSettings() {
       emailjsTemplateId: S.settings.emailjsTemplateId,
       emailjsPublicKey: S.settings.emailjsPublicKey,
       emailjsVerifyTemplateId: S.settings.emailjsVerifyTemplateId,
+      emailjsBroadcastTemplateId: S.settings.emailjsBroadcastTemplateId,
       emailjsJobApprovalTemplateId: S.settings.emailjsJobApprovalTemplateId,
       emailjsJobRejectionTemplateId: S.settings.emailjsJobRejectionTemplateId,
       emailjsJobServiceId: S.settings.emailjsJobServiceId,
@@ -6381,78 +6431,178 @@ window.addEventListener('unhandledrejection',e=>{console.warn('Unhandled promise
 document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(document.getElementById('supportChatCard')?.classList.contains('chat-open')&&typeof closeSupportThread==='function')closeSupportThread();document.querySelectorAll('.modal-overlay.show,.modal.show').forEach(m=>m.classList.remove('show'));});
 </script>
 
-<!-- ══ App Download Link card (Settings) ══ -->
+<!-- ══ App, Push & Notice card (Settings) ══ -->
 <script>
+/* ═══════════════ App, Push & Notice — Settings card ═══════════════ */
 (function () {
-  var CARD_ID = 'appDlCard';
+  var CARD_ID = 'appPushNoticeCard';
+  var $ = function (id) { return document.getElementById(id); };
+  function toast(msg, type) { try { if (typeof showToast === 'function') { showToast(msg, type); return; } } catch (e) {} alert(msg); }
+  function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
 
-  function toast(msg, type) {
-    try { if (typeof showToast === 'function') { showToast(msg, type); return; } } catch (e) {}
-    alert(msg);
-  }
+  var SAMPLE = '<style>\n  .wh-box{font-family:sans-serif;color:#fff;text-align:center;padding:24px;border-radius:20px;\n    background:linear-gradient(135deg,#0b3d24,#061a10);border:1px solid #00E676;animation:pop .5s cubic-bezier(.2,1.4,.4,1)}\n  @keyframes pop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}\n  .wh-box button{background:#00E676;border:0;border-radius:10px;padding:10px 20px;font-weight:700;margin:6px;cursor:pointer}\n</style>\n<div class="wh-box">\n  <h2 style="margin:0 0 8px">নতুন অফার!</h2>\n  <p>আজ সব টাস্কে ডাবল রিওয়ার্ড</p>\n  <button onclick="WH.go(\'tasks\')">টাস্কে যান</button>\n  <button onclick="WH.close()">বন্ধ করুন</button>\n</div>';
 
-  function buildCard() {
-    var screen = document.getElementById('screen-settings');
-    if (!screen || document.getElementById(CARD_ID)) return !!document.getElementById(CARD_ID);
-
+  function build() {
+    var screen = $('screen-settings');
+    if (!screen) return false;
+    if ($(CARD_ID)) return true;
     var col = screen.querySelector('.two-col > div') || screen;
     var card = document.createElement('div');
-    card.className = 'card';
-    card.id = CARD_ID;
+    card.className = 'card'; card.id = CARD_ID;
     card.innerHTML =
-      '<div class="card-title"><i class="ti ti-device-mobile-down"></i> App Download Link (User Site)</div>' +
-      '<div class="lf-hint" style="margin-bottom:10px">ইউজার সাইটের “অ্যাপ ডাউনলোড” বাটনে ক্লিক করলে এই লিংক থেকে APK অটো ডাউনলোড হবে। ' +
-      'GitHub Releases-এর লিংক বসান, যেমন: <b>https://github.com/আপনার-ইউজারনেম/WorkHive-Android/releases/download/latest/WorkHive.apk</b></div>' +
-      '<div class="field"><label>APK Download URL</label>' +
-      '<input type="text" id="appDlUrl" placeholder="https://github.com/.../releases/download/latest/WorkHive.apk"></div>' +
-      '<div class="field"><label>Active Workers (ঐচ্ছিক — ল্যান্ডিং পেজে দেখাবে, যেমন 1,200+)</label>' +
-      '<input type="text" id="appDlWorkers" placeholder="খালি রাখলে “নতুন” দেখাবে"></div>' +
-      '<div id="appDlStatus" class="lf-hint" style="margin-bottom:8px"></div>' +
-      '<button class="btn btn-primary" id="appDlSave" style="width:100%"><i class="ti ti-device-floppy"></i> Save App Link</button>';
-    col.insertBefore(card, col.firstChild);
+      '<div class="card-title"><i class="ti ti-device-mobile"></i> App, Push &amp; Notice</div>' +
 
-    document.getElementById('appDlSave').addEventListener('click', save);
+      /* ── 1. app download ── */
+      '<div style="font-weight:800;font-size:13px;margin:4px 0 6px">1) App Download Link</div>' +
+      '<div class="lf-hint" style="margin-bottom:8px">ইউজার সাইটের সব ডাউনলোড বাটন (ওপরের, হিরো, নিচের সেকশন) এই এক লিংক থেকে APK ডাউনলোড করাবে। যেমন: <b>https://github.com/ইউজারনেম/WorkHive-Android/releases/download/latest/WorkHive.apk</b></div>' +
+      '<div class="field"><label>APK Download URL</label><input type="text" id="apnUrl" placeholder="https://github.com/.../releases/download/latest/WorkHive.apk"></div>' +
+      '<div class="field"><label>Active Workers (ঐচ্ছিক — ল্যান্ডিংয়ে দেখাবে, যেমন 1,200+)</label><input type="text" id="apnWorkers" placeholder="খালি রাখলে “নতুন” দেখাবে"></div>' +
+      '<button class="btn btn-primary" id="apnSaveApp" style="width:100%;margin-bottom:18px"><i class="ti ti-device-floppy"></i> Save App Link</button>' +
+
+      /* ── 2. push worker ── */
+      '<div style="font-weight:800;font-size:13px;margin:4px 0 6px">2) Push Notification Worker (OneSignal)</div>' +
+      '<div class="lf-hint" style="margin-bottom:8px">উইথড্র, জব/টাস্ক অ্যাপ্রুভ-রিজেক্ট ইত্যাদির ফোন-নোটিফিকেশন (টুং টুং সাউন্ডসহ) এই Cloudflare Worker দিয়ে যায়। Worker বানানোর ধাপ README-তে আছে। Worker URL বসান:</div>' +
+      '<div class="field"><label>Push Worker URL</label><input type="text" id="apnPush" placeholder="https://workhive-push.আপনার-নাম.workers.dev"></div>' +
+      '<div style="display:flex;gap:8px;margin-bottom:6px"><button class="btn btn-primary" id="apnSavePush" style="flex:1"><i class="ti ti-device-floppy"></i> Save</button>' +
+      '<button class="btn btn-ghost" id="apnTestPush" style="flex:1"><i class="ti ti-send"></i> আমাকে টেস্ট পাঠান</button></div>' +
+      '<div id="apnPushStatus" class="lf-hint" style="margin-bottom:18px"></div>' +
+
+      /* ── 3. notice ── */
+      '<div style="font-weight:800;font-size:13px;margin:4px 0 6px">3) Notice / Banner (HTML কোড পেস্ট করুন)</div>' +
+      '<div class="lf-hint" style="margin-bottom:8px">ইউজার সাইটে ঢুকলে বা অ্যাপ খুললে এই কোড সুন্দর পপআপ/ব্যানার হিসেবে দেখাবে। HTML + CSS + JS সব চলবে (নিরাপদ বক্সে)। কোডের ভেতরে ব্যবহার করতে পারবেন: <code>WH.close()</code> বন্ধ করতে, <code>WH.go(\'wallet\')</code> অ্যাপের স্ক্রিনে যেতে (tasks, wallet, deposit, history, referral, support, profile…), <code>WH.open(\'https://…\')</code> লিংক খুলতে।</div>' +
+      '<div class="field"><label>HTML / CSS / JS কোড</label><textarea id="apnNoticeCode" rows="9" spellcheck="false" style="font-family:monospace;font-size:12px;line-height:1.5;width:100%;box-sizing:border-box" placeholder="&lt;div&gt;আপনার কোড এখানে…&lt;/div&gt;"></textarea></div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' +
+        '<div class="field"><label>Layout</label><select id="apnLayout"><option value="center">মাঝখানে বক্স (Popup)</option><option value="fullscreen">পুরো স্ক্রিন (কোডই সব ঠিক করবে)</option><option value="top">ওপরে ব্যানার</option><option value="bottom">নিচে ব্যানার</option></select></div>' +
+        '<div class="field"><label>কখন দেখাবে</label><select id="apnFreq"><option value="always">প্রতিবার সাইট/অ্যাপ খুললে</option><option value="session">প্রতি সেশনে একবার</option><option value="daily">দিনে একবার</option><option value="once">একবারই (নতুন কোড দিলে আবার)</option></select></div>' +
+        '<div class="field"><label>চওড়া (px)</label><input type="number" id="apnWidth" value="360" min="200" max="1200"></div>' +
+        '<div class="field"><label>উচ্চতা (px, খালি = কোড অনুযায়ী অটো)</label><input type="number" id="apnHeight" placeholder="auto" min="80"></div>' +
+        '<div class="field"><label>কারা দেখবে</label><select id="apnAud"><option value="users">শুধু লগইন করা ইউজার</option><option value="everyone">সবাই (ল্যান্ডিং পেজেও)</option></select></div>' +
+        '<div class="field"><label>অটো বন্ধ (সেকেন্ড, 0 = বন্ধ না)</label><input type="number" id="apnAuto" value="0" min="0"></div>' +
+      '</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:14px;margin:4px 0 12px;font-size:12.5px">' +
+        '<label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="apnBackdrop" checked> পেছনে অন্ধকার</label>' +
+        '<label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="apnClose" checked> ✕ বাটন</label>' +
+        '<label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="apnBackdropClose" checked> বাইরে ট্যাপে বন্ধ</label>' +
+        '<label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="apnEnabled"> <b>চালু</b></label>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost" id="apnSample" style="flex:1"><i class="ti ti-code"></i> নমুনা কোড</button>' +
+      '<button class="btn btn-ghost" id="apnPreview" style="flex:1"><i class="ti ti-eye"></i> প্রিভিউ</button>' +
+      '<button class="btn btn-primary" id="apnSaveNotice" style="flex:1"><i class="ti ti-device-floppy"></i> Save Notice</button></div>' +
+      '<div id="apnNoticeStatus" class="lf-hint" style="margin-top:8px"></div>';
+    col.insertBefore(card, col.firstChild);
+    $('apnSaveApp').onclick = saveApp; $('apnSavePush').onclick = savePush; $('apnTestPush').onclick = testPush;
+    $('apnSample').onclick = function () { $('apnNoticeCode').value = SAMPLE; };
+    $('apnPreview').onclick = preview; $('apnSaveNotice').onclick = saveNotice;
     load();
     return true;
   }
 
+  var _tries = 0;
   async function load() {
-    var fb = window._fb; if (!fb) return;
-    try {
-      var snap = await fb.getDoc(fb.doc(fb.db, 'siteSettings', 'appDownload'));
-      if (snap.exists()) {
-        var d = snap.data() || {};
-        document.getElementById('appDlUrl').value = d.url || '';
-        document.getElementById('appDlWorkers').value = d.activeWorkers || '';
-        if (d.url) document.getElementById('appDlStatus').textContent = '✅ বর্তমানে সেভ করা আছে';
-      }
-    } catch (e) { console.warn('app link load failed', e); }
-  }
-
-  async function save() {
     var fb = window._fb;
-    if (!fb) { toast('Firebase এখনো প্রস্তুত নয়', 'error'); return; }
-    var url = document.getElementById('appDlUrl').value.trim();
-    var workers = document.getElementById('appDlWorkers').value.trim();
-    if (url && !/^https:\/\//i.test(url)) { toast('লিংক অবশ্যই https:// দিয়ে শুরু হতে হবে', 'error'); return; }
-    var btn = document.getElementById('appDlSave');
-    btn.disabled = true;
+    if (!fb || !fb.getDoc) { if (_tries++ < 120) setTimeout(load, 500); return; }   // Firebase is still starting
+    try { var s = await fb.getDoc(fb.doc(fb.db, 'siteSettings', 'appDownload')); if (s.exists()) { var d = s.data() || {}; $('apnUrl').value = d.url || ''; $('apnWorkers').value = d.activeWorkers || ''; } } catch (e) {}
+    try { var p = await fb.getDoc(fb.doc(fb.db, 'siteSettings', 'push')); if (p.exists()) { $('apnPush').value = (p.data() || {}).workerUrl || ''; } } catch (e) {}
     try {
-      await fb.setDoc(fb.doc(fb.db, 'siteSettings', 'appDownload'),
-        { url: url, activeWorkers: workers, updatedAt: fb.serverTimestamp() }, { merge: true });
-      document.getElementById('appDlStatus').textContent = url ? '✅ সেভ হয়েছে — ইউজার সাইটে এখনই কাজ করবে' : '✅ সেভ হয়েছে (লিংক খালি — পুরনো ডিফল্ট লিংক ব্যবহার হবে না, বাটনে “শীঘ্রই আসছে” দেখাবে)';
-      toast('✅ App Download Link সেভ হয়েছে');
-    } catch (e) {
-      console.error(e);
-      toast('সেভ হয়নি — Firebase Rules-এ siteSettings write পারমিশন আছে কি দেখুন', 'error');
-    }
-    btn.disabled = false;
+      var n = await fb.getDoc(fb.doc(fb.db, 'siteSettings', 'notice'));
+      if (n.exists()) {
+        var c = n.data() || {};
+        $('apnNoticeCode').value = c.html || ''; $('apnLayout').value = c.layout || 'center'; $('apnFreq').value = c.frequency || 'always';
+        $('apnWidth').value = c.width || 360; $('apnHeight').value = (c.height && c.height !== 'auto') ? c.height : ''; $('apnAud').value = c.audience || 'users';
+        $('apnAuto').value = c.autoCloseSec || 0; $('apnBackdrop').checked = c.backdrop !== false; $('apnClose').checked = c.showClose !== false;
+        $('apnBackdropClose').checked = c.closeOnBackdrop !== false; $('apnEnabled').checked = c.enabled === true;
+        $('apnNoticeStatus').textContent = c.enabled === true ? 'চালু আছে' : 'বন্ধ আছে';
+      }
+    } catch (e) {}
   }
 
-  // The admin builds screens lazily — keep checking until Settings exists.
-  setInterval(buildCard, 1500);
-  buildCard();
+  async function saveApp() {
+    var fb = window._fb; if (!fb) return toast('Firebase প্রস্তুত নয়', 'error');
+    var url = $('apnUrl').value.trim();
+    if (url && !/^https:\/\//i.test(url)) return toast('লিংক https:// দিয়ে শুরু হতে হবে', 'error');
+    try { await fb.setDoc(fb.doc(fb.db, 'siteSettings', 'appDownload'), { url: url, activeWorkers: $('apnWorkers').value.trim(), updatedAt: fb.serverTimestamp() }, { merge: true }); toast('App link সেভ হয়েছে'); }
+    catch (e) { console.error(e); toast('সেভ হয়নি — Rules চেক করুন', 'error'); }
+  }
+
+  async function savePush() {
+    var fb = window._fb; if (!fb) return toast('Firebase প্রস্তুত নয়', 'error');
+    var url = $('apnPush').value.trim().replace(/\/+$/, '');
+    if (url && !/^https:\/\//i.test(url)) return toast('Worker URL https:// দিয়ে শুরু হতে হবে', 'error');
+    try { await fb.setDoc(fb.doc(fb.db, 'siteSettings', 'push'), { workerUrl: url, updatedAt: fb.serverTimestamp() }, { merge: true }); window.__whPushUrl = url; toast('Push Worker URL সেভ হয়েছে'); }
+    catch (e) { console.error(e); toast('সেভ হয়নি', 'error'); }
+  }
+
+  async function testPush() {
+    var st = $('apnPushStatus'); st.textContent = '';
+    var url = $('apnPush').value.trim().replace(/\/+$/, '');
+    if (!url) { st.textContent = 'আগে Worker URL দিন'; return; }
+    var fb = window._fb;
+    try {
+      var h = await fetch(url, { method: 'GET' }); var hj = await h.json();
+      if (!hj.ok) throw new Error('Worker সাড়া দিচ্ছে না');
+      var user = fb.auth && fb.auth.currentUser; if (!user) throw new Error('লগইন নেই');
+      var tok = await user.getIdToken();
+      var r = await fetch(url, { method: 'POST', headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind: 'custom', uid: user.uid, title: 'WorkHive টেস্ট', message: 'পুশ নোটিফিকেশন ঠিকভাবে কাজ করছে!', screen: 'notifications' }) });
+      var j = await r.json();
+      st.textContent = j.ok ? ('Worker ঠিক আছে। আপনার (অ্যাডমিন অ্যাকাউন্টের) ফোনে নোটিফিকেশন গেছে — অ্যাপে এই অ্যাকাউন্টে লগইন থাকলে আসবে। recipients: ' + (j.recipients == null ? '?' : j.recipients)) : ('ব্যর্থ: ' + (j.error || r.status));
+    } catch (e) { st.textContent = 'ব্যর্থ: ' + (e.message || e); }
+  }
+
+  function readNotice() {
+    var h = $('apnHeight').value.trim();
+    return {
+      enabled: $('apnEnabled').checked, html: $('apnNoticeCode').value, layout: $('apnLayout').value, frequency: $('apnFreq').value,
+      width: parseInt($('apnWidth').value, 10) || 360, height: h ? parseInt(h, 10) : 'auto', audience: $('apnAud').value,
+      autoCloseSec: parseInt($('apnAuto').value, 10) || 0, backdrop: $('apnBackdrop').checked, showClose: $('apnClose').checked,
+      closeOnBackdrop: $('apnBackdropClose').checked
+    };
+  }
+
+  async function saveNotice() {
+    var fb = window._fb; if (!fb) return toast('Firebase প্রস্তুত নয়', 'error');
+    var n = readNotice();
+    if (n.enabled && !n.html.trim()) return toast('আগে কোড দিন', 'error');
+    if (n.html.length > 900000) return toast('কোড অনেক বড় (৯০০ KB-র বেশি) — ছবি বাইরের লিংক দিন', 'error');
+    n.rev = String(Date.now()); n.updatedAt = fb.serverTimestamp();
+    try { await fb.setDoc(fb.doc(fb.db, 'siteSettings', 'notice'), n); $('apnNoticeStatus').textContent = n.enabled ? 'সেভ হয়েছে — চালু আছে' : 'সেভ হয়েছে — বন্ধ আছে'; toast(n.enabled ? 'Notice চালু হয়েছে' : 'Notice সেভ হয়েছে (বন্ধ)'); }
+    catch (e) { console.error(e); toast('সেভ হয়নি — ' + (e && e.code || 'error'), 'error'); }
+  }
+
+  function helper() {
+    return '<script>(function(){var P=window.parent;window.WH={close:function(){P.postMessage({wh:"close"},"*")},go:function(s){P.postMessage({wh:"go",screen:String(s||"")},"*")},open:function(u){P.postMessage({wh:"open",url:String(u||"")},"*")},resize:function(w,h){P.postMessage({wh:"resize",w:w,h:h},"*")}};function rs(){try{var h=Math.ceil(Math.max(document.documentElement.scrollHeight,document.body?document.body.scrollHeight:0));P.postMessage({wh:"autoheight",h:h},"*")}catch(e){}}window.addEventListener("load",function(){rs();try{new ResizeObserver(rs).observe(document.documentElement)}catch(e){}});})();<\/script>';
+  }
+  function buildDoc(html) {
+    var h = helper();
+    if (/<html[\s>]/i.test(html)) { if (/<head[^>]*>/i.test(html)) return html.replace(/<head[^>]*>/i, function (m) { return m + h; }); return html.replace(/<html[^>]*>/i, function (m) { return m + '<head>' + h + '</head>'; }); }
+    return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;padding:0;background:transparent}</style>' + h + '</head><body>' + html + '</body></html>';
+  }
+  function preview() {
+    var n = readNotice(); if (!n.html.trim()) return toast('আগে কোড দিন', 'error');
+    var old = $('apnPrev'); if (old) old.remove();
+    var wrap = document.createElement('div'); wrap.id = 'apnPrev';
+    var dim = n.backdrop && n.layout !== 'fullscreen';
+    wrap.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;justify-content:center;align-items:' + (n.layout === 'bottom' ? 'flex-end' : n.layout === 'top' ? 'flex-start' : 'center') + ';background:' + (dim ? 'rgba(0,0,0,.6)' : 'rgba(0,0,0,.25)') + ';padding:' + (n.layout === 'fullscreen' ? '0' : '12px') + ';box-sizing:border-box';
+    var fr = document.createElement('iframe'); fr.setAttribute('sandbox', 'allow-scripts allow-popups allow-forms');
+    var hh = (n.height && n.height !== 'auto') ? 'min(' + n.height + 'px,92vh)' : 'min(420px,70vh)';
+    fr.style.cssText = 'border:0;background:transparent;' + (n.layout === 'fullscreen' ? 'width:100%;height:100%' : 'width:min(' + n.width + 'px,100%);height:' + hh);
+    fr.srcdoc = buildDoc(n.html); wrap.appendChild(fr);
+    var x = document.createElement('button'); x.textContent = 'প্রিভিউ বন্ধ'; x.className = 'btn btn-primary';
+    x.style.cssText = 'position:fixed;top:12px;right:12px;z-index:2'; x.onclick = function () { window.removeEventListener('message', on); wrap.remove(); }; wrap.appendChild(x);
+    function on(e) {
+      if (e.source !== fr.contentWindow || !e.data) return; var d = e.data;
+      if (d.wh === 'close') { window.removeEventListener('message', on); wrap.remove(); }
+      else if (d.wh === 'autoheight' && n.layout !== 'fullscreen' && !(n.height && n.height !== 'auto')) fr.style.height = 'min(' + Math.max(60, parseInt(d.h, 10) || 0) + 'px,92vh)';
+      else if (d.wh === 'go') toast('প্রিভিউ: ইউজার অ্যাপে এখানে "' + d.screen + '" স্ক্রিনে যাবে', 'info');
+    }
+    window.addEventListener('message', on);
+    document.body.appendChild(wrap);
+  }
+
+  setInterval(build, 1500);
+  build();
 })();
 </script>
+
 </body>
 </html>
