@@ -6453,11 +6453,18 @@ document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(document.g
       '<div class="card-title"><i class="ti ti-device-mobile"></i> App, Push &amp; Notice</div>' +
 
       /* ── 1. app download ── */
-      '<div style="font-weight:800;font-size:13px;margin:4px 0 6px">1) App Download Link</div>' +
-      '<div class="lf-hint" style="margin-bottom:8px">ইউজার সাইটের সব ডাউনলোড বাটন (ওপরের, হিরো, নিচের সেকশন) এই এক লিংক থেকে APK ডাউনলোড করাবে। যেমন: <b>https://github.com/ইউজারনেম/WorkHive-Android/releases/download/latest/WorkHive.apk</b></div>' +
-      '<div class="field"><label>APK Download URL</label><input type="text" id="apnUrl" placeholder="https://github.com/.../releases/download/latest/WorkHive.apk"></div>' +
-      '<div class="field"><label>Active Workers (ঐচ্ছিক — ল্যান্ডিংয়ে দেখাবে, যেমন 1,200+)</label><input type="text" id="apnWorkers" placeholder="খালি রাখলে “নতুন” দেখাবে"></div>' +
-      '<button class="btn btn-primary" id="apnSaveApp" style="width:100%;margin-bottom:18px"><i class="ti ti-device-floppy"></i> Save App Link</button>' +
+      '<div style="font-weight:800;font-size:13px;margin:4px 0 6px">1) App Download &amp; Version</div>' +
+      '<div class="lf-hint" style="margin-bottom:8px">ইউজার সাইটের সব ডাউনলোড বাটন এই লিংক থেকে APK ডাউনলোড করাবে। <b>নতুন APK বানালে</b>: (১) GitHub-এর <code>build-apk.yml</code>-এ <code>APP_VERSION</code> বাড়ান (যেমন 1.1) → Run workflow, (২) এখানে একই ভার্সন লিখে Save করুন। তখন পুরনো অ্যাপের ইউজারদের হোমে “নতুন ভার্সন এসেছে” কার্ড আসবে, ডাউনলোডে চাপলেই Chrome-এ APK নামা শুরু হবে।</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' +
+        '<div class="field"><label>সর্বশেষ ভার্সন (যেমন 1.1)</label><input type="text" id="apnVer" placeholder="1.0"></div>' +
+        '<div class="field"><label>Active Workers (ঐচ্ছিক)</label><input type="text" id="apnWorkers" placeholder="1,200+"></div>' +
+      '</div>' +
+      '<div class="field"><label>APK Download URL (এই ভার্সনের)</label><input type="text" id="apnUrl" placeholder="https://github.com/.../releases/download/v1.1/WorkHive.apk"></div>' +
+      '<div class="lf-hint" style="margin:-6px 0 8px;font-size:10.5px">প্রতিটা ভার্সনের নিজের স্থায়ী ফাইল: <code>…/releases/download/v1.1/WorkHive.apk</code> · সবসময় সর্বশেষটা: <code>…/releases/download/latest/WorkHive.apk</code></div>' +
+      '<div class="field"><label>কী কী নতুন (আপডেট নোট — প্রতি লাইনে একটা)</label><textarea id="apnNotes" rows="3" placeholder="নতুন আইকন&#10;পুশ নোটিফিকেশন ঠিক করা হয়েছে" style="width:100%;box-sizing:border-box"></textarea></div>' +
+      '<label style="display:flex;gap:6px;align-items:center;font-size:12.5px;margin-bottom:10px"><input type="checkbox" id="apnForce"> <b>জোর করে আপডেট</b> (পুরনো অ্যাপ আপডেট না করা পর্যন্ত চলবে না)</label>' +
+      '<button class="btn btn-primary" id="apnSaveApp" style="width:100%;margin-bottom:8px"><i class="ti ti-device-floppy"></i> Save / নতুন ভার্সন প্রকাশ করুন</button>' +
+      '<div id="apnRelList" class="lf-hint" style="margin-bottom:18px"></div>' +
 
       /* ── 2. push worker ── */
       '<div style="font-weight:800;font-size:13px;margin:4px 0 6px">2) Push Notification Worker (OneSignal)</div>' +
@@ -6501,7 +6508,7 @@ document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(document.g
   async function load() {
     var fb = window._fb;
     if (!fb || !fb.getDoc) { if (_tries++ < 120) setTimeout(load, 500); return; }   // Firebase is still starting
-    try { var s = await fb.getDoc(fb.doc(fb.db, 'siteSettings', 'appDownload')); if (s.exists()) { var d = s.data() || {}; $('apnUrl').value = d.url || ''; $('apnWorkers').value = d.activeWorkers || ''; } } catch (e) {}
+    try { var s = await fb.getDoc(fb.doc(fb.db, 'siteSettings', 'appDownload')); if (s.exists()) { var d = s.data() || {}; $('apnUrl').value = d.url || ''; $('apnWorkers').value = d.activeWorkers || ''; $('apnVer').value = d.version || ''; $('apnNotes').value = d.notes || ''; $('apnForce').checked = d.force === true; _rels = Array.isArray(d.releases) ? d.releases : []; renderRels(); } } catch (e) {}
     try { var p = await fb.getDoc(fb.doc(fb.db, 'siteSettings', 'push')); if (p.exists()) { $('apnPush').value = (p.data() || {}).workerUrl || ''; } } catch (e) {}
     try {
       var n = await fb.getDoc(fb.doc(fb.db, 'siteSettings', 'notice'));
@@ -6516,12 +6523,41 @@ document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(document.g
     } catch (e) {}
   }
 
+  var _rels = [];
+  function renderRels() {
+    var box = $('apnRelList'); if (!box) return;
+    if (!_rels.length) { box.textContent = 'এখনো কোনো ভার্সন প্রকাশ করা হয়নি।'; return; }
+    box.innerHTML = '<b>প্রকাশিত ভার্সন:</b>' + _rels.map(function (r, i) {
+      return '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-top:1px dashed rgba(128,128,128,.25)"><span style="font-weight:800;min-width:44px">v' + esc(r.version) + '</span><span style="flex:1;font-size:11px;opacity:.8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(String(r.notes || '').split('\n')[0]) + ' · ' + esc(r.date || '') + '</span><span data-del="' + i + '" style="cursor:pointer;color:#ff6b6b;font-weight:800;padding:0 6px" title="তালিকা থেকে মুছুন">✕</span></div>';
+    }).join('');
+    box.querySelectorAll('[data-del]').forEach(function (el) { el.onclick = function () { delRel(parseInt(el.getAttribute('data-del'), 10)); }; });
+  }
+  async function delRel(i) {
+    var fb = window._fb; if (!fb || !_rels[i]) return;
+    if (!confirm('v' + _rels[i].version + ' তালিকা থেকে মুছবেন? (ইউজারদের “সব ভার্সন” থেকেও সরে যাবে)')) return;
+    _rels.splice(i, 1);
+    try { await fb.setDoc(fb.doc(fb.db, 'siteSettings', 'appDownload'), { releases: _rels, updatedAt: fb.serverTimestamp() }, { merge: true }); renderRels(); toast('মুছে ফেলা হয়েছে'); }
+    catch (e) { toast('মুছতে পারিনি', 'error'); }
+  }
   async function saveApp() {
     var fb = window._fb; if (!fb) return toast('Firebase প্রস্তুত নয়', 'error');
     var url = $('apnUrl').value.trim();
     if (url && !/^https:\/\//i.test(url)) return toast('লিংক https:// দিয়ে শুরু হতে হবে', 'error');
-    try { await fb.setDoc(fb.doc(fb.db, 'siteSettings', 'appDownload'), { url: url, activeWorkers: $('apnWorkers').value.trim(), updatedAt: fb.serverTimestamp() }, { merge: true }); toast('App link সেভ হয়েছে'); }
-    catch (e) { console.error(e); toast('সেভ হয়নি — Rules চেক করুন', 'error'); }
+    var ver = $('apnVer').value.trim().replace(/^v/i, '');
+    if (ver && !/^[0-9]+(\.[0-9]+){0,3}$/.test(ver)) return toast('ভার্সন শুধু সংখ্যা ও ডট হবে, যেমন 1.1', 'error');
+    var notes = $('apnNotes').value.trim();
+    if (ver && !url) return toast('ভার্সনের সাথে ডাউনলোড লিংকও দিন', 'error');
+    var rels = _rels.slice();
+    if (ver) {
+      rels = rels.filter(function (r) { return r.version !== ver; });
+      rels.unshift({ version: ver, url: url, notes: notes, date: new Date().toISOString().slice(0, 10) });
+      rels.sort(function (a, b) { var A = String(a.version).split('.').map(Number), B = String(b.version).split('.').map(Number); for (var i = 0; i < 4; i++) { var d = (B[i] || 0) - (A[i] || 0); if (d) return d; } return 0; });
+      rels = rels.slice(0, 10);
+    }
+    try {
+      await fb.setDoc(fb.doc(fb.db, 'siteSettings', 'appDownload'), { url: url, activeWorkers: $('apnWorkers').value.trim(), version: ver, notes: notes, force: $('apnForce').checked, releases: rels, updatedAt: fb.serverTimestamp() }, { merge: true });
+      _rels = rels; renderRels(); toast(ver ? ('v' + ver + ' প্রকাশ হয়েছে') : 'App link সেভ হয়েছে');
+    } catch (e) { console.error(e); toast('সেভ হয়নি — Rules চেক করুন', 'error'); }
   }
 
   async function savePush() {
