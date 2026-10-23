@@ -1336,6 +1336,7 @@ if (window.Capacitor?.Plugins?.OneSignal) {
               <div class="card-title"><i class="ti ti-world"></i> General Settings</div>
               <div class="field"><label>Platform Name</label><input type="text" id="setName" value="WorkHive"></div>
               <div class="field"><label>Minimum Withdrawal ($)</label><input type="number" id="setMinWd" value="5" min="1"></div>
+            <div class="field"><label>উইথড্র করতে কমপক্ষে কত জন রেফার লাগবে (0 = বন্ধ)</label><input type="number" id="setMinRef" value="10" min="0" max="1000"><div class="field-sub" style="font-size:10px;color:var(--text3);margin-top:4px">যত লিখবেন, ইউজারকে তত জনকে রেফার করতে হবে (যেমন 10, 7, 5)। Save করার সাথে সাথে সব ইউজারের জন্য কার্যকর। 0 দিলে শর্ত থাকবে না।</div></div>
               <div class="field"><label>Minimum Deposit ($)</label><input type="number" id="setMinDep" value="1" min="0.5"></div>
               <div class="field"><label>Default Withdraw Fee (%)</label><input type="number" id="setFee" value="5" min="0" max="30"></div>
               <button class="btn btn-primary" style="width:100%" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> Save General Settings</button>
@@ -2085,7 +2086,7 @@ const S = {
   os: { appId: '', restKey: '', connected: false },
   bcHistory: [], emailBcHistory: [],
   dupGroups: [], dupUserIds: new Set(),
-  settings: { name: 'WorkHive', minWd: 5, minDep: 1, fee: 5, refGen1: 0.5, refGen2: 0.25, refGen3: 0.10,
+  settings: { name: 'WorkHive', minWd: 5, minRef: 10, minDep: 1, fee: 5, refGen1: 0.5, refGen2: 0.25, refGen3: 0.10,
     supportEmail: 'support@workhive.pro', supportHours: '9 AM – 11 PM', supportResponse: 'Within 12 hours', rulesContent: '',
     banner: '', bannerType: 'info', spinEnabled: true,
     postFeatureEnabled: true, postMinReward: 0.02, postMaxReward: 5.00, postMinSlots: 5, postMaxSlots: 500, postPlatformFeePct: 10,
@@ -4922,6 +4923,7 @@ function listenSettings() {
       Object.assign(S.settings, {
         name: d.name ?? S.settings.name,
         minWd: d.minWithdraw ?? S.settings.minWd,
+      minRef: (d.minReferralsToWithdraw === undefined || d.minReferralsToWithdraw === null) ? S.settings.minRef : d.minReferralsToWithdraw,
         minDep: d.minDeposit ?? S.settings.minDep,
         fee: d.withdrawFee ?? S.settings.fee,
         refGen1: d.refGen1 ?? S.settings.refGen1,
@@ -4966,6 +4968,7 @@ function listenSettings() {
       const s = S.settings;
       if ($('setName')) $('setName').value = s.name||'WorkHive';
       if ($('setMinWd')) $('setMinWd').value = s.minWd||5;
+  if ($('setMinRef')) $('setMinRef').value = (s.minRef === undefined || s.minRef === null) ? 10 : s.minRef;
       if ($('setMinDep')) $('setMinDep').value = s.minDep||1;
       if ($('setFee')) $('setFee').value = s.fee||5;
       if ($('setRefGen1')) $('setRefGen1').value = s.refGen1??0.5;
@@ -5401,6 +5404,7 @@ async function saveSettings() {
   Object.assign(S.settings,{
     name:v('setName')||'WorkHive',
     minWd:parseFloat($('setMinWd').value)||5,
+    minRef:(isNaN(parseInt($('setMinRef').value,10)) ? 10 : Math.max(0, parseInt($('setMinRef').value,10))),
     minDep:parseFloat($('setMinDep').value)||1,
     fee:parseFloat($('setFee').value)||5,
     refGen1:parseFloat($('setRefGen1')?.value)||0,
@@ -5447,6 +5451,7 @@ async function saveSettings() {
     await fb.setDoc(fb.doc(fb.db,'siteSettings','global'),{
       name:S.settings.name,
       minWithdraw:S.settings.minWd,
+      minReferralsToWithdraw: (S.settings.minRef === undefined || S.settings.minRef === null) ? 10 : Number(S.settings.minRef),
       minDeposit:S.settings.minDep,
       withdrawFee:S.settings.fee,
       refGen1:S.settings.refGen1,
