@@ -680,7 +680,7 @@ tr.dup-row td{background:rgba(239,68,68,0.03)}
           </div>
           <div class="qm-row" onclick="goScreen('cpanetworks')">
             <div class="qm-icon" style="background:rgba(0,188,212,.1);color:var(--cyan)"><i class="ti ti-brand-cashapp"></i></div>
-            <div class="qm-text"><div class="qm-label">CPA Networks</div><div class="qm-sub">CPALead, Monlix, CPAGrip, AdGate — Offerwall পরিচালনা করুন</div></div>
+            <div class="qm-text"><div class="qm-label">CPA Networks</div><div class="qm-sub">CPALead, Monlix, CPAGrip, AdGate, Offerwall.ad — Offerwall পরিচালনা করুন</div></div>
             <span class="qm-status-pill" id="qmCpaStatus">Loading…</span>
             <i class="ti ti-chevron-right qm-chev"></i>
           </div>
@@ -1269,6 +1269,7 @@ if (window.Capacitor?.Plugins?.OneSignal) {
                   <option value="adgate">AdGate Media</option>
                   <option value="offertoro">OfferToro</option>
                   <option value="ayet">Ayet Studios</option>
+                  <option value="offerwallad">Offerwall.ad</option>
                 </select>
               </div>
               <div class="field" style="flex:1;min-width:120px;margin-bottom:0">
@@ -1310,7 +1311,17 @@ if (window.Capacitor?.Plugins?.OneSignal) {
               <option value="adgate">AdGate</option>
               <option value="offertoro">OfferToro</option>
               <option value="ayet">Ayet</option>
+              <option value="offerwallad">Offerwall.ad</option>
             </select>
+          </div>
+          <!-- [OWA] bulk reward bar (visible when filtered to Offerwall.ad) -->
+          <div id="owaBulkBar" style="display:none;flex-wrap:wrap;gap:8px;align-items:center;background:var(--bg3);border:1px solid var(--border2);border-radius:14px;padding:10px 12px;margin-bottom:12px;font-size:12px">
+            <b>🧱 Bulk reward</b><span style="color:var(--text3)">user reward = raw payout ×</span>
+            <input id="owaBulkMult" type="number" step="0.05" min="0.01" value="0.6" style="width:70px;padding:5px 8px;border-radius:8px;border:1px solid var(--border2);background:var(--bg);color:var(--green);font-weight:800">
+            <select id="owaBulkScope" style="padding:5px 8px;border-radius:8px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:12px">
+              <option value="draft">drafts only</option><option value="all">all Offerwall.ad tasks</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="owaBulkApply()">Apply</button>
           </div>
           <div id="cpaTaskList"></div>
         </div>
@@ -1737,6 +1748,20 @@ if (window.Capacitor?.Plugins?.OneSignal) {
     </div>
     <div style="overflow-y:auto;max-height:65vh;padding:0 2px">
       <input type="hidden" id="cpaEditTaskId">
+      <!-- [OWA] read-only English original + Bengali helpers (shown only for Offerwall.ad tasks) -->
+      <div id="owaOrigBox" style="display:none;background:var(--bg3);border:1px solid var(--border2);border-radius:12px;padding:10px 12px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+          <div style="font-size:11px;font-weight:800;color:var(--teal)">🇬🇧 Original from offerwall.ad (read-only)</div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-ghost btn-sm" onclick="owaResetToOriginal()">↺ Reset</button>
+            <button class="btn btn-primary btn-sm" onclick="owaAiTranslate(this)">✨ AI → বাংলা</button>
+          </div>
+        </div>
+        <div id="owaOrigTitle" style="font-size:12px;font-weight:700;margin-bottom:4px"></div>
+        <div id="owaOrigDesc" style="font-size:11.5px;color:var(--text2);white-space:pre-wrap"></div>
+        <div id="owaOrigReq" style="font-size:11.5px;color:var(--text3);white-space:pre-wrap;margin-top:4px"></div>
+        <div style="font-size:10.5px;color:var(--text3);margin-top:6px">নিচের ঘরগুলোতে বাংলা লিখুন — ইউজার সাইটে ওই লেখাই দেখাবে। AI অনুবাদ নিজে রিভিউ করে Save করুন।</div>
+      </div>
       <div class="field"><label>Title</label><input type="text" id="cpaEditTitle"></div>
       <div class="field"><label>Description</label><textarea id="cpaEditDesc" rows="3"></textarea></div>
       <div class="field"><label>Category</label><input type="text" id="cpaEditCategory"></div>
@@ -2414,11 +2439,22 @@ const CPA_NETWORKS = [
     postbackParam: '{user_id}',
     docs: 'https://www.ayetstudios.com',
   },
+  // [OWA] HMAC-signed network. API key + webhook secret live in the Cloudflare Worker, never in Firestore/browser.
+  {
+    id: 'offerwallad', name: 'Offerwall.ad', icon: '🧱', color: '#0EA5E9', hmac: true,
+    fields: [
+      { key:'workerUrl', label:'Bridge Worker URL (https://owa-bridge.<you>.workers.dev)' },
+      { key:'rewardMultiplier', label:'Default reward multiplier (user reward = raw payout × this, e.g. 0.6)' },
+      { key:'linkMode', label:'Link mode: direct (default) or bridge — use bridge if offer links do not attribute' },
+    ],
+    buildOfferUrl: () => '', postbackParam: '{subid}',
+    docs: 'https://offerwall.ad',
+  },
 ];
 
 // Every network accepts an optional "Custom Feed URL" override (so a wrong/changed endpoint never blocks you).
 CPA_NETWORKS.forEach(n => {
-  if (!n.fields.some(f => f.key === 'feedUrl')) n.fields.push({ key:'feedUrl', label:'Custom Feed URL override (optional — placeholders {api_key} {user_id} {country})' });
+  if (!n.hmac && !n.fields.some(f => f.key === 'feedUrl')) n.fields.push({ key:'feedUrl', label:'Custom Feed URL override (optional — placeholders {api_key} {user_id} {country})' });
   const orig = n.buildOfferUrl;
   n.buildOfferUrl = (cfg, country) => {
     if (cfg.feedUrl && cfg.feedUrl.trim()) {
@@ -2538,6 +2574,7 @@ function renderCpaNetworkCards() {
 
       ${fieldsHtml}
 
+      ${net.hmac ? `<div style="margin-bottom:8px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:9px 11px;font-size:11px;line-height:1.7;color:var(--text2)">🔐 API key ও Webhook signing secret এখানে রাখা হয় না — এগুলো Cloudflare Worker-এর Secret-এ থাকে (<code>OFFERWALL_API_KEY</code>, <code>OFFERWALL_WEBHOOK_SECRET</code>)।</div>` : `
       <div class="field" style="margin-bottom:8px">
         <label style="font-size:11px;font-weight:700">Postback Secret Token
           <span style="font-weight:400;color:var(--text3)"> — auto-generated, paste into network dashboard</span>
@@ -2547,6 +2584,7 @@ function renderCpaNetworkCards() {
           <button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('cpaCfg_${net.id}_postbackSecret').value).then(()=>showToast('Copied!','success'))">Copy</button>
         </div>
       </div>
+      `}
 
       <div class="field" style="margin-bottom:8px">
         <label style="font-size:11px;font-weight:700">Target Countries <span style="font-weight:400;color:var(--text3)">— fetched offers will be filtered for these</span></label>
@@ -2588,7 +2626,9 @@ async function cpaToggleNetwork(networkId, enabled) {
     try {
       const snap = await fb.getDocs(fb.query(fb.collection(fb.db, 'cpaTasks'), fb.where('network', '==', networkId)));
       for (const d of snap.docs) {
-        await fb.updateDoc(d.ref, { networkEnabled: enabled, status: enabled ? 'active' : 'inactive' }).catch(()=>{});
+        await fb.updateDoc(d.ref, (net && net.hmac)
+          ? (enabled ? { networkEnabled: true } : { networkEnabled: false, status: 'inactive' })   // [OWA] enabling never auto-publishes drafts
+          : { networkEnabled: enabled, status: enabled ? 'active' : 'inactive' }).catch(()=>{});
       }
     } catch(e) { console.warn('Network cascade:', e); }
   }
@@ -2625,7 +2665,8 @@ async function cpaSaveNetwork(networkId, silent = false) {
     if (el) data[f.key] = el.value.trim();
   });
   const secretEl = document.getElementById(`cpaCfg_${networkId}_postbackSecret`);
-  if (secretEl && secretEl.value.trim()) data.postbackSecret = secretEl.value.trim();
+  if (net.hmac) { /* [OWA] HMAC secret lives only in the Worker */ }
+  else if (secretEl && secretEl.value.trim()) data.postbackSecret = secretEl.value.trim();
   else data.postbackSecret = generateDomainSecret(networkId);
   const countriesEl = document.getElementById(`cpaCfg_${networkId}_targetCountries`);
   if (countriesEl) {
@@ -2639,7 +2680,7 @@ async function cpaSaveNetwork(networkId, silent = false) {
     // runs unauthenticated (the CPA network's server calls it, not a logged-in
     // browser) and needs this to validate incoming postbacks without ever being
     // able to read the real API keys stored on the admin-only cpaNetworks doc.
-    await fb.setDoc(fb.doc(fb.db, 'cpaPostbackSecrets', networkId), { secret: data.postbackSecret }, { merge: true }).catch(() => {});
+    if (!net.hmac) await fb.setDoc(fb.doc(fb.db, 'cpaPostbackSecrets', networkId), { secret: data.postbackSecret }, { merge: true }).catch(() => {});
     // Mirror ONLY the postback secret into the public-readable half — postback.html
     // runs unauthenticated (the CPA network's server calls it, not a logged-in
     // browser) and needs this to validate incoming postbacks without ever being
@@ -2661,6 +2702,7 @@ function cpaUpdatePostbackUrls() {
   const display = document.getElementById('postbackUrlDisplay');
   if (!display) return;
   display.innerHTML = CPA_NETWORKS.map(net => {
+    if (net.hmac) return owaPostbackCard(net);   // [OWA]
     const cfg = S.cpa.networks[net.id] || {};
     const secret = cfg.postbackSecret || generateDomainSecret(net.id);
     // Each network may substitute different macro tokens for lead/tx id,
@@ -2692,6 +2734,7 @@ async function cpaFetchOffers(networkIdArg) {
   }
   const container = document.getElementById('cpaFetchResults');
   if (!net) { showToast('Unknown network', 'error'); return; }
+  if (net.hmac) return owaFetchOffers(net, cfg, countryRaw === 'GLOBAL' ? '' : countryRaw);   // [OWA] via Worker
 
   // Check if any API credentials are configured
   const hasCredentials = net.fields.some(f => cfg[f.key] && cfg[f.key].trim());
@@ -2801,6 +2844,7 @@ function renderCpaFetchedOffers(netId, offers) {
         <button class="btn btn-primary btn-sm" onclick="cpaImportAll()"><i class="ti ti-download"></i> Import All Selected</button>
       </div>
     </div>
+    ${net && net.hmac ? owaFetchedBanner(offers) : ''}
     <div id="cpaOfferGrid">
       ${offers.map((o, idx) => `
         <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:12px;margin-bottom:9px;display:flex;gap:11px;align-items:flex-start">
@@ -2817,7 +2861,7 @@ function renderCpaFetchedOffers(netId, offers) {
           </div>
           <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0;width:80px">
             <div style="font-size:9px;color:var(--text3);font-weight:700;text-align:center">User Payout</div>
-            <input type="number" placeholder="$" step="0.01" min="0.01" id="cpoPayout_${idx}" value="${Math.max(0.01,(o.rawPayout*0.6)).toFixed(2)}"
+            <input type="number" placeholder="$" step="0.01" min="0.01" id="cpoPayout_${idx}" value="${(net && net.hmac ? owaDefaultPayout(o) : Math.max(0.01,(o.rawPayout*0.6))).toFixed(2)}"
                    style="width:100%;padding:6px;border-radius:8px;border:1.5px solid var(--border2);background:var(--bg3);color:var(--green);font-size:12px;font-weight:900;text-align:center">
             <button class="btn btn-primary btn-sm" style="padding:4px 0;font-size:10px" onclick="cpaImportSingle(${idx})">Import</button>
           </div>
@@ -2843,6 +2887,7 @@ function cpaShowManualAdd(netId) {
   const active = document.getElementById('cpaEditActive');
   if (active) { active.checked = true; document.getElementById('cpaEditStatusLabel').textContent = 'Active'; }
   cpaUpdateProfitLabel();
+  owaFillOrigBox(null);   // [OWA]
   openModal('cpaEditTaskModal');
 }
 
@@ -2868,6 +2913,7 @@ async function cpaImportAll() {
 
 async function cpaDoImport(offers) {
   ensureCpaState();
+  if (offers.length && offers.every(o => o.network === 'offerwallad')) return owaDoImport(offers);   // [OWA] preserves edits
   const fb = window._fb; if (!fb) { showToast('Firebase not ready', 'error'); return; }
   let ok = 0, skip = 0;
   const expiresAt = new Date(); expiresAt.setDate(expiresAt.getDate() + 30);
@@ -2914,6 +2960,7 @@ function renderCpaTaskList() {
   const container = document.getElementById('cpaTaskList'); if (!container) return;
   const search = (document.getElementById('cpaTaskSearch')?.value || '').toLowerCase();
   const netFilter = document.getElementById('cpaTaskNetFilter')?.value || '';
+  owaToggleBulkBar(netFilter);   // [OWA]
   let tasks = S.cpa.importedTasks || [];
   if (search) tasks = tasks.filter(t => (t.title||'').toLowerCase().includes(search) || (t.description||'').toLowerCase().includes(search));
   if (netFilter) tasks = tasks.filter(t => t.network === netFilter);
@@ -2923,7 +2970,7 @@ function renderCpaTaskList() {
     </div>`;
     return;
   }
-  const NET_COLORS = { cpalead:'#e53935',monlix:'#7b1fa2',cpagrip:'#6a1b9a',adgate:'#1565c0',offertoro:'#e65100',ayet:'#2e7d32',manual:'#607d8b' };
+  const NET_COLORS = { cpalead:'#e53935',monlix:'#7b1fa2',cpagrip:'#6a1b9a',adgate:'#1565c0',offertoro:'#e65100',ayet:'#2e7d32',offerwallad:'#0EA5E9',manual:'#607d8b' };
   container.innerHTML = tasks.map(t => {
     const nc = NET_COLORS[t.network]||'var(--teal)';
     const profit = ((t.rawPayout||0) - (t.customPayout||0));
@@ -2932,10 +2979,11 @@ function renderCpaTaskList() {
       <div style="flex:1;min-width:0">
         <div style="font-size:12.5px;font-weight:800;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(t.title||'Untitled')}</div>
         <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">
-          <span style="font-size:10px;background:var(--green-bg);color:var(--green);padding:2px 7px;border-radius:7px;font-weight:800">User $${(t.customPayout||0).toFixed(2)}</span>
+          ${t.network==='offerwallad' ? owaRewardInput(t) : `<span style="font-size:10px;background:var(--green-bg);color:var(--green);padding:2px 7px;border-radius:7px;font-weight:800">User $${(t.customPayout||0).toFixed(2)}</span>`}
           <span style="font-size:10px;background:var(--bg3);color:var(--text3);padding:2px 7px;border-radius:7px">Raw $${(t.rawPayout||0).toFixed(4)}</span>
           ${profit > 0 ? `<span style="font-size:10px;background:var(--amber-bg);color:var(--amber);padding:2px 7px;border-radius:7px">Profit $${profit.toFixed(4)}</span>` : ''}
           <span style="font-size:10px;background:var(--bg3);color:var(--text3);padding:2px 7px;border-radius:7px">${escHtml(t.network||'')}</span>
+          ${owaTaskChips(t)}
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:7px;flex-shrink:0">
@@ -2952,6 +3000,7 @@ function renderCpaTaskList() {
 
 async function cpaToggleTaskStatus(taskId, active) {
   const fb = window._fb; if (!fb) return;
+  if (active && !owaConfirmPublish(taskId)) { renderCpaTaskList(); return; }   // [OWA] translation safety net
   const status = active ? 'active' : 'inactive';
   try {
     await fb.updateDoc(fb.doc(fb.db, 'cpaTasks', taskId), { status });
@@ -2983,6 +3032,7 @@ function cpaOpenEdit(taskId) {
   if (active) { active.checked = task.status === 'active'; document.getElementById('cpaEditStatusLabel').textContent = active.checked ? 'Active' : 'Draft'; }
   document.getElementById('cpaEditCustomPayout').oninput = cpaUpdateProfitLabel;
   cpaUpdateProfitLabel();
+  owaFillOrigBox(task);   // [OWA]
   openModal('cpaEditTaskModal');
 }
 
@@ -3020,6 +3070,7 @@ async function saveCpaTaskEdit() {
     updatedAt: fb.serverTimestamp ? fb.serverTimestamp() : new Date(),
   };
   if (!data.title) { showToast('❌ Title is required', 'error'); return; }
+  if (!isNew && !owaBeforeSave(taskId, data)) return;   // [OWA] sets translationStatus, confirms English publish
   try {
     if (isNew) {
       data.network = netId || 'manual';
@@ -3075,7 +3126,7 @@ function renderCpaPostbacks() {
   const container = document.getElementById('cpaPostbackList'); if (!container) return;
   const pbs = S.cpa.postbacks || [];
   if (!pbs.length) { container.innerHTML = '<div style="text-align:center;color:var(--text3);padding:32px">No postbacks received yet.</div>'; return; }
-  const SC = { pending:'var(--amber)', credited:'var(--green)', failed:'var(--red)', manual:'var(--teal)' };
+  const SC = { pending:'var(--amber)', credited:'var(--green)', failed:'var(--red)', manual:'var(--teal)', held:'var(--blue)', reversed:'var(--red)', reversed_after_credit:'var(--red)' };
   container.innerHTML = `<div style="overflow-x:auto">
   <table style="width:100%;border-collapse:collapse;font-size:12px">
     <thead><tr style="border-bottom:2px solid var(--border)">
@@ -3152,6 +3203,240 @@ function playAdminAlertSound(key) {
     _adminAlertAudio.play().catch(() => {});
   } catch (e) { console.warn('Admin alert sound failed:', e); }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   [OWA] Offerwall.ad integration  — inserted by owa-apply-patch.py
+   Lives inside the CPA Networks module. Data model (all in Firestore):
+     cpaNetworks/offerwallad        admin-only config (workerUrl, rewardMultiplier, linkMode)  — NO secrets
+     cpaTasks/offerwallad_<id>      what the user site already reads: title, description, customPayout, status…
+        + titleOriginal / descriptionOriginal / requirementsOriginal   (raw English, never edited by admin)
+        + translationStatus 'pending'|'done', lastSeenAt
+     cpaPostbacks/offerwallad_<id>  written ONLY by the Worker (conversion audit + idempotency key)
+   ═══════════════════════════════════════════════════════════════════════════ */
+// The uploaded panel calls escHtml() in 16 places but never defines it (=> ReferenceError, CPA screens fail to render).
+// Defined here only if it is genuinely absent, so a version that already has it is left alone.
+if (typeof window.escHtml !== 'function') {
+  window.escHtml = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+const OWA_ID = 'offerwallad';
+const owaDocKey = v => String(v).replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 200);   // MUST match docKey() in the Worker
+const owaHasBn = s => /[\u0980-\u09FF]/.test(s || '');
+const owaRound = n => Math.max(0.01, Math.round(n * 100) / 100);
+
+function owaCfg() { ensureCpaState(); return S.cpa.networks[OWA_ID] || {}; }
+function owaWorkerBase() { return (owaCfg().workerUrl || '').trim().replace(/\/+$/, ''); }
+function owaMultiplier() {
+  const m = parseFloat(owaCfg().rewardMultiplier);
+  if (m > 0) return m;
+  const pct = parseFloat(S.settings && S.settings.cpaUserSharePct);
+  return pct > 0 ? pct / 100 : 0.6;
+}
+function owaTaskId(offerId) { return OWA_ID + '_' + owaDocKey(offerId); }
+function owaExistingTask(offerId) { return (S.cpa.importedTasks || []).find(t => t.id === owaTaskId(offerId)); }
+// Already-imported offers keep THEIR saved reward; only brand-new ones get raw × multiplier.
+function owaDefaultPayout(o) { const ex = owaExistingTask(o.offerId); return ex ? (ex.customPayout || 0) : owaRound(o.rawPayout * owaMultiplier()); }
+
+/* ── 1. Fetch (through the Worker — the API key never reaches the browser) ───────────── */
+async function owaFetchOffers(net, cfg, country) {
+  const container = $('cpaFetchResults');
+  const base = owaWorkerBase();
+  if (!/^https:\/\/[^\s]+$/.test(base)) {
+    container.innerHTML = `<div class="alert" style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:12px;padding:14px;color:var(--amber)">
+      <b>⚠️ Bridge Worker URL not saved.</b><br>Config tab → Offerwall.ad card → paste your <code>https://owa-bridge.….workers.dev</code> URL → Save Config.
+      <br><br><button class="btn btn-ghost btn-sm" onclick="cpaTabSwitch('config')">← Go to Config</button></div>`;
+    return;
+  }
+  container.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text3)"><div style="font-size:28px;margin-bottom:8px">⏳</div>Fetching from Offerwall.ad…</div>';
+  try {
+    const fb = window._fb, user = fb && fb.auth && fb.auth.currentUser;
+    if (!user) throw new Error('Firebase admin sign-in required (Settings → Firebase Admin)');
+    await loadCpaTasks();                                   // so the list can show what is already imported
+    const qs = new URLSearchParams({ limit: '50' });
+    if (country) qs.set('country', country);
+    const r = await fetch(base + '/offers?' + qs, { headers: { Authorization: 'Bearer ' + await user.getIdToken() }, signal: AbortSignal.timeout(20000) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.ok) throw new Error(j.error || ('HTTP ' + r.status) + (j.detail ? ' — ' + j.detail : ''));
+    if (!j.offers.length) throw new Error('offerwall.ad returned 0 offers (check API key, account approval, geo filter).');
+    S.cpa.fetchedOffers = j.offers; S.cpa.owaRawSample = j.rawSample;
+    renderCpaFetchedOffers(OWA_ID, j.offers);
+    showToast(`✅ ${j.offers.length} offers from Offerwall.ad`, 'success');
+  } catch (e) {
+    container.innerHTML = `<div class="alert" style="background:var(--red-bg);border:1px solid var(--red);border-radius:12px;padding:14px">
+      <b style="color:var(--red)">❌ Fetch failed:</b> <span style="color:var(--text2);font-size:12px">${escHtml(e.message)}</span>
+      <div style="margin-top:10px"><button class="btn btn-ghost btn-sm" onclick="cpaFetchOffers('${OWA_ID}')"><i class="ti ti-refresh"></i> Retry</button></div></div>`;
+  }
+}
+
+function owaFetchedBanner(offers) {
+  const noSubid = offers.filter(o => !o.subidEmbedded).length;
+  const sample = S.cpa.owaRawSample ? escHtml(JSON.stringify(S.cpa.owaRawSample, null, 2)) : '';
+  return `<div style="background:var(--bg3);border:1px solid var(--border2);border-radius:14px;padding:12px;margin-bottom:12px">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px">
+      <b>🎚 Reward multiplier</b> <span style="color:var(--text3)">user reward = raw payout ×</span>
+      <input id="owaMult" type="number" step="0.05" min="0.01" value="${owaMultiplier()}" style="width:70px;padding:5px 8px;border-radius:8px;border:1px solid var(--border2);background:var(--bg);color:var(--green);font-weight:800">
+      <button class="btn btn-ghost btn-sm" onclick="owaApplyMultiplierToList()">Apply to list</button>
+      <span style="font-size:10.5px;color:var(--text3)">Already-imported offers keep their saved reward.</span>
+    </div>
+    <div style="font-size:10.5px;color:var(--text3);margin-top:6px">নতুন অফার <b>Draft</b> হিসেবে ইম্পোর্ট হয় — বাংলা অনুবাদ ও রিওয়ার্ড দেখে Imported Tasks থেকে Publish করুন।</div>
+    ${noSubid ? `<div style="font-size:11px;color:var(--amber);margin-top:6px">⚠️ ${noSubid} অফারের ট্র্যাকিং লিংকে subid প্লেসহোল্ডার পাওয়া যায়নি — Config-এ <code>linkMode = bridge</code> দিন (README দেখুন)।</div>` : ''}
+    ${sample ? `<details style="margin-top:8px"><summary style="cursor:pointer;font-size:11px;color:var(--teal)">Raw API sample (first offer) — verify field mapping</summary><pre style="font-size:10px;max-height:200px;overflow:auto;background:var(--bg);padding:8px;border-radius:8px;margin-top:6px;white-space:pre-wrap">${sample}</pre></details>` : ''}
+  </div>`;
+}
+function owaApplyMultiplierToList() {
+  const m = parseFloat($('owaMult').value);
+  if (!(m > 0)) { showToast('❌ Multiplier must be > 0', 'error'); return; }
+  (S.cpa.fetchedOffers || []).forEach((o, i) => { const el = $('cpoPayout_' + i); if (el) el.value = owaRound(o.rawPayout * m).toFixed(2); });
+  showToast(`🎚 ×${m} applied to ${(S.cpa.fetchedOffers || []).length} offers (not saved until you Import)`, 'info');
+}
+
+/* ── 2. Import / re-sync — NEVER overwrites admin edits ──────────────────────────────── */
+async function owaDoImport(offers) {
+  const fb = window._fb; if (!fb) { showToast('Firebase not ready', 'error'); return; }
+  await loadCpaTasks();
+  const cfg = owaCfg(), bridge = (cfg.linkMode || '').trim().toLowerCase() === 'bridge', base = owaWorkerBase();
+  const expiresAt = new Date(); expiresAt.setDate(expiresAt.getDate() + 30);
+  let created = 0, refreshed = 0, skipped = 0;
+  for (const o of offers) {
+    if (!o.offerId || !o.title) { skipped++; continue; }
+    const id = owaTaskId(o.offerId);
+    const offerUrl = bridge && base ? `${base}/go?offer=${encodeURIComponent(o.offerId)}&subid={subid}` : (o.offerUrl || '');
+    const network = {            // fields owned by the network — safe to refresh on every sync
+      rawPayout: parseFloat(o.rawPayout) || 0, offerUrl, thumbnail: o.thumbnail || '',
+      titleOriginal: o.title, descriptionOriginal: o.description || '', requirementsOriginal: o.requirements || '',
+      expiresAt, lastSeenAt: fb.serverTimestamp(),
+    };
+    try {
+      if (owaExistingTask(o.offerId)) {
+        await fb.updateDoc(fb.doc(fb.db, 'cpaTasks', id), network);   // title/description/customPayout/status untouched
+        refreshed++;
+      } else {
+        const typed = parseFloat(o.customPayout);
+        await fb.setDoc(fb.doc(fb.db, 'cpaTasks', id), {
+          ...network, offerId: String(o.offerId), network: OWA_ID,
+          title: o.title, description: o.description || '', requirements: o.requirements || '',   // English until the admin translates
+          category: o.category || 'CPE', type: o.taskType || 'cpa_offer', country: String(o.country || 'Global'),
+          customPayout: owaRound(isNaN(typed) ? o.rawPayout * owaMultiplier() : typed),
+          limit: 500, filled: 0, expiryDays: 30,
+          status: 'draft', translationStatus: 'pending',                 // hidden from users until published
+          networkEnabled: cfg.enabled !== false, postedByAdmin: true, postedById: 'admin',
+          importedAt: fb.serverTimestamp(),
+        });
+        created++;
+      }
+    } catch (e) { console.error('[OWA] import', id, e); skipped++; }
+  }
+  showToast(`✅ ${created} new (draft) · ${refreshed} refreshed${skipped ? ' · ' + skipped + ' skipped' : ''}`, 'success');
+  addLog(`Offerwall.ad sync: ${created} new, ${refreshed} refreshed`, 'cpa', 'teal');
+  await loadCpaTasks();
+  const f = $('cpaTaskNetFilter'); if (f) f.value = OWA_ID;
+  cpaTabSwitch('tasks');
+}
+
+/* ── 3. Imported-tasks list: chips, inline reward, bulk multiplier ───────────────────── */
+function owaTaskChips(t) {
+  if (t.network !== OWA_ID) return '';
+  const chip = (txt, c) => `<span style="font-size:10px;background:var(--${c}-bg);color:var(--${c});padding:2px 7px;border-radius:7px;font-weight:700">${txt}</span>`;
+  let h = t.translationStatus === 'done' ? chip('🇧🇩 বাংলা ✔', 'green') : chip('✍️ অনুবাদ বাকি', 'amber');
+  if (t.status === 'draft') h += chip('Draft', 'blue');
+  const seen = t.lastSeenAt && t.lastSeenAt.toDate ? t.lastSeenAt.toDate().getTime() : 0;
+  if (seen && Date.now() - seen > 3 * 86400e3) h += chip('⚠️ not in recent sync', 'red');
+  return h;
+}
+function owaRewardInput(t) {
+  return `<span title="User reward ($) — saves on change" style="display:inline-flex;align-items:center;gap:3px;background:var(--green-bg);border-radius:7px;padding:1px 6px">
+    <span style="font-size:10px;color:var(--green);font-weight:800">User $</span>
+    <input type="number" step="0.01" min="0.01" value="${(t.customPayout || 0).toFixed(2)}" onchange="owaQuickPayout('${t.id}',this)"
+      style="width:58px;background:transparent;border:none;border-bottom:1px dashed var(--green);color:var(--green);font-weight:800;font-size:11px;text-align:right;outline:none"></span>`;
+}
+async function owaQuickPayout(id, el) {
+  const v = parseFloat(el.value), fb = window._fb;
+  if (!(v > 0)) { showToast('❌ Reward must be > 0', 'error'); renderCpaTaskList(); return; }
+  try {
+    const val = owaRound(v);
+    await fb.updateDoc(fb.doc(fb.db, 'cpaTasks', id), { customPayout: val, updatedAt: fb.serverTimestamp() });
+    const t = S.cpa.importedTasks.find(x => x.id === id); if (t) t.customPayout = val;
+    renderCpaTaskList(); showToast('✅ Reward saved', 'success');
+  } catch (e) { showToast('❌ ' + e.message, 'error'); }
+}
+function owaToggleBulkBar(netFilter) {
+  const bar = $('owaBulkBar'); if (!bar) return;
+  const show = netFilter === OWA_ID;
+  if (show && bar.style.display === 'none') $('owaBulkMult').value = owaMultiplier();
+  bar.style.display = show ? 'flex' : 'none';
+}
+async function owaBulkApply() {
+  const m = parseFloat($('owaBulkMult').value), scope = $('owaBulkScope').value, fb = window._fb;
+  if (!(m > 0)) { showToast('❌ Multiplier must be > 0', 'error'); return; }
+  const targets = (S.cpa.importedTasks || []).filter(t => t.network === OWA_ID && (scope === 'all' || t.status === 'draft') && t.rawPayout > 0);
+  if (!targets.length) { showToast('No matching Offerwall.ad tasks', 'warn'); return; }
+  if (!confirm(`${targets.length}টি টাস্কের ইউজার রিওয়ার্ড = raw payout × ${m} করা হবে। নিশ্চিত?`)) return;
+  try {
+    for (let i = 0; i < targets.length; i += 400) {                      // Firestore batch limit is 500
+      const b = fb.writeBatch(fb.db);
+      targets.slice(i, i + 400).forEach(t => b.update(fb.doc(fb.db, 'cpaTasks', t.id), { customPayout: owaRound(t.rawPayout * m) }));
+      await b.commit();
+    }
+    targets.forEach(t => { t.customPayout = owaRound(t.rawPayout * m); });
+    renderCpaTaskList(); showToast(`✅ ${targets.length} rewards updated (×${m})`, 'success');
+    addLog(`Offerwall.ad bulk reward ×${m} on ${targets.length} tasks`, 'cpa', 'teal');
+  } catch (e) { showToast('❌ Bulk update failed: ' + e.message, 'error'); }
+}
+
+/* ── 4. Edit modal: English original + Bengali editing ───────────────────────────────── */
+function owaEditingTask() { return (S.cpa.importedTasks || []).find(t => t.id === $('cpaEditTaskId').value); }
+function owaFillOrigBox(task) {
+  const box = $('owaOrigBox'); if (!box) return;
+  if (!task || task.network !== OWA_ID) { box.style.display = 'none'; return; }
+  box.style.display = '';
+  $('owaOrigTitle').textContent = task.titleOriginal || '';
+  $('owaOrigDesc').textContent = task.descriptionOriginal || '';
+  $('owaOrigReq').textContent = task.requirementsOriginal ? '📋 ' + task.requirementsOriginal : '';
+}
+function owaResetToOriginal() {
+  const t = owaEditingTask(); if (!t) return;
+  $('cpaEditTitle').value = t.titleOriginal || ''; $('cpaEditDesc').value = t.descriptionOriginal || ''; $('cpaEditRequirements').value = t.requirementsOriginal || '';
+}
+async function owaAiTranslate(btn) {
+  const t = owaEditingTask(); if (!t) return;
+  const label = btn.innerHTML; btn.disabled = true; btn.innerHTML = '⏳ অনুবাদ হচ্ছে…';
+  const sys = 'You translate task listings for a Bangladeshi micro-task app from English into natural, simple Bengali (বাংলা). Keep app, game and brand names, numbers, currency symbols and level names exactly as written. Do not add claims, promises or extra information. Output ONLY the translation, no quotes or notes.';
+  try {
+    for (const [field, src] of [['cpaEditTitle', t.titleOriginal], ['cpaEditDesc', t.descriptionOriginal], ['cpaEditRequirements', t.requirementsOriginal]]) {
+      if (!src) continue;
+      const out = await callAIProxy(src, sys); if (out) $(field).value = String(out).trim();
+    }
+    showToast('✅ অনুবাদ বসানো হয়েছে — রিভিউ করে Save করুন', 'success');
+  } catch (e) { console.error(e); showToast('❌ AI ব্যর্থ — Dev Studio-তে Gemini/Groq key দিন, অথবা নিজে লিখুন', 'error'); }
+  finally { btn.disabled = false; btn.innerHTML = label; }
+}
+// Called from saveCpaTaskEdit(): returns false to cancel the save.
+function owaBeforeSave(taskId, data) {
+  const t = (S.cpa.importedTasks || []).find(x => x.id === taskId);
+  if (!t || t.network !== OWA_ID) return true;
+  data.translationStatus = (owaHasBn(data.title) || owaHasBn(data.description)) ? 'done' : 'pending';
+  if (data.status === 'active' && data.translationStatus === 'pending')
+    return confirm('এই টাস্কে এখনো বাংলা লেখা নেই (ইংরেজিই আছে)। তবুও ইউজারদের জন্য Publish করবেন?');
+  return true;
+}
+// Called from cpaToggleTaskStatus(): same safety net when publishing from the list.
+function owaConfirmPublish(taskId) {
+  const t = (S.cpa.importedTasks || []).find(x => x.id === taskId);
+  return !(t && t.network === OWA_ID && t.translationStatus !== 'done') ||
+    confirm('এই টাস্কের বাংলা অনুবাদ এখনো সেভ হয়নি। তবুও Publish করবেন?');
+}
+
+/* ── 5. Postback URL card ─────────────────────────────────────────────────────────────── */
+function owaPostbackCard(net) {
+  const url = (owaWorkerBase() || 'https://owa-bridge.YOUR-SUBDOMAIN.workers.dev') + '/postback';
+  return `<div style="margin-bottom:12px">
+    <div style="font-size:10.5px;font-weight:800;color:var(--text2);margin-bottom:3px">${net.icon} ${net.name} <span style="color:var(--green)">· HMAC-SHA256 signed (X-Offerwall-Ad-Signature)</span></div>
+    <div data-url="${escHtml(url)}" onclick="navigator.clipboard.writeText(this.dataset.url).then(()=>showToast('Copied!','success'))" title="Click to copy"
+      style="font-size:10px;color:var(--teal);background:var(--bg);padding:8px 10px;border-radius:8px;word-break:break-all;cursor:pointer;border:1px solid var(--border)">${escHtml(url)}</div>
+    <div style="font-size:10px;color:var(--text3);margin-top:4px;line-height:1.7">offerwall.ad ড্যাশবোর্ডে এই URL-টি Webhook হিসেবে দিন। Signing secret শুধু Worker-এ (<code>OFFERWALL_WEBHOOK_SECRET</code>) থাকে — Firestore-এ রাখা হয় না।</div>
+  </div>`;
+}
+/* ═══════════════════════════ [OWA] end ═══════════════════════════ */
 
 // ── Startup loader ────────────────────────────────────────────────────────────
 async function loadCpaNetworks() {
