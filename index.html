@@ -2439,11 +2439,11 @@ const CPA_NETWORKS = [
     postbackParam: '{user_id}',
     docs: 'https://www.ayetstudios.com',
   },
-  // [OWA] HMAC-signed network. API key + webhook secret live in the Cloudflare Worker, never in Firestore/browser.
+  // [OWA] HMAC-signed network. API key + webhook secret live in the server (Vercel /api), never in Firestore/browser.
   {
     id: 'offerwallad', name: 'Offerwall.ad', icon: '🧱', color: '#0EA5E9', hmac: true,
     fields: [
-      { key:'workerUrl', label:'Bridge Worker URL (https://owa-bridge.<you>.workers.dev)' },
+      { key:'workerUrl', label:'Server API URL = ইউজার সাইটের ডোমেইন + /api (যেমন https://yoursite.vercel.app/api)' },
       { key:'rewardMultiplier', label:'Default reward multiplier (user reward = raw payout × this, e.g. 0.6)' },
       { key:'linkMode', label:'Link mode: direct (default) or bridge — use bridge if offer links do not attribute' },
     ],
@@ -2574,7 +2574,7 @@ function renderCpaNetworkCards() {
 
       ${fieldsHtml}
 
-      ${net.hmac ? `<div style="margin-bottom:8px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:9px 11px;font-size:11px;line-height:1.7;color:var(--text2)">🔐 API key ও Webhook signing secret এখানে রাখা হয় না — এগুলো Cloudflare Worker-এর Secret-এ থাকে (<code>OFFERWALL_API_KEY</code>, <code>OFFERWALL_WEBHOOK_SECRET</code>)।</div>` : `
+      ${net.hmac ? `<div style="margin-bottom:8px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:9px 11px;font-size:11px;line-height:1.7;color:var(--text2)">🔐 API key ও Webhook signing secret এখানে রাখা হয় না — এগুলো Vercel Environment Variables-এ থাকে (<code>OFFERWALL_API_KEY</code>, <code>OFFERWALL_WEBHOOK_SECRET</code>)।</div>` : `
       <div class="field" style="margin-bottom:8px">
         <label style="font-size:11px;font-weight:700">Postback Secret Token
           <span style="font-weight:400;color:var(--text3)"> — auto-generated, paste into network dashboard</span>
@@ -3243,7 +3243,7 @@ async function owaFetchOffers(net, cfg, country) {
   const base = owaWorkerBase();
   if (!/^https:\/\/[^\s]+$/.test(base)) {
     container.innerHTML = `<div class="alert" style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:12px;padding:14px;color:var(--amber)">
-      <b>⚠️ Bridge Worker URL not saved.</b><br>Config tab → Offerwall.ad card → paste your <code>https://owa-bridge.….workers.dev</code> URL → Save Config.
+      <b>⚠️ Server API URL not saved.</b><br>Config tab → Offerwall.ad card → paste <code>https://ইউজার-সাইটের-ডোমেইন/api</code> → Save Config.
       <br><br><button class="btn btn-ghost btn-sm" onclick="cpaTabSwitch('config')">← Go to Config</button></div>`;
     return;
   }
@@ -3428,12 +3428,12 @@ function owaConfirmPublish(taskId) {
 
 /* ── 5. Postback URL card ─────────────────────────────────────────────────────────────── */
 function owaPostbackCard(net) {
-  const url = (owaWorkerBase() || 'https://owa-bridge.YOUR-SUBDOMAIN.workers.dev') + '/postback';
+  const url = (owaWorkerBase() || 'https://ইউজার-সাইটের-ডোমেইন/api') + '/postback';
   return `<div style="margin-bottom:12px">
     <div style="font-size:10.5px;font-weight:800;color:var(--text2);margin-bottom:3px">${net.icon} ${net.name} <span style="color:var(--green)">· HMAC-SHA256 signed (X-Offerwall-Ad-Signature)</span></div>
     <div data-url="${escHtml(url)}" onclick="navigator.clipboard.writeText(this.dataset.url).then(()=>showToast('Copied!','success'))" title="Click to copy"
       style="font-size:10px;color:var(--teal);background:var(--bg);padding:8px 10px;border-radius:8px;word-break:break-all;cursor:pointer;border:1px solid var(--border)">${escHtml(url)}</div>
-    <div style="font-size:10px;color:var(--text3);margin-top:4px;line-height:1.7">offerwall.ad ড্যাশবোর্ডে এই URL-টি Webhook হিসেবে দিন। Signing secret শুধু Worker-এ (<code>OFFERWALL_WEBHOOK_SECRET</code>) থাকে — Firestore-এ রাখা হয় না।</div>
+    <div style="font-size:10px;color:var(--text3);margin-top:4px;line-height:1.7">offerwall.ad ড্যাশবোর্ডে এই URL-টি Webhook হিসেবে দিন। Signing secret শুধু Vercel Environment Variables-এ (<code>OFFERWALL_WEBHOOK_SECRET</code>) থাকে — Firestore-এ রাখা হয় না।</div>
   </div>`;
 }
 /* ═══════════════════════════ [OWA] end ═══════════════════════════ */
