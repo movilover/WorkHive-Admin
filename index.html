@@ -3275,18 +3275,63 @@ async function owaFetchOffers(net, cfg, country) {
   }
 }
 
-// "Failed to fetch" = the browser got no CORS-readable answer. Tell the admin which of the two causes it is.
+// "Failed to fetch" = the browser got no CORS-readable answer. Run 4 probes against the saved URL (and its www/apex twin)
+// and show the admin exactly which layer fails — no DevTools needed on a phone.
+async function owaProbe(base) {
+  const t = (init) => ({ cache: 'no-store', signal: AbortSignal.timeout(8000), ...init });
+  const ok = async (fn) => { try { await fn(); return true; } catch (e) { return false; } };
+  const out = { base, reach: false, redirect: false, cors: false, preflight: false };
+  out.reach = await ok(() => fetch(base + '/health', t({ mode: 'no-cors' })));
+  if (!out.reach) return out;
+  try { const r = await fetch(base + '/health', t({ mode: 'no-cors', redirect: 'manual' })); out.redirect = !!r && r.type === 'opaqueredirect'; } catch (e) { /* ignore */ }
+  out.cors = await ok(() => fetch(base + '/health', t({ mode: 'cors' })));                                             // plain cross-origin GET
+  out.preflight = await ok(() => fetch(base + '/health', t({ mode: 'cors', headers: { Authorization: 'Bearer probe' } }))); // triggers OPTIONS preflight, like /offers
+  return out;
+}
+function owaTwinUrl(base) {                       // workhive.pro <-> www.workhive.pro (a very common Vercel domain redirect)
+  try {
+    const u = new URL(base), labels = u.hostname.split('.');
+    if (u.hostname.startsWith('www.')) u.hostname = u.hostname.slice(4);
+    else if (labels.length === 2) u.hostname = 'www.' + u.hostname; else return '';
+    return u.origin + u.pathname.replace(/\/+$/, '');
+  } catch (e) { return ''; }
+}
 async function owaDiagnose(base) {
-  const origin = location.origin;
-  let reachable = false;
-  try { await fetch(base + '/health', { mode: 'no-cors', cache: 'no-store', signal: AbortSignal.timeout(8000) }); reachable = true; } catch (err) { reachable = false; }
-  const box = (c, html) => `<div style="margin-top:10px;font-size:12px;line-height:1.8;color:var(--text2);border-top:1px dashed var(--border2);padding-top:8px">${html}</div>`;
-  const health = `<a href="${escHtml(base)}/health" target="_blank" rel="noopener" style="color:var(--teal)">${escHtml(base)}/health</a>`;
-  if (!reachable) return box('', `🔌 <b>সার্ভারে পৌঁছানো যায়নি।</b> কারণ: Server API URL ভুল / ডোমেইনে টাইপো / সার্ভার ডিপ্লয় হয়নি / ইন্টারনেট।<br>নতুন ট্যাবে খুলে দেখুন: ${health} — <code>{"ok":true…}</code> আসা উচিত।`);
-  return box('', `🛡️ <b>সার্ভার পাওয়া যাচ্ছে, কিন্তু ব্রাউজার উত্তর ব্লক করেছে (CORS)।</b><br>
-    ১) Vercel → ইউজার-সাইট প্রজেক্ট → Environment Variables → <code>ALLOWED_ORIGIN</code> = <b style="color:var(--green);user-select:all">${escHtml(origin)}</b> (এই প্যানেল যেখান থেকে খুলেছেন সেটাই) → <b>Redeploy</b>।<br>
-    ২) ${health} নতুন ট্যাবে খুলে দেখুন <code>{"ok":true…}</code> আসে কি না। 404 হলে ফাইল <code>api/health.mjs</code> ঠিক জায়গায় নেই; Vercel-এর লগইন/Protection পেজ এলে Settings → Deployment Protection বন্ধ করুন।<br>
-    ৩) এইমাত্র ভেরিয়েবল বদলালে Redeploy না করলে কাজ করবে না।`);
+  const origin = location.origin, twin = owaTwinUrl(base);
+  const [a, b] = await Promise.all([owaProbe(base), twin ? owaProbe(twin) : Promise.resolve(null)]);
+  const row = (v, label) => `<div>${v ? '✅' : '❌'} ${label}</div>`;
+  const block = (r) => !r ? '' : `<div style="margin:6px 0;padding:6px 8px;background:var(--bg);border-radius:8px"><div style="color:var(--teal);word-break:break-all">${escHtml(r.base)}</div>
+      ${row(r.reach, 'সার্ভারে পৌঁছানো যায়')}${r.reach ? `<div>${r.redirect ? '⚠️ <b>অন্য ঠিকানায় রিডাইরেক্ট করে</b>' : '✅ রিডাইরেক্ট নেই'}</div>${row(r.cors, 'CORS অনুমতি (সাধারণ রিকোয়েস্ট)')}${row(r.preflight, 'CORS অনুমতি (Authorization সহ — প্রি-ফ্লাইট)')}` : ''}</div>`;
+  const good = (r) => r && r.reach && !r.redirect && r.cors && r.preflight;
+  let verdict;
+  if (!good(a) && good(b)) {
+    verdict = `✅ <b>সমাধান পাওয়া গেছে:</b> আপনার সেভ করা ঠিকানা রিডাইরেক্ট/ব্লক হচ্ছে, কিন্তু <b style="color:var(--green)">${escHtml(b.base)}</b> ঠিকঠাক কাজ করে।
+      <div style="margin-top:8px"><button class="btn btn-primary btn-sm" data-url="${escHtml(b.base)}" onclick="owaUseUrl(this.dataset.url)">✔ এই ঠিকানা সেভ করে আবার চেষ্টা করুন</button></div>`;
+  } else if (!a.reach) {
+    verdict = `🔌 <b>সার্ভারে পৌঁছানো যায়নি।</b> Server API URL ভুল / ডোমেইনে টাইপো / সার্ভার ডিপ্লয় হয়নি / ইন্টারনেট।`;
+  } else if (a.redirect) {
+    verdict = `↪️ <b>এই ঠিকানা অন্য ঠিকানায় রিডাইরেক্ট করে।</b> ব্রাউজারের প্রি-ফ্লাইট রিডাইরেক্ট মানে না — তাই লিংক ট্যাবে ঠিক দেখালেও প্যানেল থেকে ব্যর্থ হয়। ট্যাবে <code>${escHtml(a.base)}/health</code> খুলে address bar-এ যে <b>চূড়ান্ত ডোমেইন</b> দেখায় সেটা Config → Server API URL-এ দিন (শেষে <code>/api</code>)।`;
+  } else if (!a.cors) {
+    verdict = `🛡️ <b>CORS: সার্ভার এই প্যানেলের ঠিকানা অনুমোদন করেনি।</b> Vercel → ইউজার-সাইট প্রজেক্ট → Environment Variables → <code>ALLOWED_ORIGIN</code> = <b style="color:var(--green);user-select:all">${escHtml(origin)}</b> → <b>Production</b> টিক আছে কি দেখুন → <b>Redeploy</b>।`;
+  } else if (!a.preflight) {
+    verdict = `🛡️ সাধারণ রিকোয়েস্ট ঠিক, কিন্তু <b>Authorization সহ (প্রি-ফ্লাইট) ব্লক</b>। সম্ভাব্য কারণ: সার্ভারে <code>lib/owa.mjs</code> পুরোনো সংস্করণ (নতুনটা আপলোড করে Redeploy করুন) বা Vercel Deployment Protection।`;
+  } else {
+    verdict = `✅ সার্ভার ও CORS ঠিক আছে — ব্যর্থ হচ্ছে শুধু <code>/offers</code>। Vercel → প্রজেক্ট → <b>Logs</b> দেখুন (সম্ভাব্য: offerwall.ad ধীর/টাইমআউট, ভেরিয়েবল অসম্পূর্ণ, ফাংশন ক্র্যাশ)।`;
+  }
+  return `<div style="margin-top:10px;font-size:12px;line-height:1.7;color:var(--text2);border-top:1px dashed var(--border2);padding-top:8px">
+    <div style="color:var(--text3);margin-bottom:4px">🔎 ডায়াগনস্টিক — এই প্যানেলের origin: <b style="user-select:all">${escHtml(origin)}</b></div>${block(a)}${block(b)}
+    <div style="margin-top:6px">${verdict}</div></div>`;
+}
+async function owaUseUrl(url) {
+  if (!/^https:\/\/[^\s]+$/.test(url)) return;
+  try {
+    const fb = window._fb; ensureCpaState();
+    await fb.setDoc(fb.doc(fb.db, 'cpaNetworks', OWA_ID), { workerUrl: url }, { merge: true });
+    S.cpa.networks[OWA_ID] = { ...(S.cpa.networks[OWA_ID] || {}), workerUrl: url };
+    const el = $('cpaCfg_' + OWA_ID + '_workerUrl'); if (el) el.value = url;
+    showToast('✅ Server API URL সেভ হয়েছে', 'success');
+    cpaFetchOffers(OWA_ID);
+  } catch (e) { showToast('❌ ' + e.message, 'error'); }
 }
 
 function owaFetchedBanner(offers) {
