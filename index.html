@@ -3225,7 +3225,11 @@ const owaHasBn = s => /[\u0980-\u09FF]/.test(s || '');
 const owaRound = n => Math.max(0.01, Math.round(n * 100) / 100);
 
 function owaCfg() { ensureCpaState(); return S.cpa.networks[OWA_ID] || {}; }
-function owaWorkerBase() { return (owaCfg().workerUrl || '').trim().replace(/\/+$/, ''); }
+function owaWorkerBase() {
+  let b = (owaCfg().workerUrl || '').trim().replace(/\/+$/, '');
+  try { const u = new URL(b); if (u.pathname === '/' || u.pathname === '') b = u.origin + '/api'; } catch (e) { /* not a URL yet */ }   // domain pasted without /api
+  return b;
+}
 function owaMultiplier() {
   const m = parseFloat(owaCfg().rewardMultiplier);
   if (m > 0) return m;
@@ -3262,10 +3266,27 @@ async function owaFetchOffers(net, cfg, country) {
     renderCpaFetchedOffers(OWA_ID, j.offers);
     showToast(`✅ ${j.offers.length} offers from Offerwall.ad`, 'success');
   } catch (e) {
+    const net = e instanceof TypeError || /failed to fetch|networkerror|load failed/i.test(e.message || '');
+    const why = net ? await owaDiagnose(base) : '';
     container.innerHTML = `<div class="alert" style="background:var(--red-bg);border:1px solid var(--red);border-radius:12px;padding:14px">
       <b style="color:var(--red)">❌ Fetch failed:</b> <span style="color:var(--text2);font-size:12px">${escHtml(e.message)}</span>
+      ${why}
       <div style="margin-top:10px"><button class="btn btn-ghost btn-sm" onclick="cpaFetchOffers('${OWA_ID}')"><i class="ti ti-refresh"></i> Retry</button></div></div>`;
   }
+}
+
+// "Failed to fetch" = the browser got no CORS-readable answer. Tell the admin which of the two causes it is.
+async function owaDiagnose(base) {
+  const origin = location.origin;
+  let reachable = false;
+  try { await fetch(base + '/health', { mode: 'no-cors', cache: 'no-store', signal: AbortSignal.timeout(8000) }); reachable = true; } catch (err) { reachable = false; }
+  const box = (c, html) => `<div style="margin-top:10px;font-size:12px;line-height:1.8;color:var(--text2);border-top:1px dashed var(--border2);padding-top:8px">${html}</div>`;
+  const health = `<a href="${escHtml(base)}/health" target="_blank" rel="noopener" style="color:var(--teal)">${escHtml(base)}/health</a>`;
+  if (!reachable) return box('', `🔌 <b>সার্ভারে পৌঁছানো যায়নি।</b> কারণ: Server API URL ভুল / ডোমেইনে টাইপো / সার্ভার ডিপ্লয় হয়নি / ইন্টারনেট।<br>নতুন ট্যাবে খুলে দেখুন: ${health} — <code>{"ok":true…}</code> আসা উচিত।`);
+  return box('', `🛡️ <b>সার্ভার পাওয়া যাচ্ছে, কিন্তু ব্রাউজার উত্তর ব্লক করেছে (CORS)।</b><br>
+    ১) Vercel → ইউজার-সাইট প্রজেক্ট → Environment Variables → <code>ALLOWED_ORIGIN</code> = <b style="color:var(--green);user-select:all">${escHtml(origin)}</b> (এই প্যানেল যেখান থেকে খুলেছেন সেটাই) → <b>Redeploy</b>।<br>
+    ২) ${health} নতুন ট্যাবে খুলে দেখুন <code>{"ok":true…}</code> আসে কি না। 404 হলে ফাইল <code>api/health.mjs</code> ঠিক জায়গায় নেই; Vercel-এর লগইন/Protection পেজ এলে Settings → Deployment Protection বন্ধ করুন।<br>
+    ৩) এইমাত্র ভেরিয়েবল বদলালে Redeploy না করলে কাজ করবে না।`);
 }
 
 function owaFetchedBanner(offers) {
