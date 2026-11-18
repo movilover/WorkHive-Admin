@@ -3256,10 +3256,13 @@ async function owaFetchOffers(net, cfg, country) {
     const fb = window._fb, user = fb && fb.auth && fb.auth.currentUser;
     if (!user) throw new Error('Firebase admin sign-in required (Settings → Firebase Admin)');
     await loadCpaTasks();                                   // so the list can show what is already imported
-    const qs = new URLSearchParams({ limit: '50' });
-    if (country) qs.set('country', country);
-    const r = await fetch(base + '/offers?' + qs, { headers: { Authorization: 'Bearer ' + await user.getIdToken() }, signal: AbortSignal.timeout(20000) });
+    // POST + text/plain = a CORS "simple request": the browser sends NO OPTIONS preflight (which some hosts/protections block).
+    // The ID token travels in the body, never in the URL.
+    const payload = { t: await user.getIdToken(), limit: 50 };
+    if (country) payload.country = country;
+    const r = await fetch(base + '/offers', { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=UTF-8' }, body: JSON.stringify(payload), signal: AbortSignal.timeout(20000) });
     const j = await r.json().catch(() => ({}));
+    if (j.error === 'method_not_allowed') throw new Error('সার্ভারের lib/owa.mjs পুরোনো (POST সমর্থন নেই) — নতুন lib/owa.mjs আপলোড করে Vercel-এ Redeploy করুন।');
     if (!r.ok || !j.ok) throw new Error(j.error || ('HTTP ' + r.status) + (j.detail ? ' — ' + j.detail : ''));
     if (!j.offers.length) throw new Error('offerwall.ad returned 0 offers (check API key, account approval, geo filter).');
     S.cpa.fetchedOffers = j.offers; S.cpa.owaRawSample = j.rawSample;
@@ -3280,12 +3283,13 @@ async function owaFetchOffers(net, cfg, country) {
 async function owaProbe(base) {
   const t = (init) => ({ cache: 'no-store', signal: AbortSignal.timeout(8000), ...init });
   const ok = async (fn) => { try { await fn(); return true; } catch (e) { return false; } };
-  const out = { base, reach: false, redirect: false, cors: false, preflight: false };
+  const out = { base, reach: false, redirect: false, cors: false, post: false, preflight: false };
   out.reach = await ok(() => fetch(base + '/health', t({ mode: 'no-cors' })));
   if (!out.reach) return out;
   try { const r = await fetch(base + '/health', t({ mode: 'no-cors', redirect: 'manual' })); out.redirect = !!r && r.type === 'opaqueredirect'; } catch (e) { /* ignore */ }
   out.cors = await ok(() => fetch(base + '/health', t({ mode: 'cors' })));                                             // plain cross-origin GET
-  out.preflight = await ok(() => fetch(base + '/health', t({ mode: 'cors', headers: { Authorization: 'Bearer probe' } }))); // triggers OPTIONS preflight, like /offers
+  out.post = await ok(() => fetch(base + '/health', t({ mode: 'cors', method: 'POST', headers: { 'Content-Type': 'text/plain;charset=UTF-8' }, body: '{}' })));   // exactly the kind of request /offers now uses
+  out.preflight = await ok(() => fetch(base + '/health', t({ mode: 'cors', headers: { Authorization: 'Bearer probe' } })));                                          // informational only: needs an OPTIONS preflight
   return out;
 }
 function owaTwinUrl(base) {                       // workhive.pro <-> www.workhive.pro (a very common Vercel domain redirect)
@@ -3301,8 +3305,8 @@ async function owaDiagnose(base) {
   const [a, b] = await Promise.all([owaProbe(base), twin ? owaProbe(twin) : Promise.resolve(null)]);
   const row = (v, label) => `<div>${v ? '✅' : '❌'} ${label}</div>`;
   const block = (r) => !r ? '' : `<div style="margin:6px 0;padding:6px 8px;background:var(--bg);border-radius:8px"><div style="color:var(--teal);word-break:break-all">${escHtml(r.base)}</div>
-      ${row(r.reach, 'সার্ভারে পৌঁছানো যায়')}${r.reach ? `<div>${r.redirect ? '⚠️ <b>অন্য ঠিকানায় রিডাইরেক্ট করে</b>' : '✅ রিডাইরেক্ট নেই'}</div>${row(r.cors, 'CORS অনুমতি (সাধারণ রিকোয়েস্ট)')}${row(r.preflight, 'CORS অনুমতি (Authorization সহ — প্রি-ফ্লাইট)')}` : ''}</div>`;
-  const good = (r) => r && r.reach && !r.redirect && r.cors && r.preflight;
+      ${row(r.reach, 'সার্ভারে পৌঁছানো যায়')}${r.reach ? `<div>${r.redirect ? '⚠️ <b>অন্য ঠিকানায় রিডাইরেক্ট করে</b>' : '✅ রিডাইরেক্ট নেই'}</div>${row(r.cors, 'CORS অনুমতি (GET)')}${row(r.post, 'CORS অনুমতি (POST — প্যানেল এটাই ব্যবহার করে)')}<div style="opacity:.75">${r.preflight ? '✅' : '➖'} প্রি-ফ্লাইট (Authorization) — ঐচ্ছিক, প্যানেল এটা এড়িয়ে চলে</div>` : ''}</div>`;
+  const good = (r) => r && r.reach && !r.redirect && r.cors && r.post;
   let verdict;
   if (!good(a) && good(b)) {
     verdict = `✅ <b>সমাধান পাওয়া গেছে:</b> আপনার সেভ করা ঠিকানা রিডাইরেক্ট/ব্লক হচ্ছে, কিন্তু <b style="color:var(--green)">${escHtml(b.base)}</b> ঠিকঠাক কাজ করে।
@@ -3313,8 +3317,8 @@ async function owaDiagnose(base) {
     verdict = `↪️ <b>এই ঠিকানা অন্য ঠিকানায় রিডাইরেক্ট করে।</b> ব্রাউজারের প্রি-ফ্লাইট রিডাইরেক্ট মানে না — তাই লিংক ট্যাবে ঠিক দেখালেও প্যানেল থেকে ব্যর্থ হয়। ট্যাবে <code>${escHtml(a.base)}/health</code> খুলে address bar-এ যে <b>চূড়ান্ত ডোমেইন</b> দেখায় সেটা Config → Server API URL-এ দিন (শেষে <code>/api</code>)।`;
   } else if (!a.cors) {
     verdict = `🛡️ <b>CORS: সার্ভার এই প্যানেলের ঠিকানা অনুমোদন করেনি।</b> Vercel → ইউজার-সাইট প্রজেক্ট → Environment Variables → <code>ALLOWED_ORIGIN</code> = <b style="color:var(--green);user-select:all">${escHtml(origin)}</b> → <b>Production</b> টিক আছে কি দেখুন → <b>Redeploy</b>।`;
-  } else if (!a.preflight) {
-    verdict = `🛡️ সাধারণ রিকোয়েস্ট ঠিক, কিন্তু <b>Authorization সহ (প্রি-ফ্লাইট) ব্লক</b>। সম্ভাব্য কারণ: সার্ভারে <code>lib/owa.mjs</code> পুরোনো সংস্করণ (নতুনটা আপলোড করে Redeploy করুন) বা Vercel Deployment Protection।`;
+  } else if (!a.post) {
+    verdict = `🛡️ GET ঠিক, কিন্তু <b>POST ব্লক</b>। সম্ভাব্য কারণ: সার্ভারে <code>lib/owa.mjs</code> পুরোনো সংস্করণ (নতুনটা আপলোড করে <b>Redeploy</b> করুন) বা Vercel Deployment Protection / Firewall।`;
   } else {
     verdict = `✅ সার্ভার ও CORS ঠিক আছে — ব্যর্থ হচ্ছে শুধু <code>/offers</code>। Vercel → প্রজেক্ট → <b>Logs</b> দেখুন (সম্ভাব্য: offerwall.ad ধীর/টাইমআউট, ভেরিয়েবল অসম্পূর্ণ, ফাংশন ক্র্যাশ)।`;
   }
