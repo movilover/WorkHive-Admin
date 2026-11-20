@@ -1316,7 +1316,7 @@ if (window.Capacitor?.Plugins?.OneSignal) {
           </div>
           <!-- [OWA] bulk reward bar (visible when filtered to Offerwall.ad) -->
           <div id="owaBulkBar" style="display:none;flex-wrap:wrap;gap:8px;align-items:center;background:var(--bg3);border:1px solid var(--border2);border-radius:14px;padding:10px 12px;margin-bottom:12px;font-size:12px">
-            <b>🧱 Bulk reward</b><span style="color:var(--text3)">user reward = raw payout ×</span>
+            <b>🧱 Bulk reward — <span id="owaBulkName"></span></b><span style="color:var(--text3)">user reward = raw payout ×</span>
             <input id="owaBulkMult" type="number" step="0.05" min="0.01" value="0.6" style="width:70px;padding:5px 8px;border-radius:8px;border:1px solid var(--border2);background:var(--bg);color:var(--green);font-weight:800">
             <select id="owaBulkScope" style="padding:5px 8px;border-radius:8px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:12px">
               <option value="draft">drafts only</option><option value="all">all Offerwall.ad tasks</option>
@@ -2626,9 +2626,7 @@ async function cpaToggleNetwork(networkId, enabled) {
     try {
       const snap = await fb.getDocs(fb.query(fb.collection(fb.db, 'cpaTasks'), fb.where('network', '==', networkId)));
       for (const d of snap.docs) {
-        await fb.updateDoc(d.ref, (net && net.hmac)
-          ? (enabled ? { networkEnabled: true } : { networkEnabled: false, status: 'inactive' })   // [OWA] enabling never auto-publishes drafts
-          : { networkEnabled: enabled, status: enabled ? 'active' : 'inactive' }).catch(()=>{});
+        await fb.updateDoc(d.ref, enabled ? { networkEnabled: true } : { networkEnabled: false, status: 'inactive' }).catch(()=>{});   // [OWA] enabling a network never auto-publishes drafts
       }
     } catch(e) { console.warn('Network cascade:', e); }
   }
@@ -2794,7 +2792,7 @@ function cpaParseOffers(netId, raw) {
       offerId: String(o.id||o.campaign_id||''), title: o.name||o.title||'Untitled',
       description: o.description||o.desc||'', category: o.category||'CPA',
       rawPayout: parseFloat(o.payout||o.amount||0),
-      country: o.country||o.countries||'Global', network: 'cpalead',
+      country: o.country||o.countries||'Global', network: 'cpalead', requirements: cpaReq(o),
       thumbnail: o.thumbnail||o.image||'', offerUrl: o.link||o.url||'',
     }));
   }
@@ -2804,7 +2802,7 @@ function cpaParseOffers(netId, raw) {
       offerId: String(o.id||o.offer_id||''), title: o.title||o.name||'Untitled',
       description: o.description||'', category: o.category||'CPA',
       rawPayout: parseFloat(o.points||o.reward||o.payout||0) / (raw.currency_divisor||100),
-      country: o.country||'Global', network: 'monlix',
+      country: o.country||'Global', network: 'monlix', requirements: cpaReq(o),
       thumbnail: o.image||'', offerUrl: o.url||'',
     }));
   }
@@ -2814,7 +2812,7 @@ function cpaParseOffers(netId, raw) {
       offerId: String(o.offer_id||o.id||''), title: o.offer_name||o.name||'Untitled',
       description: o.offer_desc||o.description||'', category: o.category||'CPA',
       rawPayout: parseFloat(o.payout||o.amount||0),
-      country: o.country_code||o.country||'Global', network: 'cpagrip',
+      country: o.country_code||o.country||'Global', network: 'cpagrip', requirements: cpaReq(o),
       thumbnail: o.picture||o.image||'', offerUrl: o.offer_url||'',
     }));
   }
@@ -2827,7 +2825,7 @@ function cpaParseOffers(netId, raw) {
     category: o.category||o.type||'CPA',
     rawPayout: parseFloat(o.payout||o.amount||o.reward||o.virtual_currency||0),
     country: String(o.country||o.countries||o.country_code||'Global'),
-    network: netId, thumbnail: o.thumbnail||o.image||o.icon||o.picture||'',
+    network: netId, requirements: cpaReq(o), thumbnail: o.thumbnail||o.image||o.icon||o.picture||'',
     offerUrl: o.url||o.link||o.offer_url||'',
   }));
 }
@@ -2844,7 +2842,7 @@ function renderCpaFetchedOffers(netId, offers) {
         <button class="btn btn-primary btn-sm" onclick="cpaImportAll()"><i class="ti ti-download"></i> Import All Selected</button>
       </div>
     </div>
-    ${net && net.hmac ? owaFetchedBanner(offers) : ''}
+    ${owaFetchedBanner(offers)}
     <div id="cpaOfferGrid">
       ${offers.map((o, idx) => `
         <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:12px;margin-bottom:9px;display:flex;gap:11px;align-items:flex-start">
@@ -2861,7 +2859,7 @@ function renderCpaFetchedOffers(netId, offers) {
           </div>
           <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0;width:80px">
             <div style="font-size:9px;color:var(--text3);font-weight:700;text-align:center">User Payout</div>
-            <input type="number" placeholder="$" step="0.01" min="0.01" id="cpoPayout_${idx}" value="${(net && net.hmac ? owaDefaultPayout(o) : Math.max(0.01,(o.rawPayout*0.6))).toFixed(2)}"
+            <input type="number" placeholder="$" step="0.01" min="0.01" id="cpoPayout_${idx}" value="${owaDefaultPayout(o).toFixed(2)}"
                    style="width:100%;padding:6px;border-radius:8px;border:1.5px solid var(--border2);background:var(--bg3);color:var(--green);font-size:12px;font-weight:900;text-align:center">
             <button class="btn btn-primary btn-sm" style="padding:4px 0;font-size:10px" onclick="cpaImportSingle(${idx})">Import</button>
           </div>
@@ -2913,7 +2911,7 @@ async function cpaImportAll() {
 
 async function cpaDoImport(offers) {
   ensureCpaState();
-  if (offers.length && offers.every(o => o.network === 'offerwallad')) return owaDoImport(offers);   // [OWA] preserves edits
+  if (offers.length && offers.every(o => o.network && o.network !== 'manual')) return owaDoImport(offers);   // [OWA] drafts + never overwrites edits (ALL networks)
   const fb = window._fb; if (!fb) { showToast('Firebase not ready', 'error'); return; }
   let ok = 0, skip = 0;
   const expiresAt = new Date(); expiresAt.setDate(expiresAt.getDate() + 30);
@@ -2979,7 +2977,7 @@ function renderCpaTaskList() {
       <div style="flex:1;min-width:0">
         <div style="font-size:12.5px;font-weight:800;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(t.title||'Untitled')}</div>
         <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">
-          ${t.network==='offerwallad' ? owaRewardInput(t) : `<span style="font-size:10px;background:var(--green-bg);color:var(--green);padding:2px 7px;border-radius:7px;font-weight:800">User $${(t.customPayout||0).toFixed(2)}</span>`}
+          ${t.network!=='manual' ? owaRewardInput(t) : `<span style="font-size:10px;background:var(--green-bg);color:var(--green);padding:2px 7px;border-radius:7px;font-weight:800">User $${(t.customPayout||0).toFixed(2)}</span>`}
           <span style="font-size:10px;background:var(--bg3);color:var(--text3);padding:2px 7px;border-radius:7px">Raw $${(t.rawPayout||0).toFixed(4)}</span>
           ${profit > 0 ? `<span style="font-size:10px;background:var(--amber-bg);color:var(--amber);padding:2px 7px;border-radius:7px">Profit $${profit.toFixed(4)}</span>` : ''}
           <span style="font-size:10px;background:var(--bg3);color:var(--text3);padding:2px 7px;border-radius:7px">${escHtml(t.network||'')}</span>
@@ -3230,16 +3228,38 @@ function owaWorkerBase() {
   try { const u = new URL(b); if (u.pathname === '/' || u.pathname === '') b = u.origin + '/api'; } catch (e) { /* not a URL yet */ }   // domain pasted without /api
   return b;
 }
-function owaMultiplier() {
-  const m = parseFloat(owaCfg().rewardMultiplier);
+// ── works for EVERY CPA network (cpalead, monlix, cpagrip, adgate, offertoro, ayet, offerwallad …); only 'manual' tasks are excluded ──
+const owaIsNet = t => !!t && !!t.network && t.network !== 'manual';
+function owaNetCfg(id) { ensureCpaState(); return (S.cpa.networks && S.cpa.networks[id]) || {}; }
+function owaNetName(id) { const n = (typeof CPA_NETWORKS !== 'undefined' ? CPA_NETWORKS : []).find(x => x.id === id); return n ? n.name : id; }
+function owaMultiplier(netId) {
+  const m = parseFloat(owaNetCfg(netId || OWA_ID).rewardMultiplier);   // only Offerwall.ad has its own field; others use the global share %
   if (m > 0) return m;
   const pct = parseFloat(S.settings && S.settings.cpaUserSharePct);
   return pct > 0 ? pct / 100 : 0.6;
 }
-function owaTaskId(offerId) { return OWA_ID + '_' + owaDocKey(offerId); }
-function owaExistingTask(offerId) { return (S.cpa.importedTasks || []).find(t => t.id === owaTaskId(offerId)); }
+// Id of the task document. MUST stay `<network>_<sanitised id>` for Offerwall.ad (the server looks it up). Older networks may already
+// have documents under the raw id — find those first so a re-sync never creates a duplicate.
+function owaTaskId(offerId, netId) { return (netId || OWA_ID) + '_' + owaDocKey(offerId); }
+function owaExistingTask(offerId, netId) {
+  const n = netId || OWA_ID, list = S.cpa.importedTasks || [];
+  return list.find(t => t.id === owaTaskId(offerId, n)) || list.find(t => t.id === n + '_' + offerId);
+}
+function owaNewTaskId(offerId, netId) { const raw = netId + '_' + offerId; return netId !== OWA_ID && /^[A-Za-z0-9_.-]{1,200}$/.test(raw) && !/^\.+$/.test(raw) ? raw : owaTaskId(offerId, netId); }
+const owaTranslated = t => t.translationStatus === 'done' || (t.translationStatus == null && (owaHasBn(t.title) || owaHasBn(t.description)));
+const owaOrig = t => ({ title: t.titleOriginal ?? t.title ?? '', desc: t.descriptionOriginal ?? t.description ?? '', req: t.requirementsOriginal ?? t.requirements ?? '' });
+// "How to do the task" — networks name it differently; take the first non-empty field (arrays/objects are flattened to lines).
+function cpaReq(o) {
+  const keys = ['requirements', 'requirement', 'instructions', 'instruction', 'how_to', 'howto', 'steps', 'conditions', 'offer_requirements', 'conversion_requirements', 'conversion', 'call_to_action', 'cta', 'goals', 'goal'];
+  for (const k of keys) {
+    const v = o && o[k]; if (v == null || v === '') continue;
+    const txt = Array.isArray(v) ? v.map(x => typeof x === 'string' ? x : (x && (x.description || x.title || x.name)) || '').filter(Boolean).join('\n') : (typeof v === 'object' ? '' : String(v));
+    if (txt.trim()) return txt.trim();
+  }
+  return '';
+}
 // Already-imported offers keep THEIR saved reward; only brand-new ones get raw × multiplier.
-function owaDefaultPayout(o) { const ex = owaExistingTask(o.offerId); return ex ? (ex.customPayout || 0) : owaRound(o.rawPayout * owaMultiplier()); }
+function owaDefaultPayout(o) { const ex = owaExistingTask(o.offerId, o.network); return ex ? (ex.customPayout || 0) : owaRound(o.rawPayout * owaMultiplier(o.network)); }
 
 /* ── 1. Fetch (through the Worker — the API key never reaches the browser) ───────────── */
 async function owaFetchOffers(net, cfg, country) {
@@ -3300,12 +3320,24 @@ function owaTwinUrl(base) {                       // workhive.pro <-> www.workhi
     return u.origin + u.pathname.replace(/\/+$/, '');
   } catch (e) { return ''; }
 }
+const owaRow = (v, label) => `<div>${v ? '✅' : '❌'} ${label}</div>`;
+const owaProbeBlock = (r) => !r ? '' : `<div style="margin:6px 0;padding:6px 8px;background:var(--bg);border-radius:8px"><div style="color:var(--teal);word-break:break-all">${escHtml(r.base)}</div>
+      ${owaRow(r.reach, 'সার্ভারে পৌঁছানো যায়')}${r.reach ? `<div>${r.redirect ? '⚠️ <b>অন্য ঠিকানায় রিডাইরেক্ট করে</b>' : '✅ রিডাইরেক্ট নেই'}</div>${owaRow(r.cors, 'CORS অনুমতি (GET)')}${owaRow(r.post, 'CORS অনুমতি (POST — প্যানেল এটাই ব্যবহার করে)')}<div style="opacity:.75">${r.preflight ? '✅' : '➖'} প্রি-ফ্লাইট (Authorization) — ঐচ্ছিক, প্যানেল এটা এড়িয়ে চলে</div>` : ''}</div>`;
+const owaProbeGood = (r) => !!(r && r.reach && !r.redirect && r.cors && r.post);
+// Lets the admin type ANY server address (e.g. the project's own *.vercel.app domain) and see the same 4 checks. Result is also one-tap saveable.
+async function owaTestUrl() {
+  const out = $('owaTestOut'); let u = (($('owaTestUrl') || {}).value || '').trim().replace(/\/+$/, '');
+  try { const x = new URL(u); if (x.protocol !== 'https:') throw 0; if (x.pathname === '/' || x.pathname === '') u = x.origin + '/api'; } catch (e) { out.innerHTML = '<span style="color:var(--red)">https:// দিয়ে শুরু একটি সঠিক ঠিকানা দিন</span>'; return; }
+  out.innerHTML = '<span style="color:var(--text3)">⏳ পরীক্ষা চলছে…</span>';
+  const r = await owaProbe(u);
+  out.innerHTML = owaProbeBlock(r) + (owaProbeGood(r)
+    ? `<div style="color:var(--green);margin:4px 0">✅ এই ঠিকানা ঠিকঠাক কাজ করে।</div><button class="btn btn-primary btn-sm" data-url="${escHtml(r.base)}" onclick="owaUseUrl(this.dataset.url)">✔ এই ঠিকানা সেভ করে আবার চেষ্টা করুন</button>`
+    : `<div style="color:var(--amber);margin:4px 0">❌ এই ঠিকানাতেও সব ✅ হয়নি।</div>`);
+}
 async function owaDiagnose(base) {
   const origin = location.origin, twin = owaTwinUrl(base);
   const [a, b] = await Promise.all([owaProbe(base), twin ? owaProbe(twin) : Promise.resolve(null)]);
-  const row = (v, label) => `<div>${v ? '✅' : '❌'} ${label}</div>`;
-  const block = (r) => !r ? '' : `<div style="margin:6px 0;padding:6px 8px;background:var(--bg);border-radius:8px"><div style="color:var(--teal);word-break:break-all">${escHtml(r.base)}</div>
-      ${row(r.reach, 'সার্ভারে পৌঁছানো যায়')}${r.reach ? `<div>${r.redirect ? '⚠️ <b>অন্য ঠিকানায় রিডাইরেক্ট করে</b>' : '✅ রিডাইরেক্ট নেই'}</div>${row(r.cors, 'CORS অনুমতি (GET)')}${row(r.post, 'CORS অনুমতি (POST — প্যানেল এটাই ব্যবহার করে)')}<div style="opacity:.75">${r.preflight ? '✅' : '➖'} প্রি-ফ্লাইট (Authorization) — ঐচ্ছিক, প্যানেল এটা এড়িয়ে চলে</div>` : ''}</div>`;
+  const block = owaProbeBlock;
   const good = (r) => r && r.reach && !r.redirect && r.cors && r.post;
   let verdict;
   if (!good(a) && good(b)) {
@@ -3318,13 +3350,18 @@ async function owaDiagnose(base) {
   } else if (!a.cors) {
     verdict = `🛡️ <b>CORS: সার্ভার এই প্যানেলের ঠিকানা অনুমোদন করেনি।</b> Vercel → ইউজার-সাইট প্রজেক্ট → Environment Variables → <code>ALLOWED_ORIGIN</code> = <b style="color:var(--green);user-select:all">${escHtml(origin)}</b> → <b>Production</b> টিক আছে কি দেখুন → <b>Redeploy</b>।`;
   } else if (!a.post) {
-    verdict = `🛡️ GET ঠিক, কিন্তু <b>POST ব্লক</b>। সম্ভাব্য কারণ: সার্ভারে <code>lib/owa.mjs</code> পুরোনো সংস্করণ (নতুনটা আপলোড করে <b>Redeploy</b> করুন) বা Vercel Deployment Protection / Firewall।`;
+    verdict = `🛡️ <b>GET চলে, কিন্তু POST আটকে যাচ্ছে।</b> Vercel নিজে POST ঠিকই সামলায়, তাই সাধারণত এটা <b>ডোমেইনের সামনের কোনো প্রক্সি/ফায়ারওয়াল</b> (যেমন Cloudflare "Proxied/অরেঞ্জ মেঘ", Bot Fight / WAF) অথবা Vercel Firewall।<br>
+      <b>যাচাই (১ মিনিট):</b> Vercel → প্রজেক্ট → <b>Logs</b> খুলে রেখে এখানে Retry চাপুন। • লগে <code>POST /api/health</code> দেখা গেলে → Vercel পর্যন্ত পৌঁছাচ্ছে, স্ট্যাটাস কোড দেখুন (403 = Vercel Firewall)। • লগে POST <b>একদম নেই</b> → ডোমেইনের সামনের প্রক্সি আটকাচ্ছে।<br>
+      <b>দ্রুত সমাধান:</b> নিচের বাক্সে প্রজেক্টের নিজস্ব <code>https://…vercel.app/api</code> ঠিকানা পরীক্ষা করুন (Vercel → Domains-এ পাবেন)। ওটা ✅ হলে ওটাই Server API URL ও offerwall.ad-এর Webhook URL হিসেবে ব্যবহার করুন।`;
   } else {
     verdict = `✅ সার্ভার ও CORS ঠিক আছে — ব্যর্থ হচ্ছে শুধু <code>/offers</code>। Vercel → প্রজেক্ট → <b>Logs</b> দেখুন (সম্ভাব্য: offerwall.ad ধীর/টাইমআউট, ভেরিয়েবল অসম্পূর্ণ, ফাংশন ক্র্যাশ)।`;
   }
   return `<div style="margin-top:10px;font-size:12px;line-height:1.7;color:var(--text2);border-top:1px dashed var(--border2);padding-top:8px">
     <div style="color:var(--text3);margin-bottom:4px">🔎 ডায়াগনস্টিক — এই প্যানেলের origin: <b style="user-select:all">${escHtml(origin)}</b></div>${block(a)}${block(b)}
-    <div style="margin-top:6px">${verdict}</div></div>`;
+    <div style="margin-top:6px">${verdict}</div>
+    <div style="margin-top:10px;padding-top:8px;border-top:1px dashed var(--border2)"><div>🧪 <b>অন্য ঠিকানা পরীক্ষা করুন</b> (যেমন Vercel-এর নিজস্ব ডোমেইন):</div>
+      <div style="display:flex;gap:6px;margin:6px 0"><input id="owaTestUrl" placeholder="https://your-project.vercel.app/api" style="flex:1;padding:6px 8px;border-radius:8px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:12px">
+      <button class="btn btn-ghost btn-sm" onclick="owaTestUrl()">পরীক্ষা</button></div><div id="owaTestOut"></div></div></div>`;
 }
 async function owaUseUrl(url) {
   if (!/^https:\/\/[^\s]+$/.test(url)) return;
@@ -3339,12 +3376,13 @@ async function owaUseUrl(url) {
 }
 
 function owaFetchedBanner(offers) {
-  const noSubid = offers.filter(o => !o.subidEmbedded).length;
+  const noSubid = offers.filter(o => o.subidEmbedded === false).length;   // only Offerwall.ad reports this flag
+  const netId = (offers[0] && offers[0].network) || OWA_ID;
   const sample = S.cpa.owaRawSample ? escHtml(JSON.stringify(S.cpa.owaRawSample, null, 2)) : '';
   return `<div style="background:var(--bg3);border:1px solid var(--border2);border-radius:14px;padding:12px;margin-bottom:12px">
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px">
       <b>🎚 Reward multiplier</b> <span style="color:var(--text3)">user reward = raw payout ×</span>
-      <input id="owaMult" type="number" step="0.05" min="0.01" value="${owaMultiplier()}" style="width:70px;padding:5px 8px;border-radius:8px;border:1px solid var(--border2);background:var(--bg);color:var(--green);font-weight:800">
+      <input id="owaMult" type="number" step="0.05" min="0.01" value="${owaMultiplier(netId)}" style="width:70px;padding:5px 8px;border-radius:8px;border:1px solid var(--border2);background:var(--bg);color:var(--green);font-weight:800">
       <button class="btn btn-ghost btn-sm" onclick="owaApplyMultiplierToList()">Apply to list</button>
       <span style="font-size:10.5px;color:var(--text3)">Already-imported offers keep their saved reward.</span>
     </div>
@@ -3364,29 +3402,32 @@ function owaApplyMultiplierToList() {
 async function owaDoImport(offers) {
   const fb = window._fb; if (!fb) { showToast('Firebase not ready', 'error'); return; }
   await loadCpaTasks();
-  const cfg = owaCfg(), bridge = (cfg.linkMode || '').trim().toLowerCase() === 'bridge', base = owaWorkerBase();
+  const base = owaWorkerBase();
   const expiresAt = new Date(); expiresAt.setDate(expiresAt.getDate() + 30);
-  let created = 0, refreshed = 0, skipped = 0;
+  let created = 0, refreshed = 0, skipped = 0, firstNet = '';
   for (const o of offers) {
-    if (!o.offerId || !o.title) { skipped++; continue; }
-    const id = owaTaskId(o.offerId);
-    const offerUrl = bridge && base ? `${base}/go?offer=${encodeURIComponent(o.offerId)}&subid={subid}` : (o.offerUrl || '');
+    const netId = o.network; firstNet = firstNet || netId;
+    if (!o.offerId || !o.title || !netId) { skipped++; continue; }
+    const isOwa = netId === OWA_ID, cfg = owaNetCfg(netId);
+    const bridge = isOwa && (cfg.linkMode || '').trim().toLowerCase() === 'bridge' && base;
+    const ex = owaExistingTask(o.offerId, netId), id = ex ? ex.id : owaNewTaskId(o.offerId, netId);
+    const offerUrl = bridge ? `${base}/go?offer=${encodeURIComponent(o.offerId)}&subid={subid}` : (o.offerUrl || '');
     const network = {            // fields owned by the network — safe to refresh on every sync
       rawPayout: parseFloat(o.rawPayout) || 0, offerUrl, thumbnail: o.thumbnail || '',
       titleOriginal: o.title, descriptionOriginal: o.description || '', requirementsOriginal: o.requirements || '',
       expiresAt, lastSeenAt: fb.serverTimestamp(),
     };
     try {
-      if (owaExistingTask(o.offerId)) {
-        await fb.updateDoc(fb.doc(fb.db, 'cpaTasks', id), network);   // title/description/customPayout/status untouched
+      if (ex) {
+        await fb.updateDoc(fb.doc(fb.db, 'cpaTasks', id), network);   // title/description/requirements/customPayout/status untouched
         refreshed++;
       } else {
         const typed = parseFloat(o.customPayout);
         await fb.setDoc(fb.doc(fb.db, 'cpaTasks', id), {
-          ...network, offerId: String(o.offerId), network: OWA_ID,
+          ...network, offerId: String(o.offerId), network: netId,
           title: o.title, description: o.description || '', requirements: o.requirements || '',   // English until the admin translates
-          category: o.category || 'CPE', type: o.taskType || 'cpa_offer', country: String(o.country || 'Global'),
-          customPayout: owaRound(isNaN(typed) ? o.rawPayout * owaMultiplier() : typed),
+          category: o.category || (isOwa ? 'CPE' : 'CPA'), type: o.taskType || 'cpa_offer', country: String(o.country || 'Global'),
+          customPayout: owaRound(isNaN(typed) ? o.rawPayout * owaMultiplier(netId) : typed),
           limit: 500, filled: 0, expiryDays: 30,
           status: 'draft', translationStatus: 'pending',                 // hidden from users until published
           networkEnabled: cfg.enabled !== false, postedByAdmin: true, postedById: 'admin',
@@ -3397,17 +3438,17 @@ async function owaDoImport(offers) {
     } catch (e) { console.error('[OWA] import', id, e); skipped++; }
   }
   showToast(`✅ ${created} new (draft) · ${refreshed} refreshed${skipped ? ' · ' + skipped + ' skipped' : ''}`, 'success');
-  addLog(`Offerwall.ad sync: ${created} new, ${refreshed} refreshed`, 'cpa', 'teal');
+  addLog(`${owaNetName(firstNet)} sync: ${created} new, ${refreshed} refreshed`, 'cpa', 'teal');
   await loadCpaTasks();
-  const f = $('cpaTaskNetFilter'); if (f) f.value = OWA_ID;
+  const f = $('cpaTaskNetFilter'); if (f && firstNet) f.value = firstNet;
   cpaTabSwitch('tasks');
 }
 
 /* ── 3. Imported-tasks list: chips, inline reward, bulk multiplier ───────────────────── */
 function owaTaskChips(t) {
-  if (t.network !== OWA_ID) return '';
+  if (!owaIsNet(t)) return '';
   const chip = (txt, c) => `<span style="font-size:10px;background:var(--${c}-bg);color:var(--${c});padding:2px 7px;border-radius:7px;font-weight:700">${txt}</span>`;
-  let h = t.translationStatus === 'done' ? chip('🇧🇩 বাংলা ✔', 'green') : chip('✍️ অনুবাদ বাকি', 'amber');
+  let h = owaTranslated(t) ? chip('🇧🇩 বাংলা ✔', 'green') : chip('✍️ অনুবাদ বাকি', 'amber');
   if (t.status === 'draft') h += chip('Draft', 'blue');
   const seen = t.lastSeenAt && t.lastSeenAt.toDate ? t.lastSeenAt.toDate().getTime() : 0;
   if (seen && Date.now() - seen > 3 * 86400e3) h += chip('⚠️ not in recent sync', 'red');
@@ -3431,15 +3472,17 @@ async function owaQuickPayout(id, el) {
 }
 function owaToggleBulkBar(netFilter) {
   const bar = $('owaBulkBar'); if (!bar) return;
-  const show = netFilter === OWA_ID;
-  if (show && bar.style.display === 'none') $('owaBulkMult').value = owaMultiplier();
+  const show = owaIsNet({ network: netFilter });          // any single network selected in the filter
+  if (show && (bar.style.display === 'none' || bar.dataset.net !== netFilter)) { $('owaBulkMult').value = owaMultiplier(netFilter); bar.dataset.net = netFilter; const l = $('owaBulkName'); if (l) l.textContent = owaNetName(netFilter); }
   bar.style.display = show ? 'flex' : 'none';
 }
 async function owaBulkApply() {
   const m = parseFloat($('owaBulkMult').value), scope = $('owaBulkScope').value, fb = window._fb;
   if (!(m > 0)) { showToast('❌ Multiplier must be > 0', 'error'); return; }
-  const targets = (S.cpa.importedTasks || []).filter(t => t.network === OWA_ID && (scope === 'all' || t.status === 'draft') && t.rawPayout > 0);
-  if (!targets.length) { showToast('No matching Offerwall.ad tasks', 'warn'); return; }
+  const net = ($('cpaTaskNetFilter') || {}).value;
+  if (!owaIsNet({ network: net })) { showToast('আগে উপরের ফিল্টারে একটি নেটওয়ার্ক বাছুন', 'warn'); return; }
+  const targets = (S.cpa.importedTasks || []).filter(t => t.network === net && (scope === 'all' || t.status === 'draft') && t.rawPayout > 0);
+  if (!targets.length) { showToast('No matching tasks', 'warn'); return; }
   if (!confirm(`${targets.length}টি টাস্কের ইউজার রিওয়ার্ড = raw payout × ${m} করা হবে। নিশ্চিত?`)) return;
   try {
     for (let i = 0; i < targets.length; i += 400) {                      // Firestore batch limit is 500
@@ -3449,7 +3492,7 @@ async function owaBulkApply() {
     }
     targets.forEach(t => { t.customPayout = owaRound(t.rawPayout * m); });
     renderCpaTaskList(); showToast(`✅ ${targets.length} rewards updated (×${m})`, 'success');
-    addLog(`Offerwall.ad bulk reward ×${m} on ${targets.length} tasks`, 'cpa', 'teal');
+    addLog(`${owaNetName(net)} bulk reward ×${m} on ${targets.length} tasks`, 'cpa', 'teal');
   } catch (e) { showToast('❌ Bulk update failed: ' + e.message, 'error'); }
 }
 
@@ -3457,22 +3500,24 @@ async function owaBulkApply() {
 function owaEditingTask() { return (S.cpa.importedTasks || []).find(t => t.id === $('cpaEditTaskId').value); }
 function owaFillOrigBox(task) {
   const box = $('owaOrigBox'); if (!box) return;
-  if (!task || task.network !== OWA_ID) { box.style.display = 'none'; return; }
+  if (!owaIsNet(task)) { box.style.display = 'none'; return; }
+  const o = owaOrig(task);          // tasks imported before this feature fall back to their current text as the "original"
   box.style.display = '';
-  $('owaOrigTitle').textContent = task.titleOriginal || '';
-  $('owaOrigDesc').textContent = task.descriptionOriginal || '';
-  $('owaOrigReq').textContent = task.requirementsOriginal ? '📋 ' + task.requirementsOriginal : '';
+  $('owaOrigTitle').textContent = o.title;
+  $('owaOrigDesc').textContent = o.desc;
+  $('owaOrigReq').textContent = o.req ? '📋 ' + o.req : '📋 (এই নেটওয়ার্ক "কীভাবে করতে হবে" দেয়নি — নিচের Requirements ঘরে নিজে লিখুন)';
 }
 function owaResetToOriginal() {
   const t = owaEditingTask(); if (!t) return;
-  $('cpaEditTitle').value = t.titleOriginal || ''; $('cpaEditDesc').value = t.descriptionOriginal || ''; $('cpaEditRequirements').value = t.requirementsOriginal || '';
+  const o = owaOrig(t); $('cpaEditTitle').value = o.title; $('cpaEditDesc').value = o.desc; $('cpaEditRequirements').value = o.req;
 }
 async function owaAiTranslate(btn) {
   const t = owaEditingTask(); if (!t) return;
   const label = btn.innerHTML; btn.disabled = true; btn.innerHTML = '⏳ অনুবাদ হচ্ছে…';
   const sys = 'You translate task listings for a Bangladeshi micro-task app from English into natural, simple Bengali (বাংলা). Keep app, game and brand names, numbers, currency symbols and level names exactly as written. Do not add claims, promises or extra information. Output ONLY the translation, no quotes or notes.';
   try {
-    for (const [field, src] of [['cpaEditTitle', t.titleOriginal], ['cpaEditDesc', t.descriptionOriginal], ['cpaEditRequirements', t.requirementsOriginal]]) {
+    const o = owaOrig(t);
+    for (const [field, src] of [['cpaEditTitle', o.title], ['cpaEditDesc', o.desc], ['cpaEditRequirements', o.req]]) {
       if (!src) continue;
       const out = await callAIProxy(src, sys); if (out) $(field).value = String(out).trim();
     }
@@ -3483,7 +3528,7 @@ async function owaAiTranslate(btn) {
 // Called from saveCpaTaskEdit(): returns false to cancel the save.
 function owaBeforeSave(taskId, data) {
   const t = (S.cpa.importedTasks || []).find(x => x.id === taskId);
-  if (!t || t.network !== OWA_ID) return true;
+  if (!owaIsNet(t)) return true;
   data.translationStatus = (owaHasBn(data.title) || owaHasBn(data.description)) ? 'done' : 'pending';
   if (data.status === 'active' && data.translationStatus === 'pending')
     return confirm('এই টাস্কে এখনো বাংলা লেখা নেই (ইংরেজিই আছে)। তবুও ইউজারদের জন্য Publish করবেন?');
@@ -3492,7 +3537,7 @@ function owaBeforeSave(taskId, data) {
 // Called from cpaToggleTaskStatus(): same safety net when publishing from the list.
 function owaConfirmPublish(taskId) {
   const t = (S.cpa.importedTasks || []).find(x => x.id === taskId);
-  return !(t && t.network === OWA_ID && t.translationStatus !== 'done') ||
+  return !(owaIsNet(t) && !owaTranslated(t)) ||
     confirm('এই টাস্কের বাংলা অনুবাদ এখনো সেভ হয়নি। তবুও Publish করবেন?');
 }
 
